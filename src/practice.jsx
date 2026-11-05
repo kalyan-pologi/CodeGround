@@ -7,22 +7,29 @@ const McqPractice = lazy(() => import('../practice/src/components/McqPractice'))
 function Practice({ project, codingQuestions, debuggingQuestions }) {
   const [mode, setMode] = useState('coding');
   const [visited, setVisited] = useState({ coding: true });
+  const scenarioId = new URLSearchParams(location.search).get('scenario');
+  const initialSelectedId = project ? codingQuestions.find(question => question.scenarioId === scenarioId)?.id : undefined;
   function selectMode(next) {
     setVisited(previous => ({ ...previous, [next]: true }));
     setMode(next);
   }
   return <main><header><div><p className="eyebrow">CodeGround / {project ? 'ReidyAI Project Tasks' : 'Java Practice Exercises'}</p><h1>{project ? 'Build it. Debug it. Explain it.' : 'Prepare across Java & Spring.'}</h1><p>{project ? 'Practice Java through property management, appraisals, and event processing.' : 'Strengthen your Java and Spring skills with coding challenges, debugging questions, and explained solutions.'}</p></div></header>
-    <nav className="tabs" aria-label="Practice mode"><button aria-pressed={mode === 'coding'} onClick={() => selectMode('coding')}>Coding challenges | {codingQuestions.length}</button><button aria-pressed={mode === 'mcq'} onClick={() => selectMode('mcq')}>{project ? 'Project questions' : 'Debugging MCQs'} | {debuggingQuestions.length}</button></nav>
-    <div hidden={mode !== 'coding'}><Suspense fallback={<p role="status">Loading coding workspace…</p>}><CodingPractice challenges={codingQuestions} active={mode === 'coding'} /></Suspense></div>
+    <nav className="tabs" aria-label="Practice mode"><button aria-pressed={mode === 'coding'} onClick={() => selectMode('coding')}>{project ? 'Project coding tasks' : 'Coding challenges'} | {codingQuestions.length}</button>{debuggingQuestions.length > 0 && <button aria-pressed={mode === 'mcq'} onClick={() => selectMode('mcq')}>{project ? 'Project questions' : 'Debugging MCQs'} | {debuggingQuestions.length}</button>}</nav>
+    <div hidden={mode !== 'coding'}><Suspense fallback={<p role="status">Loading coding workspace…</p>}><CodingPractice challenges={codingQuestions} active={mode === 'coding'} initialSelectedId={initialSelectedId} /></Suspense></div>
     {visited.mcq && <div hidden={mode !== 'mcq'}><Suspense fallback={<p role="status">Loading questions…</p>}><McqPractice questions={debuggingQuestions} /></Suspense></div>}
     </main>;
 }
 const root = createRoot(document.getElementById('root'));
 root.render(<p role="status">Loading practice…</p>);
 async function start() {
-  const project = new URLSearchParams(location.search).get('bank') === 'project';
+  const bankName = new URLSearchParams(location.search).get('bank');
+  const project = ['project', 'topics', 'sample'].includes(bankName);
   let codingQuestions, debuggingQuestions;
-  if (project) {
+  if (bankName === 'topics' || bankName === 'sample') {
+    const bank = await import('./project-topic-tasks');
+    codingQuestions = bank.projectTopicTasks;
+    debuggingQuestions = [];
+  } else if (project) {
     const bank = await import('./project-exercises');
     codingQuestions = bank.projectChallenges;
     debuggingQuestions = bank.projectMcqs;

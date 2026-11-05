@@ -1,9 +1,10 @@
 import { topicGroups } from '../data/topics';
 
-export default function TopicFilter({ value, onChange }) {
+export default function TopicFilter({ value, onChange, availableTopics }) {
+  const groups = topicGroups.map(group => ({ ...group, topics: group.topics.filter(topic => !availableTopics || availableTopics.includes(topic)) })).filter(group => group.topics.length);
   return <label>Topic <select value={value} onChange={event => onChange(event.target.value)}>
     <option value="All">All topics</option>
-    {topicGroups.map(group => <optgroup key={group.label} label={group.label}>
+    {groups.map(group => <optgroup key={group.label} label={group.label}>
       {group.topics.map(topic => <option key={topic} value={topic}>{topic}</option>)}
     </optgroup>)}
   </select></label>;

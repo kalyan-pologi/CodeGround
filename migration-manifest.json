@@ -1697,7 +1697,9 @@
   {
     "repo": "practice",
     "file": "practice/src/components/CodingPractice.jsx",
-    "sha256": "27831cdcffb9ddd04d1289c7cc92c5a5b275d5813434ff8380b6238ff4560965"
+    "sha256": "27831cdcffb9ddd04d1289c7cc92c5a5b275d5813434ff8380b6238ff4560965",
+    "adaptedSha256": "95d49a26336991bd1e21352142f7b00e3a4cb64805a1bb5f2d880125640468ac",
+    "adaptation": "Support project and production exercises with structured content and Java, SQL, and YAML editors."
   },
   {
     "repo": "practice",
@@ -1712,7 +1714,9 @@
   {
     "repo": "practice",
     "file": "practice/src/components/TopicFilter.jsx",
-    "sha256": "fbe05a31ee351d901c472c18dc3e3ef7d97833915aaf273f08f85e5c3fd58f38"
+    "sha256": "fbe05a31ee351d901c472c18dc3e3ef7d97833915aaf273f08f85e5c3fd58f38",
+    "adaptedSha256": "2ef815a2197d93b404d0f71db4b614f3686ec877df9af9e98b9f701f5924f6db",
+    "adaptation": "Filter topics to the selected exercise bank."
   },
   {
     "repo": "practice",

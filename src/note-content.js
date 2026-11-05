@@ -15,12 +15,14 @@ export function fetchText(file) {
 }
 
 export async function loadNoteContent(note) {
-  const [original, supplement] = await Promise.all([
+  const isStreams = note.repo === 'interview' && note.id === 'java-snippets';
+  const [original, supplement, approaches] = await Promise.all([
     fetchText(note.file),
-    note.repo === 'interview' && note.id === 'java-snippets'
-      ? fetchText('java-streams.html') : ''
+    isStreams ? fetchText('java-streams.html') : '',
+    isStreams ? import('./stream-approaches.js') : null
   ]);
-  if (note.repo !== 'interview' || note.id !== 'proj-accenture') return original + supplement;
+  if (isStreams) return approaches.addStreamApproaches(original + supplement);
+  if (note.repo !== 'interview' || note.id !== 'proj-accenture') return original;
 
   // Keep the imported source intact while showing the shared AWS reference in DevOps.
   const doc = new DOMParser().parseFromString(original, 'text/html');

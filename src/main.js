@@ -147,13 +147,18 @@ function practiceTabs(project = true) {
   return `<nav class="practice-subtabs" aria-label="Backend practice sections"><a href="#practice/tasks" ${project ? 'aria-current="page"' : ''}>ReidyAI Project Tasks</a><a href="#practice/workspace" ${!project ? 'aria-current="page"' : ''}>Java Practice Exercises</a></nav>`;
 }
 function showTasks() {
-  main.innerHTML = `<div class="page"><div class="eyebrow">Learn → Build → Explain</div><h1>Practice through ReidyAI.</h1><p class="muted">Build features across property, appraisal, and communication services. Follow the acceptance criteria, test your implementation, and explain your decisions.</p><p><a class="cta" href="#practice/project-coding">Open ReidyAI coding exercises ↗</a></p><div class="task-grid">${tasks.map(task => `<article class="task"><div class="eyebrow">${task.area}</div><h2>${task.title}</h2><p>${task.details}</p><h3>Acceptance criteria</h3><ul>${task.checks.map(check => `<li>${check}</li>`).join('')}</ul><details><summary>Explain your decisions</summary><p>${task.explain}</p></details><p>Related notes: ${task.links.map(id => `<a href="${noteRoute(getNote('interview', id))}" style="color:#a0e7cd">${escape(getNote('interview', id).title)}</a>`).join(' · ')}</p><label><input type="checkbox" data-complete="${task.id}" ${storage.get(`complete:${task.id}`) === 'yes' ? 'checked' : ''}> Completed</label><label for="notes-${task.id}">Implementation notes / commit link</label><textarea id="notes-${task.id}" data-notes="${task.id}" placeholder="What did you build? What did you learn?">${escape(storage.get(`notes:${task.id}`))}</textarea></article>`).join('')}</div></div>`;
+  main.innerHTML = `<div class="page"><div class="eyebrow">Learn → Build → Explain</div><h1>Practice through ReidyAI.</h1><p class="muted">Build features across property, appraisal, and communication services. Follow the acceptance criteria, test your implementation, and explain your decisions.</p><p><a class="cta" href="#practice/tasks">Open ReidyAI coding exercises ↗</a></p><div class="task-grid">${tasks.map(task => `<article class="task"><div class="eyebrow">${task.area}</div><h2>${task.title}</h2><p>${task.details}</p><h3>Acceptance criteria</h3><ul>${task.checks.map(check => `<li>${check}</li>`).join('')}</ul><details><summary>Explain your decisions</summary><p>${task.explain}</p></details><p>Related notes: ${task.links.map(id => `<a href="${noteRoute(getNote('interview', id))}" style="color:#a0e7cd">${escape(getNote('interview', id).title)}</a>`).join(' · ')}</p><label><input type="checkbox" data-complete="${task.id}" ${storage.get(`complete:${task.id}`) === 'yes' ? 'checked' : ''}> Completed</label><label for="notes-${task.id}">Implementation notes / commit link</label><textarea id="notes-${task.id}" data-notes="${task.id}" placeholder="What did you build? What did you learn?">${escape(storage.get(`notes:${task.id}`))}</textarea></article>`).join('')}</div></div>`;
   main.querySelectorAll('[data-complete]').forEach(input => input.onchange = () => storage.set(`complete:${input.dataset.complete}`, input.checked ? 'yes' : 'no'));
   main.querySelectorAll('[data-notes]').forEach(input => input.oninput = () => storage.set(`notes:${input.dataset.notes}`, input.value));
   main.insertAdjacentHTML('afterbegin', practiceTabs(true));
 }
-function showWorkspace(project = false) {
-  main.innerHTML = `<div class="reader">${practiceTabs(project)}<div class="reader-bar"><span>Backend Practice / ${project ? 'ReidyAI coding exercises' : 'Java Practice Exercises'}</span><a href="#practice/tasks">Project task board ↗</a></div><iframe class="note-frame" title="${project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${project ? '?bank=project' : ''}"></iframe></div>`;
+function showWorkspace(project = false, topicTasks = false, scenarioId = '') {
+  const params = new URLSearchParams();
+  if (topicTasks) params.set('bank', 'topics');
+  else if (project) params.set('bank', 'project');
+  if (project && scenarioId) params.set('scenario', scenarioId);
+  const query = params.toString();
+  main.innerHTML = `<div class="reader">${practiceTabs(project)}<div class="reader-bar"><span>Backend Practice / ${project ? 'ReidyAI coding exercises' : 'Java Practice Exercises'}</span><a href="#practice/task-board">Implementation task board ↗</a></div><iframe class="note-frame" title="${project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
 }
 function showSearch(query) {
   const normalizedQuery = query.toLowerCase();
@@ -163,7 +168,8 @@ function showSearch(query) {
 function router() {
   clearTimeout(searchTimer);
   const version = ++routeVersion;
-  const [requestedTab, repo, id] = location.hash.slice(1).split('/');
+  const [path, queryString = ''] = location.hash.slice(1).split('?');
+  const [requestedTab, repo, id] = path.split('/');
   if (requestedTab === 'search') {
     const query = new URLSearchParams(location.hash.split('?')[1]).get('q') || '';
     search.value = query; showSearch(query); return;
@@ -171,7 +177,7 @@ function router() {
   const tab = slugs.includes(requestedTab) ? requestedTab : 'home';
   search.value = '';
   document.querySelectorAll('[data-tab]').forEach(link => { link.classList.toggle('active', link.dataset.tab === tab); link.setAttribute('aria-current', link.dataset.tab === tab ? 'page' : 'false'); });
-  renderSidebar(tab, id || (repo === 'tasks' || repo === 'project-coding' ? '@tasks' : repo === 'workspace' ? '@workspace' : '@overview'));
+  renderSidebar(tab, repo === 'workspace' ? '@workspace' : ['tasks', 'project-coding', 'task-board', 'incidents'].includes(repo) ? '@tasks' : id || '@overview');
   if ((tab === 'sd' || tab === 'genai') && !libraryNavigation[tab]) {
     if (!navigationRequests.has(tab)) navigationRequests.set(tab, loadLibraryNavigation(tab).finally(() => navigationRequests.delete(tab)));
     navigationRequests.get(tab).then(() => {
@@ -181,9 +187,12 @@ function router() {
   sidebar.classList.remove('open'); menu.setAttribute('aria-expanded', 'false');
   main.scrollTop = 0;
   if (tab === 'home' && !repo) dashboard();
+  else if (tab === 'practice' && repo === 'workspace' && id === 'production') location.replace(`#practice/tasks?scenario=${encodeURIComponent(new URLSearchParams(queryString).get('scenario') || 'n-plus-one')}`);
   else if (tab === 'practice' && repo === 'workspace') showWorkspace();
+  else if (tab === 'practice' && repo === 'incidents') location.replace(`#practice/tasks?scenario=${encodeURIComponent(id || 'n-plus-one')}`);
   else if (tab === 'practice' && repo === 'project-coding') showWorkspace(true);
-  else if (tab === 'practice' && (!repo || repo === 'tasks')) showTasks();
+  else if (tab === 'practice' && (!repo || repo === 'tasks')) showWorkspace(true, true, new URLSearchParams(queryString).get('scenario') || (id === 'production' ? 'n-plus-one' : ''));
+  else if (tab === 'practice' && repo === 'task-board') showTasks();
   else if (repo && id) showNote(repo, id, version);
   else { location.replace(defaultRoute(tab)); }
 }
