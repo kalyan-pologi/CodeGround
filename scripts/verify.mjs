@@ -13,9 +13,14 @@ import { productionExercises } from '../src/production-exercises.js';
 const root = fileURLToPath(new URL('../', import.meta.url));
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/catalog.json'), 'utf8'));
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'migration-manifest.json'), 'utf8'));
+let verifiedFiles = 0;
 for (const entry of manifest) {
+  // Archived source documents were intentionally ignored by the original repo.
+  // Verify them when present locally, without requiring them in a public checkout.
+  if (entry.localOnly && !fs.existsSync(path.join(root, entry.file))) continue;
   const bytes = fs.readFileSync(path.join(root, entry.file));
   assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), entry.adaptedSha256 || entry.sha256, `Imported file differs: ${entry.file}`);
+  verifiedFiles++;
 }
 const keys = new Set();
 for (const note of catalog) {
@@ -43,7 +48,7 @@ for (const topic of topics) {
   assert.ok(task.hintSteps?.length >= 4, `${topic}: needs progressive hints`);
   assert.ok(task.explanation?.length >= 3, `${topic}: needs an explained solution`);
 }
-console.log(`Verified ${manifest.length} imported/adapted files, ${catalog.length} unique notes, and ${projectTopicTasks.length} ReidyAI tasks covering every practice topic.`);
+console.log(`Verified ${verifiedFiles} imported/adapted files, ${catalog.length} unique notes, and ${projectTopicTasks.length} ReidyAI tasks covering every practice topic.`);
 console.log(`Full original Java Practice banks available: ${challenges.length} coding challenges and ${mcqs.length} MCQs.`);
 assert.equal(productionScenarios.length, 12);
 assert.equal(new Set(productionScenarios.map(scenario => scenario.id)).size, 12);

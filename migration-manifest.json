@@ -272,7 +272,8 @@
   {
     "repo": "interview",
     "file": "public/library/interview/interview-prep.md",
-    "sha256": "63cbae4e0d6b5127d0236d2b0cad14f2ab9b4c37685f61c39cbd664e85ccf09e"
+    "sha256": "63cbae4e0d6b5127d0236d2b0cad14f2ab9b4c37685f61c39cbd664e85ccf09e",
+    "localOnly": true
   },
   {
     "repo": "interview",
@@ -522,12 +523,14 @@
   {
     "repo": "interview",
     "file": "public/library/interview/Project_Documentation.docx",
-    "sha256": "f5e3bb877cddbe542d7e9e58e755b1823dc081509ce536d6294c1197cd686517"
+    "sha256": "f5e3bb877cddbe542d7e9e58e755b1823dc081509ce536d6294c1197cd686517",
+    "localOnly": true
   },
   {
     "repo": "interview",
     "file": "public/library/interview/Project_Documentation_WITH_BEHAVIORAL.txt",
-    "sha256": "c86794e486a2c5c264aba498fc57891e9dfaa437c2c2d8de442db48ed537853a"
+    "sha256": "c86794e486a2c5c264aba498fc57891e9dfaa437c2c2d8de442db48ed537853a",
+    "localOnly": true
   },
   {
     "repo": "sd",
