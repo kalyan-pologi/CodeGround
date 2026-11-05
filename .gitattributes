@@ -1,0 +1,5 @@
+* text=auto eol=lf
+
+# Imported files are checked byte-for-byte against the migration manifest.
+public/library/** -text
+practice/** -text

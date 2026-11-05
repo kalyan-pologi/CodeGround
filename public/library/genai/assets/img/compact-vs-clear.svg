@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 560" font-family="'Comic Sans MS','Segoe Print',cursive" role="img" aria-label="Decision flowchart: same task use compact, new task use clear">
+  <defs>
+    <!-- hand-drawn wobble filter -->
+    <filter id="rough">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="7" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6" fill="none" stroke="#2b2b2b" stroke-width="1.4"/>
+    </marker>
+  </defs>
+
+  <style>
+    .box  { filter:url(#rough); stroke:#2b2b2b; stroke-width:2; fill:#fff; }
+    .green{ fill:#5fbf72; }
+    .red  { fill:#ec6a3c; }
+    .grey { fill:#f4f4f4; }
+    .lbl  { font-size:17px; fill:#1c1c1c; }
+    .lblw { font-size:17px; fill:#fff; font-weight:bold; }
+    .sub  { font-size:12px; fill:#555; }
+    .subw { font-size:12px; fill:#f2f2f2; }
+    .edge { stroke:#2b2b2b; stroke-width:1.8; fill:none; filter:url(#rough); marker-end:url(#arrow); }
+    .elbl { font-size:12px; fill:#333; }
+    text  { text-anchor:middle; }
+  </style>
+
+  <!-- Title -->
+  <text x="380" y="34" font-size="28" fill="#1c1c1c" font-weight="bold">/compact vs /clear</text>
+  <text x="380" y="56" font-size="14" fill="#666">"Which one right now?"</text>
+
+  <!-- Rule box -->
+  <rect class="box grey" x="560" y="72" width="180" height="70" rx="6"/>
+  <text x="650" y="94" class="sub" font-weight="bold" fill="#222">Rule</text>
+  <text x="650" y="114" class="sub">Same task → compact</text>
+  <text x="650" y="132" class="sub">New task → clear</text>
+
+  <!-- Q1 diamond: Same task? -->
+  <polygon class="box" points="330,90 430,130 330,170 230,130"/>
+  <text x="330" y="126" class="lbl">Same</text>
+  <text x="330" y="146" class="lbl">task?</text>
+
+  <!-- YES to compact -->
+  <path class="edge" d="M230,130 C150,140 130,200 130,235"/>
+  <text x="120" y="120" class="elbl">YES</text>
+  <rect class="box green" x="55" y="238" width="150" height="70" rx="6"/>
+  <text x="130" y="270" class="lblw">"/compact"</text>
+  <text x="130" y="290" class="subw">Continue · less history</text>
+
+  <!-- NO down to Q2 -->
+  <path class="edge" d="M330,170 L330,235"/>
+  <text x="345" y="200" class="elbl">NO</text>
+
+  <!-- Q2 diamond: New task? -->
+  <polygon class="box" points="330,235 430,275 330,315 230,275"/>
+  <text x="330" y="271" class="lbl">New</text>
+  <text x="330" y="291" class="lbl">task?</text>
+
+  <!-- YES -> clear -->
+  <path class="edge" d="M430,275 C520,285 545,330 545,360"/>
+  <text x="500" y="262" class="elbl">YES</text>
+  <rect class="box red" x="470" y="363" width="150" height="70" rx="6"/>
+  <text x="545" y="395" class="lblw">"/clear"</text>
+  <text x="545" y="415" class="subw">Reset · start fresh</text>
+
+  <!-- NO -> compact default -->
+  <path class="edge" d="M330,315 L330,360"/>
+  <text x="345" y="345" class="elbl">NO</text>
+  <rect class="box green" x="255" y="363" width="150" height="70" rx="6"/>
+  <text x="330" y="395" class="lblw">"/compact"</text>
+  <text x="330" y="415" class="subw">Default when unsure</text>
+
+  <!-- Converge to Check /context -->
+  <rect class="box grey" x="255" y="475" width="250" height="56" rx="6"/>
+  <text x="380" y="500" class="lbl">🔍 Check /context</text>
+  <text x="380" y="519" class="sub">Confirm what was dropped</text>
+
+  <path class="edge" d="M130,308 C130,430 240,480 253,490"/>
+  <path class="edge" d="M330,433 L330,473"/>
+  <path class="edge" d="M545,433 C545,470 470,485 460,490"/>
+</svg>

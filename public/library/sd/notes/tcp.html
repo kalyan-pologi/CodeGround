@@ -1,0 +1,294 @@
+<div class="section-header">
+        <div class="tag">Networking Essentials</div>
+        <h1>🌐 TCP / UDP / HTTP / WebSocket</h1>
+        <p>How data travels across networks: connection types, reliability guarantees, and when to use each
+          protocol.</p>
+      </div>
+
+      <div class="cs-section-label">📚 What They Are</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Transport Layer</h3>
+          <span class="b"><b>TCP</b> is connection-oriented. It guarantees ordered, reliable delivery of every
+            byte between two endpoints.</span>
+          <span class="b"><b>UDP</b> is connectionless. It fires datagrams with no guarantee of delivery, order, or
+            duplicate protection.</span>
+          <span class="b">Both sit directly on top of IP and are identified in a packet by a protocol number (6 for
+            TCP, 17 for UDP).</span>
+        </div>
+        <div class="card c2">
+          <h3>Application Layer</h3>
+          <span class="b"><b>HTTP</b> is a request/response protocol built on top of TCP, used for most
+            client-server communication on the web.</span>
+          <span class="b"><b>WebSocket</b> starts life as a normal HTTP request, then "upgrades" the underlying TCP
+            connection into a persistent, bidirectional channel.</span>
+          <span class="b">Both are text-based (HTTP/1.1) or binary-framed (HTTP/2, WebSocket frames) protocols that
+            define message structure on top of a transport connection.</span>
+        </div>
+        <div class="card c8">
+          <h3>How They Stack</h3>
+          <div class="row"><span class="k">Layer 1</span><span class="v">IP, routing</span></div>
+          <div class="row"><span class="k">Layer 2</span><span class="v">TCP or UDP</span></div>
+          <div class="row"><span class="k">Layer 3</span><span class="v">HTTP or WebSocket</span></div>
+          <div class="sep"></div>
+          <span class="b">Each layer only knows about the one below it. HTTP has no idea whether it's riding on
+            a fresh TCP connection or a reused one.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">❓ Why Each Was Introduced</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>TCP</h3>
+          <span class="b">IP alone only guarantees "best effort" delivery. Packets can be lost, duplicated, or
+            arrive out of order because routers may take different paths.</span>
+          <span class="b">Applications like file transfer or loading a web page need the data to arrive complete and
+            in the right order, or the result is corrupted or unusable.</span>
+          <span class="b">TCP was built as a layer on top of unreliable IP that reconstructs a clean, ordered byte
+            stream for the application.</span>
+        </div>
+        <div class="card c2">
+          <h3>UDP</h3>
+          <span class="b">TCP's reliability comes at a real cost: handshakes before any data flows, acknowledgments
+            for every segment, and retransmissions on loss, all of which add latency.</span>
+          <span class="b">Some applications (video calls, live game state, DNS lookups) care more about speed and
+            low latency than about every single packet arriving.</span>
+          <span class="b">UDP strips away all of TCP's bookkeeping so the app can send data with the minimum
+            possible overhead and handle loss itself if it needs to.</span>
+        </div>
+        <div class="card c8">
+          <h3>HTTP & WebSocket</h3>
+          <span class="b"><b>HTTP</b> exists because once you have a reliable byte stream (TCP), you still need a
+            shared "language" for computers to ask each other for resources: methods, status codes, headers.</span>
+          <span class="b">HTTP is fundamentally request driven. The client always speaks first and the server can
+            only reply.</span>
+          <span class="b"><b>WebSocket</b> solves the case where the server needs to push data without being asked,
+            like chat messages, live dashboards, or multiplayer game state, by keeping one TCP connection open in
+            both directions.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚙️ How It Works</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>TCP Handshake & Teardown</h3>
+          <div class="row"><span class="k">Setup</span><span class="v">SYN, SYN-ACK, ACK</span></div>
+          <div class="row"><span class="k">Teardown</span><span class="v">4-way FIN/ACK</span></div>
+          <div class="sep"></div>
+          <span class="b">Every byte sent is tracked with sequence numbers. Unacknowledged bytes are retransmitted
+            after a timeout.</span>
+          <span class="b">Flow control (receive window) prevents a fast sender from overwhelming a slow
+            receiver. Congestion control backs off sending rate when the network itself seems overloaded.</span>
+          <span class="b">This handshake and teardown is state the client and server must maintain for the life of
+            the connection, which matters a lot for load balancer design.</span>
+        </div>
+        <div class="card c2">
+          <h3>UDP</h3>
+          <span class="b">No handshake at all. You just send a packet, sometimes called "spray and pray."</span>
+          <span class="b">The receiver sees source IP/port, destination IP/port, and a binary payload. That's the
+            entire contract.</span>
+          <span class="b">No ordering, no re-send, no flow control, and no congestion control by default, though
+            protocols built on UDP (like QUIC) can add their own.</span>
+        </div>
+        <div class="card c8">
+          <h3>WebSocket Upgrade</h3>
+          <div class="row"><span class="k">1.</span><span class="v">Client sends HTTP GET with Upgrade header</span></div>
+          <div class="row"><span class="k">2.</span><span class="v">Server responds 101 Switching Protocols</span></div>
+          <div class="row"><span class="k">3.</span><span class="v">Connection now speaks WebSocket frames</span></div>
+          <div class="row"><span class="k">4.</span><span class="v">Either side sends frames anytime</span></div>
+          <div class="row"><span class="k">5.</span><span class="v">Stays open until either side closes it</span></div>
+          <div class="sep"></div>
+          <span class="b">Because it rides on the original TCP+HTTP handshake, WebSocket inherits cookies and auth
+            from that initial HTTP request, which is convenient for reusing session info.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">✅ When to Use / Use Cases</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>TCP</h3>
+          <span class="b">The default for basically everything: web pages, REST APIs, file transfer, databases,
+            SSH, email.</span>
+          <span class="b">Anywhere correctness of the data matters more than shaving milliseconds off delivery.</span>
+          <span class="b">Any workflow with financial or state-changing consequences (payments, orders, inventory
+            updates) needs TCP's guarantees, since a dropped or reordered byte can corrupt the result.</span>
+          <span class="b">Also the right choice whenever you need a simple mental model: write bytes in, read the
+            same bytes out in order, on the other end.</span>
+        </div>
+        <div class="card c2">
+          <h3>UDP</h3>
+          <span class="b">Live video/audio streaming, online gaming position updates, VoIP, DNS lookups, and
+            high-volume telemetry where occasional loss is acceptable.</span>
+          <span class="b">Also the base for custom protocols like QUIC (HTTP/3) that reimplement reliability
+            themselves, more flexibly than TCP allows.</span>
+          <span class="b">Multicast and broadcast scenarios (sending one packet to many recipients at once) are
+            only practical over UDP, since TCP is strictly point-to-point.</span>
+          <span class="b">Good fit whenever the newest update matters more than an old one, e.g. a player's current
+            position; a stale position update arriving late is worse than useless, so no point retransmitting it.</span>
+        </div>
+        <div class="card c8">
+          <h3>HTTP vs WebSocket</h3>
+          <span class="b"><b>HTTP</b> for standard client-server request/response: REST APIs, loading web pages,
+            most CRUD operations.</span>
+          <span class="b"><b>WebSocket</b> for high-frequency, persistent, bidirectional communication: chat apps,
+            multiplayer games, live collaborative editing (Google Docs style), trading dashboards.</span>
+          <span class="b">A useful test: if you can describe the interaction as "the client asks, the server
+            answers," reach for HTTP. If the server needs to speak first or speak often, unprompted, reach for
+            WebSocket.</span>
+          <span class="b">HTTP/2 and HTTP/3 add server push and multiplexing, narrowing the gap somewhat, but they
+            still don't give you a fully open bidirectional channel the way WebSocket does.</span>
+        </div>
+      </div>
+      <div class="note"><b>Interview nuance:</b> real systems mix protocols. A video conferencing app might use
+        TCP/HTTP for signaling and login, but UDP/WebRTC for the actual audio/video stream, because losing a video
+        frame occasionally is fine but losing an auth token is not.</div>
+
+      <div class="cs-section-label">⚖️ Trade-offs</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>TCP vs UDP</h3>
+          <span class="b"><b>TCP</b> gives reliability and ordering, but pays for it with connection setup latency,
+            more per-packet overhead (20 to 60 byte header vs UDP's 8 bytes), and head-of-line blocking: if one
+            packet is lost, everything behind it waits.</span>
+          <span class="b"><b>UDP</b> gives speed and simplicity, but the application has to handle loss, ordering,
+            and duplication itself, or just tolerate it.</span>
+        </div>
+        <div class="card c2">
+          <h3>HTTP vs WebSocket</h3>
+          <span class="b"><b>HTTP</b> is simple, cacheable, and stateless, which is good for horizontal scaling,
+            but its request-response model means the server can never proactively push to the client.</span>
+          <span class="b"><b>WebSocket</b> gives real-time bidirectional push, but you now hold a stateful,
+            persistent connection per client. That's expensive at scale (memory per connection) and constrains load
+            balancing, and older proxies/firewalls sometimes don't support it well.</span>
+        </div>
+        <div class="card c8">
+          <h3>Cost Summary</h3>
+          <span class="b"><b>TCP header:</b> 20 to 60 bytes.</span>
+          <span class="b"><b>UDP header:</b> 8 bytes.</span>
+          <span class="b"><b>TCP handshake:</b> 1 extra round trip before data.</span>
+          <span class="b"><b>WebSocket:</b> 1 connection held open per client.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚨 Failure Modes + Mitigations</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Loss & Connection Failures</h3>
+          <span class="b"><b>Packet loss (UDP):</b> App-level tolerance, e.g. VoIP just drops the glitch.</span>
+          <span class="b"><b>Connection state loss (WS):</b> Reconnect with backoff, resync from last-seen message ID.</span>
+          <span class="b"><b>TCP connection reset:</b> Client retries with a fresh handshake.</span>
+          <span class="b"><b>Partial message on disconnect:</b> App-level framing so a receiver knows a message is incomplete.</span>
+        </div>
+        <div class="card c2">
+          <h3>Retry-Related Failures</h3>
+          <span class="b"><b>Duplicate side effects on retry:</b> Idempotency keys, e.g. for payments.</span>
+          <span class="b"><b>Cascading retries (thundering herd):</b> Exponential backoff with jitter.</span>
+          <span class="b"><b>Retry storms after an outage:</b> Circuit breakers to stop hammering a recovering service.</span>
+          <span class="b"><b>Client timeout too aggressive:</b> Tune timeout above p99 latency, not the average.</span>
+        </div>
+        <div class="card c8">
+          <h3>Infrastructure-Level Failures</h3>
+          <span class="b"><b>Middleboxes killing idle connections:</b> Heartbeat ping/pong frames.</span>
+          <span class="b"><b>Slow start penalizing bursty traffic:</b> Connection reuse (keep-alive, HTTP/2 multiplexing).</span>
+          <span class="b"><b>NAT/firewall blocking UDP:</b> Fall back to TCP, or use STUN/TURN for WebRTC.</span>
+          <span class="b"><b>Load balancer drops sticky WS client:</b> Client reconnect logic plus server-side session resync.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚫 When NOT to Use</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Don't use UDP</h3>
+          <span class="b">When you need guaranteed delivery or ordering, or need to support browsers without a
+            fallback. Browsers don't support raw UDP outside of WebRTC.</span>
+        </div>
+        <div class="card c2">
+          <h3>Don't use WebSocket</h3>
+          <span class="b">Just because "real-time" sounds nice. If occasional server push (not high-frequency) is
+            enough, SSE is much simpler and works over plain HTTP. If you don't need push at all, plain polling
+            might be fine.</span>
+        </div>
+        <div class="card c8">
+          <h3>Interview Red Flag</h3>
+          <span class="b">Reaching for WebSocket without justifying it signals you didn't consider the operational
+            cost of stateful connections at scale.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🗺️ Where It Fits in a System Diagram</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Request Path</h3>
+          <div class="row"><span class="k">1.</span><span class="v">Client resolves domain via DNS</span></div>
+          <div class="row"><span class="k">2.</span><span class="v">Connects through a Load Balancer</span></div>
+          <div class="row"><span class="k">3.</span><span class="v">Hits an App Server</span></div>
+          <div class="row"><span class="k">4.</span><span class="v">Talks to backend services / DB</span></div>
+        </div>
+        <div class="card c2">
+          <h3>L4 vs L7 Load Balancer</h3>
+          <span class="b"><b>L4</b> forwards TCP connections blindly, which is good for WebSocket, since the same
+            server must keep handling that client for the life of the connection.</span>
+          <span class="b"><b>L7</b> terminates the connection and inspects the HTTP request itself, so it can route
+            based on URL/headers/cookies, but that model doesn't naturally fit a long-lived bidirectional
+            WebSocket.</span>
+        </div>
+        <div class="card c8">
+          <h3>Follow-up to Expect</h3>
+          <span class="b">If you design a system with WebSockets, expect a follow-up question on how your load
+            balancer handles that.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🌍 Real-World Examples</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>TCP in the Wild</h3>
+          <span class="b"><b>Web:</b> HTTP/1.1, HTTP/2 (all over TCP).</span>
+          <span class="b"><b>Databases:</b> Postgres, MySQL client connections.</span>
+          <span class="b"><b>Remote access:</b> SSH, RDP.</span>
+          <span class="b"><b>Messaging:</b> Kafka's broker protocol.</span>
+        </div>
+        <div class="card c2">
+          <h3>UDP in the Wild</h3>
+          <span class="b"><b>Naming:</b> DNS lookups.</span>
+          <span class="b"><b>Media:</b> WebRTC audio/video.</span>
+          <span class="b"><b>Gaming:</b> Custom multiplayer position protocols.</span>
+          <span class="b"><b>Modern web:</b> QUIC, the transport under HTTP/3.</span>
+        </div>
+        <div class="card c8">
+          <h3>HTTP & WebSocket in the Wild</h3>
+          <span class="b"><b>REST API:</b> Elasticsearch, Stripe, most public APIs.</span>
+          <span class="b"><b>Chat:</b> Slack, Discord (WebSocket).</span>
+          <span class="b"><b>Live state:</b> Multiplayer games, trading dashboards.</span>
+          <div class="sep"></div>
+          <span class="b"><b>Golden rule:</b> default to TCP/HTTP/REST unless you have a specific reason not to.
+            Interviewers want you to justify deviations, not show off knowledge for its own sake.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🎯 Interview-Grade Points to Internalize</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Know Cold</h3>
+          <span class="b">Know the TCP vs UDP trade-off table cold. It's one of the most commonly probed
+            comparisons in networking interviews.</span>
+          <span class="b">Be ready to explain header overhead (20 to 60 bytes for TCP vs 8 for UDP) and why that
+            matters for high-frequency, small-payload traffic like game state updates.</span>
+        </div>
+        <div class="card c2">
+          <h3>Layering Understanding</h3>
+          <span class="b">WebSocket is an HTTP upgrade on an existing TCP connection, not a separate thing built
+            from scratch. Saying this shows you understand the layering.</span>
+          <span class="b">Similarly, know that HTTP/3 changes the transport underneath (UDP via QUIC instead of
+            TCP) while keeping the same HTTP semantics on top, which is a good example of clean layering.</span>
+        </div>
+        <div class="card c8">
+          <h3>"How would you scale WebSockets?"</h3>
+          <span class="b">L4 load balancing with <b>least connections</b>, not round robin, since connections are
+            long-lived and unevenly loaded over time.</span>
+          <span class="b">Add a pub/sub layer, like Redis, so any server can push a message to a client connected to
+            any other server in the fleet.</span>
+          <span class="b">Mention heartbeats to detect dead connections and horizontal sharding of connections
+            across many WebSocket servers to bound memory per instance.</span>
+        </div>
+      </div>

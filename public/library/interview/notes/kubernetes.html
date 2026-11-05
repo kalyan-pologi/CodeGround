@@ -1,0 +1,171 @@
+<div class="section-header">
+  <div class="tag">DevOps</div>
+  <h1>☸️ Kubernetes</h1>
+  <p>Kubernetes concepts and commands.</p>
+</div>
+
+<div class="note-body">
+  <h2>Basic info & configuration</h2>
+  <pre><code>kubectl version --short              # Show client & server versions
+kubectl cluster-info                 # Show cluster details (API server, DNS, etc.)
+kubectl get all                      # List all resources in current namespace
+kubectl config get-contexts          # List kubeconfig contexts
+kubectl config use-context &lt;context&gt; # Switch between clusters/contexts
+kubectl config view                  # Show kubeconfig file
+kubectl get ns                       # List all namespaces
+kubectl create namespace &lt;name&gt;      # Create new namespace
+kubectl delete namespace &lt;name&gt;      # Delete namespace and all resources</code></pre>
+
+  <h2>Pod management</h2>
+  <pre><code>kubectl get pods                         # List all pods in current namespace
+kubectl get pods -n &lt;namespace&gt;          # List pods in specific namespace
+kubectl describe pod &lt;pod_name&gt;          # Detailed pod info and events
+kubectl logs &lt;pod_name&gt;                  # Show logs of a pod
+kubectl logs -f &lt;pod_name&gt;               # Stream live logs (follow mode)
+kubectl exec -it &lt;pod_name&gt; -- bash      # Open shell into pod
+kubectl delete pod &lt;pod_name&gt;            # Delete a pod (Deployment auto-recreates)
+kubectl port-forward &lt;pod_name&gt; 8080:80  # Map local port 8080 to pod port 80
+kubectl get pod -o wide                  # Show pod IP and node info</code></pre>
+
+  <h2>Deployments</h2>
+  <pre><code>kubectl get deployments                  # List all deployments
+kubectl describe deployment &lt;name&gt;       # Detailed info (strategy, events, etc.)
+kubectl apply -f &lt;file.yml&gt;              # Create or update deployment from YAML
+kubectl create -f &lt;file.yml&gt;             # Create resources from YAML
+kubectl delete -f &lt;file.yml&gt;             # Delete resource(s) from YAML
+kubectl rollout status deployment/&lt;name&gt; # Watch rollout progress
+kubectl rollout history deployment/&lt;name&gt; # Show deployment revision history
+kubectl rollout undo deployment/&lt;name&gt;   # Rollback to previous version
+kubectl scale deployment &lt;name&gt; --replicas=3 # Scale up/down pods
+kubectl set image deployment/&lt;name&gt; &lt;container&gt;=&lt;image&gt;:&lt;tag&gt; # Update image
+kubectl get rs                           # Show ReplicaSets</code></pre>
+
+  <h2>Services</h2>
+  <pre><code>kubectl get svc                          # List all services
+kubectl describe svc &lt;name&gt;              # Show details of a service
+kubectl expose deployment &lt;name&gt; --port=80 --target-port=8080 --type=ClusterIP # Create service
+kubectl get endpoints                    # Show service endpoint (pod IPs)
+kubectl delete svc &lt;name&gt;                # Delete a service</code></pre>
+
+  <h2>Ingress</h2>
+  <pre><code>kubectl get ingress                      # List all ingress resources
+kubectl describe ingress &lt;name&gt;          # Show ingress routing details
+kubectl delete ingress &lt;name&gt;            # Delete ingress
+kubectl get pods -n ingress-nginx        # Check ingress controller status
+kubectl logs -n ingress-nginx &lt;pod_name&gt; # View ingress logs
+minikube tunnel                          # Expose ingress on 127.0.0.1 (local)</code></pre>
+
+  <h2>ConfigMaps & secrets</h2>
+  <pre><code>kubectl get configmap                    # List config maps
+kubectl describe configmap &lt;name&gt;        # View details
+kubectl create configmap my-config --from-literal=key=value  # Create simple configmap
+kubectl create configmap app-config --from-file=config.yml   # From file
+kubectl delete configmap &lt;name&gt;          # Delete configmap
+kubectl get secrets                      # List secrets
+kubectl describe secret &lt;name&gt;           # Show details (values are base64)
+kubectl create secret generic my-secret --from-literal=USER=admin --from-literal=PASS=1234
+kubectl delete secret &lt;name&gt;             # Delete secret</code></pre>
+
+  <h2>Nodes & cluster</h2>
+  <pre><code>kubectl get nodes                        # List cluster nodes
+kubectl describe node &lt;name&gt;             # Show detailed node info
+kubectl cordon &lt;node&gt;                    # Mark node as unschedulable
+kubectl drain &lt;node&gt;                     # Evict pods safely from node
+kubectl uncordon &lt;node&gt;                  # Make node schedulable again</code></pre>
+
+  <h2>Storage</h2>
+  <pre><code>kubectl get pv                           # List persistent volumes
+kubectl get pvc                          # List persistent volume claims
+kubectl describe pv &lt;name&gt;               # Details of persistent volume
+kubectl describe pvc &lt;name&gt;              # Details of PVC
+kubectl delete pvc &lt;name&gt;                # Delete PVC
+kubectl apply -f mysql-pv.yml            # Apply your storage config</code></pre>
+
+  <h2>Logs, events & debugging</h2>
+  <pre><code>kubectl logs &lt;pod_name&gt;                  # Get pod logs
+kubectl logs -f &lt;pod_name&gt;               # Follow logs
+kubectl describe pod &lt;pod_name&gt;          # View pod events & issues
+kubectl get events --sort-by=.metadata.creationTimestamp # Recent cluster events
+kubectl top pods                         # CPU/memory usage of pods
+kubectl top nodes                        # CPU/memory usage of nodes
+kubectl exec -it &lt;pod_name&gt; -- /bin/sh   # Exec shell in busybox/alpine pod
+kubectl delete pod &lt;pod_name&gt; --force --grace-period=0  # Force delete stuck pod</code></pre>
+
+  <h2>Namespaces & contexts</h2>
+  <pre><code>kubectl config set-context --current --namespace=microservices  # Switch default namespace
+kubectl get pods -n microservices                                # Use specific namespace
+kubectl get all -A                                               # Everything, all namespaces</code></pre>
+
+  <h2>YAML exports</h2>
+  <pre><code>kubectl get pod &lt;name&gt; -o yaml           # Export full YAML of a pod
+kubectl get deployment &lt;name&gt; -o yaml    # Export deployment YAML
+kubectl get svc &lt;name&gt; -o yaml           # Export service YAML</code></pre>
+
+  <h2>Delete & cleanup</h2>
+  <pre><code>kubectl delete pod &lt;name&gt;                # Delete pod
+kubectl delete deployment &lt;name&gt;         # Delete deployment
+kubectl delete svc &lt;name&gt;                # Delete service
+kubectl delete ingress &lt;name&gt;            # Delete ingress
+kubectl delete all --all                 # Delete EVERYTHING in current namespace
+kubectl delete -f k8s/                   # Delete all your project resources</code></pre>
+
+  <h2>Quick monitoring shortcuts</h2>
+  <pre><code>watch kubectl get pods                   # Watch pods status live
+kubectl get pods -w                      # Watch for changes in pods
+kubectl get svc,pods,deployments         # Combined quick view
+kubectl get events --sort-by='.lastTimestamp' # Watch live events</code></pre>
+
+  <h2>Daily dev workflow</h2>
+  <pre><code>kubectl apply -f k8s/namespace.yml       # Create namespace
+kubectl apply -f k8s/                    # Deploy all microservices
+kubectl get pods -n microservices        # Check pods
+kubectl logs -f &lt;pod_name&gt; -n microservices  # View live app logs
+kubectl get ingress -n microservices     # Verify ingress rules
+minikube tunnel                          # Enable Ingress routing (keep running)
+kubectl delete -f k8s/                   # Tear down everything</code></pre>
+
+  <hr>
+
+  <h2>From My Own Work (Docker &amp; Kubernetes)</h2>
+
+  <div class="story-block">
+    <h3>1. A multi-instance failure that was really an orchestration/routing problem</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> Our real time messaging service had intermittent connection failures under multi-instance load, root-caused to sticky session cookies not surviving a hop through our content delivery layer.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Fix a problem that was fundamentally about how requests get routed across multiple running instances, not a single-instance bug.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I proposed migrating to a managed relay so no client needed to stay pinned to one instance, since sticky sessions only reduce the odds of hitting the wrong instance, they don't remove the requirement for affinity in the first place.</div>
+    <div class="star-row"><span class="star-label">Result:</span> This is the same class of problem Kubernetes Services and load balancing are designed to solve architecturally, treating pods as interchangeable rather than requiring client affinity to a specific instance.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>2. Why a config flag couldn't rely on the container just not calling a dependency</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> A cache feature's flag only gated behavior, not bean creation, so the DataSource was still built eagerly on container startup and could crash-loop the whole application on a bad connection string.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Make the flag genuinely remove the dependency so a bad config value couldn't take down the container.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I used @ConditionalOnProperty so the bean is only created when the flag is true, which matters specifically in a containerized deployment where a failed startup means a failed readiness probe and the orchestrator repeatedly restarting a container that will never come up healthy.</div>
+    <div class="star-row"><span class="star-label">Result:</span> It reinforced thinking about failure of infrastructure a container depends on, since a crash loop from a bad optional dependency looks identical to a real outage from the orchestrator's point of view.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>3. Externalizing configuration instead of baking it into the image</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> Services needed different configuration (connection strings, feature flags, storage account names) across dev, UAT, and prod, and one specific bug came from a storage account name being wrong for the environment it ran in.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Make configuration environment-specific without building a separate image per environment.</div>
+    <div class="star-row"><span class="star-label">Action:</span> Configuration was externalized via Spring profiles and environment variables rather than hardcoded, the same pattern Kubernetes ConfigMaps and Secrets exist to support, one image, config injected at deploy time per environment.</div>
+    <div class="star-row"><span class="star-label">Result:</span> The actual bug still came from a wrong config value, which reinforced that externalizing config solves portability, it doesn't remove the need to get the value itself right per environment.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>4. Designing a service to be safely restarted or scaled without losing state</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> Presence tracking initially lived in one application instance's memory, which gave inconsistent results once multiple instances were running behind a load balancer.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Make the service's behavior correct regardless of which instance, or how many instances, handled a given request.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I moved presence into a shared Redis-backed service instead of per-instance memory, so any instance reads the same source of truth, which is exactly the statelessness assumption Kubernetes deployments and horizontal scaling depend on.</div>
+    <div class="star-row"><span class="star-label">Result:</span> A pod being killed, restarted, or scaled out should never change correctness, and this fix was what actually made that true for presence data.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>5. Docker for consistent local development and CI builds</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> Spring Boot services needed to build and run identically across a developer's machine, CI, and deployment targets, and integration tests needed a real database rather than an approximation.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Remove "works on my machine" as a category of problem for both running the service and testing it.</div>
+    <div class="star-row"><span class="star-label">Action:</span> Services were packaged as Docker images built from the same Dockerfile used in CI, and integration tests used Testcontainers to spin up a real SQL Server instance in a container rather than relying on an in-memory substitute like H2.</div>
+    <div class="star-row"><span class="star-label">Result:</span> The same containerization that makes deployment portable also made testing more honest, since the database in the test container behaved the same as the one in production.</div>
+  </div>
+
+</div>

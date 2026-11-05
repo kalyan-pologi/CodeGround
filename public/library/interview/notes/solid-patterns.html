@@ -1,0 +1,166 @@
+<div class="section-header">
+  <div class="tag">Design</div>
+  <h1>🧩 SOLID Principles & Design Patterns</h1>
+  <p>SOLID principles and design patterns used in real projects.</p>
+</div>
+
+<div class="note-body">
+  <h2>SOLID Principles</h2>
+  <p>Five principles for writing maintainable, extensible object oriented code. They come up
+    constantly in interviews because they are the vocabulary for explaining why a piece of code
+    is well designed or badly designed.</p>
+
+  <figure class="note-figure">
+    <img src="assets/img/solid-principles-diagram.png" alt="SOLID principles overview diagram">
+    <figcaption>SOLID principles overview</figcaption>
+  </figure>
+
+  <h3>Single Responsibility Principle (SRP)</h3>
+  <p>A class should have only one reason to change. In practice this means a service class does
+    one job, for example a <code>RiskScoringService</code> should score risk, not also send
+    notifications and not also handle persistence. When a class starts doing three unrelated
+    things, split it.</p>
+
+  <h3>Open/Closed Principle (OCP)</h3>
+  <p>A class should be open for extension but closed for modification. Instead of adding more
+    if-else branches to an existing method every time a new case shows up, you add a new
+    implementation of an interface. This is usually paired with the Strategy pattern, since new
+    strategies can be added without touching existing strategy classes.</p>
+
+  <h3>Liskov Substitution Principle (LSP)</h3>
+  <p>A subclass should be usable anywhere its parent class is expected, without breaking
+    behavior. If a subclass overrides a method and throws an exception the parent never threw,
+    or returns something that violates the parent's contract, that is an LSP violation, and it
+    usually means the inheritance relationship was wrong to begin with.</p>
+
+  <h3>Interface Segregation Principle (ISP)</h3>
+  <p>Clients should not be forced to depend on methods they do not use. Instead of one large
+    interface with ten methods where most implementers only need three, split it into smaller,
+    focused interfaces. This keeps implementing classes clean and avoids empty or
+    throw-not-supported method bodies.</p>
+
+  <h3>Dependency Inversion Principle (DIP)</h3>
+  <p>High level modules should depend on abstractions, not concrete implementations. A service
+    class should depend on a <code>RiskScoringStrategy</code> interface, not on a specific
+    concrete scoring class. Spring's dependency injection is basically DIP built into the
+    framework, since beans are wired by interface type and the concrete implementation can be
+    swapped without touching the consumer.</p>
+
+  <h2>Design Patterns Used in Real Projects</h2>
+  <p>Below are the patterns that come up the most often when explaining real project decisions,
+    with the actual scenario they solved.</p>
+
+  <h3>Strategy Pattern</h3>
+  <p>Used to select an algorithm at runtime based on some condition, instead of branching with
+    if-else. On one project I had risk scoring logic where the scoring algorithm depended on the
+    applicant's credit tier. I defined a <code>RiskScoringStrategy</code> interface with three
+    implementations, one per tier, each a Spring <code>@Component</code> so it gets picked up by
+    component scanning automatically. This satisfies both OCP (new tiers just mean a new
+    implementation class) and DIP (the service depends on the interface).</p>
+
+  <h3>Factory Pattern</h3>
+  <p>Used to centralize object creation logic so callers do not need to know which concrete class
+    to instantiate. Paired with the strategy example above, a factory class reads the applicant's
+    credit profile, classifies it into a risk category, and returns the matching strategy
+    implementation. This kept the classification logic in exactly one place instead of scattered
+    across every caller.</p>
+
+  <h3>Singleton Pattern</h3>
+  <p>Ensures only one instance of a class exists. Spring beans are singleton scoped by default,
+    so this pattern is mostly handled by the framework rather than written by hand. The one time
+    it matters explicitly is remembering that a singleton bean must be stateless, meaning no
+    mutable instance fields that hold per-request data, since the same instance is shared across
+    every concurrent request. Request-specific data goes into method parameters or local
+    variables, never instance fields.</p>
+
+  <h3>Builder Pattern</h3>
+  <p>Used for constructing objects that have many optional fields, so you avoid a constructor
+    with eight parameters where it is easy to mix up the order. Common on DTOs and request
+    objects in a Spring Boot service, especially with Lombok's <code>@Builder</code> generating
+    the boilerplate.</p>
+
+  <h3>Observer Pattern</h3>
+  <p>Defines a one-to-many dependency so that when one object changes state, dependents get
+    notified. Spring's <code>ApplicationEventPublisher</code> and <code>@EventListener</code> are
+    a built-in implementation of this. I used it to decouple a core write operation from
+    secondary side effects, for example publishing an event after a status update instead of
+    calling the notification logic directly inline, so the core transaction does not need to know
+    who is listening.</p>
+
+  <h2>Concurrency Related Patterns</h2>
+  <p>These come up more in system design and multithreading discussions than in day to day Spring
+    Boot work, but they are worth knowing by name since they explain the reasoning behind
+    higher-level abstractions like <code>ExecutorService</code> and
+    <code>CompletableFuture</code>.</p>
+
+  <ul>
+    <li><b>Producer-Consumer</b>, producer threads generate data, consumer threads process it, a
+      shared queue decouples the two. Basis for message queue based processing.</li>
+    <li><b>Thread Pool</b>, reuses a fixed set of worker threads instead of creating and
+      destroying threads per task, avoiding thread creation overhead. This is what
+      <code>ExecutorService</code> gives you.</li>
+    <li><b>Futures and Promises</b>, represents the result of an async operation that is not
+      available yet. Java's <code>Future</code> and <code>CompletableFuture</code> are direct
+      implementations.</li>
+    <li><b>Monitor Object</b>, synchronizes access to shared state so only one thread executes a
+      critical section at a time, preventing race conditions. This is essentially what
+      <code>synchronized</code> blocks give you.</li>
+    <li><b>Read-Write Lock</b>, allows many concurrent readers but only one writer at a time,
+      useful when reads vastly outnumber writes on a shared resource.</li>
+  </ul>
+
+  <figure class="note-figure">
+    <img src="assets/img/essential-design-patterns-overview-diagram.png" alt="Essential design patterns overview diagram">
+    <figcaption>Essential design patterns overview</figcaption>
+  </figure>
+
+  <figure class="note-figure">
+    <img src="assets/img/design-patterns-junior-middle-senior-cheatsheet.png" alt="Design patterns cheat sheet by experience level">
+    <figcaption>Design patterns cheat sheet</figcaption>
+  </figure>
+
+  <hr>
+
+  <h2>From My Own Work</h2>
+
+  <div class="story-block">
+    <h3>1. SRP violation risk: keeping paid and free write paths in separate modules</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> A paid appraisal history write path and a free cache write path were conceptually related but needed to never share behavior, since a bug crossing them could double-charge someone or corrupt an audit trail.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Prevent a shared service class from slowly accumulating both responsibilities as features were added over time.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I kept the two write paths in two entirely separate Spring Boot starter modules, so each module's single responsibility was reinforced by physical separation, not just by disciplined class design within one module.</div>
+    <div class="star-row"><span class="star-label">Result:</span> The two systems have coexisted without leaking into each other, since crossing the boundary required a deliberate new dependency, not a convenient shortcut inside a shared class.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>2. OCP and Strategy: reconciling two valuation engines without branching logic</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> Two valuation engines produced structurally different appraisal data, one with dollar adjustments, one with percentage adjustments, and both had to write into one shared schema.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Support both without an ever-growing if-else branching on which engine produced the data.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I wrote a normalizer that converts commercial's percentage adjustments to dollars at write time, so both engines write into the same schema through one consistent interface, rather than the schema layer needing to know engine-specific branching logic.</div>
+    <div class="star-row"><span class="star-label">Result:</span> Any future third engine only needs its own normalizer implementation, the shared schema and its consumers don't need to change, which is the practical benefit OCP is describing.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>3. DIP: depending on a shared transport interface instead of 20 call sites</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> A report pipeline made around 20 calls to a third party API, and I needed to add caching without touching each of the 20 call sites individually.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Add caching in a way that didn't require every caller to know it existed.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I found that all 20 calls funneled through a single shared transport interface, and added caching as a decorator wrapping that one interface, so every caller kept depending on the abstraction, not on a concrete client they'd now need to know was cached.</div>
+    <div class="star-row"><span class="star-label">Result:</span> Repeat lookups for fresh data dropped to zero external calls, with zero changes to any of the 20 existing call sites, since they only ever depended on the interface.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>4. LSP-adjacent judgment call: reusing an appraisal schema for a poorly fitting engine</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> Land appraisals had no ARV, no beds or baths, and no adjustment breakdown, but needed to live in the same appraisal tables as residential and commercial.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Decide whether forcing land into the existing shape violated the implicit contract other consumers expected from that schema.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I mapped only the fields that genuinely applied to land, left the rest explicitly null, and documented why, following the same pattern the commercial engine already used for its own gaps, rather than inventing a new convention.</div>
+    <div class="star-row"><span class="star-label">Result:</span> Land support shipped without a schema fork, and any consumer of the shared schema could rely on the same contract, some fields being null for a given property type, being documented and consistent rather than a surprise.</div>
+  </div>
+
+  <div class="story-block">
+    <h3>5. ISP in practice: a normalizer interface instead of one giant appraisal writer</h3>
+    <div class="star-row"><span class="star-label">Situation:</span> A single write path handling residential, commercial, and land appraisal data risked becoming one large class with conditional logic for fields that only applied to some property types.</div>
+    <div class="star-row"><span class="star-label">Task:</span> Avoid forcing each engine-specific writer to depend on methods or fields it would never use.</div>
+    <div class="star-row"><span class="star-label">Action:</span> I kept the normalization logic per engine focused only on the fields that engine actually produces, rather than one interface with every possible field across all three property types that most implementations would leave unused.</div>
+    <div class="star-row"><span class="star-label">Result:</span> Each engine's normalizer stayed simple and focused, and adding a future property type doesn't require touching the other two engines' code at all.</div>
+  </div>
+
+</div>

@@ -1,0 +1,310 @@
+<div class="section-header">
+        <div class="tag">Section 1</div>
+        <h1>📐 Back of Envelope Estimation</h1>
+        <p>Core numbers every SD interviewer expects you to know. Memorize the order of magnitude, not exact values.</p>
+      </div>
+
+      <div class="cs-section-label">🔢 Core Numbers — Memorize First</div>
+      <div style="margin-bottom:16px;">
+        <img
+          src="https://camo.githubusercontent.com/7b158d2ef5659efc05042f0d323530bfc3a82f1dc2dbf5401c2cd55f315036fb/687474703a2f2f692e696d6775722e636f6d2f6b307431652e706e67"
+          alt="Latency Numbers Every Programmer Should Know"
+          style="width:100%;border-radius:10px;border:1px solid rgba(255,255,255,0.07);">
+      </div>
+      <div class="grid3">
+        <div class="card c4">
+          <h3>Latency Numbers (Jeff Dean)</h3>
+          <div class="row"><span class="k">L1 cache ref</span><span class="v">0.5 ns</span></div>
+          <div class="row"><span class="k">Branch mispredict</span><span class="v">5 ns</span></div>
+          <div class="row"><span class="k">L2 cache ref</span><span class="v">7 ns</span></div>
+          <div class="row"><span class="k">Mutex lock/unlock</span><span class="v">25 ns</span></div>
+          <div class="row"><span class="k">Main memory ref</span><span class="v">100 ns</span></div>
+          <div class="row"><span class="k">Compress 1K (Zippy)</span><span class="v">10 µs</span></div>
+          <div class="row"><span class="k">Send 2K over 1Gbps</span><span class="v">20 µs</span></div>
+          <div class="row"><span class="k">SSD random read</span><span class="v">~16 µs</span></div>
+          <div class="row"><span class="k">Read 1MB from memory</span><span class="v">250 µs</span></div>
+          <div class="row"><span class="k">Datacenter round trip</span><span class="v">500 µs</span></div>
+          <div class="row"><span class="k">Disk seek</span><span class="v">2–10 ms</span></div>
+          <div class="row"><span class="k">Read 1MB from network</span><span class="v">10 ms</span></div>
+          <div class="row"><span class="k">Read 1MB from disk</span><span class="v">20 ms</span></div>
+          <div class="row"><span class="k">CA → Netherlands → CA</span><span class="v">150 ms</span></div>
+          <div class="b"><b>&lt;10 ms</b> → real-time (gaming, HFT)</div>
+          <div class="b"><b>&lt;100 ms</b> → snappy (web, chat apps)</div>
+          <div class="b"><b>~1 sec</b> → feels slow or broken</div>
+        </div>
+        <div class="card c3">
+          <h3>Traffic / QPS Math</h3>
+          <div class="row"><span class="k">1 req/sec</span><span class="v">≈2.6M/month</span></div>
+          <div class="row"><span class="k">1M users → DAU</span><span class="v">~100K</span></div>
+          <div class="row"><span class="k">Peak concurrent users</span><span class="v">5% of DAU</span></div>
+          <div class="row"><span class="k">Peak traffic</span><span class="v">2–10× avg</span></div>
+          <div class="sep"></div>
+          <div class="note"><b>QPS</b> = DAU × actions ÷ 86,400</div>
+          <div class="note"><b>Peak QPS</b> = QPS × 2 (safe default)</div>
+          <div class="note"><b>Bandwidth</b> = QPS × payload size</div>
+           <div class="note"><b>Storage/day</b> = DAU × actions × payload</div>
+          <div class="note"><b>Total storage</b> = storage/day × retention days</div>
+          <div class="note"><b>Media storage</b> = DAU × actions × % with media × media size</div>
+          <div class="note"><b>1000 QPS × 1KB</b> ≈ 1 MB/s</div>
+          <div class="note"><b>1 Gbps</b> = ~125 MB/s (1 byte = 8 bits)</div>
+          <div class="note"><b>Read ops/s</b> = QPS × read %</div>
+          <div class="note"><b>Write ops/s</b> = QPS × write %</div>
+          <div class="sep"></div>
+          <div class="sl">Twitter example</div>
+          <div class="row"><span class="k">DAU (300M × 50%)</span><span class="v">150M</span></div>
+          <div class="row"><span class="k">Tweets QPS</span><span class="v">~3,500</span></div>
+          <div class="row"><span class="k">Peak QPS (2×)</span><span class="v">~7,000</span></div>
+          <div class="row"><span class="k">Media/day (10% × 1MB)</span><span class="v">30 TB</span></div>
+          <div class="row"><span class="k">5yr storage</span><span class="v">~55 PB</span></div>
+        </div>
+        <div class="card c6">
+          <h3>Availability / SLA Nines</h3>
+          <div class="row"><span class="k">99% (2 nines)</span><span class="v">3.65 days/yr</span></div>
+          <div class="row"><span class="k">99.9% (3 nines)</span><span class="v">8.77 hrs/yr</span></div>
+          <div class="row"><span class="k">99.99% (4 nines)</span><span class="v">52 min/yr</span></div>
+          <div class="row"><span class="k">99.999% (5 nines)</span><span class="v">5.26 min/yr</span></div>
+          <div class="row"><span class="k">99.9999% (6 nines)</span><span class="v">31.5 sec/yr</span></div>
+          <div class="sep"></div>
+          <div class="row"><span class="k">Downtime/day @ 99%</span><span class="v">14.4 min</span></div>
+          <div class="row"><span class="k">Downtime/day @ 99.9%</span><span class="v">1.44 min</span></div>
+          <div class="row"><span class="k">Downtime/day @ 99.99%</span><span class="v">8.6 sec</span></div>
+          <div class="sep"></div>
+          <div class="b">AWS / GCP / Azure SLA ≥ <b>99.9%</b></div>
+          <div class="b">More nines = more cost + complexity</div>
+          <div class="sep"></div>
+          <div class="sl">Modern Network (2025)</div>
+          <div class="row"><span class="k">Within same AZ</span><span class="v">&lt;1 ms</span></div>
+          <div class="row"><span class="k">Cross AZ same region</span><span class="v">1–2 ms</span></div>
+          <div class="row"><span class="k">Cross region</span><span class="v">50–150 ms</span></div>
+        </div>
+      </div>
+
+      <div class="cs-section-label">📦 Data + Component Limits</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Power of 2 + Data Types</h3>
+          <div class="row"><span class="k">2^10 = 1 Thousand</span><span class="v">1 KB</span></div>
+          <div class="row"><span class="k">2^20 = 1 Million</span><span class="v">1 MB</span></div>
+          <div class="row"><span class="k">2^30 = 1 Billion</span><span class="v">1 GB</span></div>
+          <div class="row"><span class="k">2^40 = 1 Trillion</span><span class="v">1 TB</span></div>
+          <div class="row"><span class="k">2^50 = 1 Quadrillion</span><span class="v">1 PB</span></div>
+          <div class="sep"></div>
+          <div class="row"><span class="k">1 ASCII char</span><span class="v">1 B</span></div>
+          <div class="row"><span class="k">1 Unicode char</span><span class="v">2 B</span></div>
+          <div class="row"><span class="k">Int32 / Float</span><span class="v">4 B</span></div>
+          <div class="row"><span class="k">Int64 / Long / Double</span><span class="v">8 B</span></div>
+          <div class="row"><span class="k">Boolean</span><span class="v">4 B</span></div>
+          <div class="sep"></div>
+          <div class="row"><span class="k">1 text / log entry</span><span class="v">~1 KB</span></div>
+          <div class="row"><span class="k">1 thumbnail</span><span class="v">~50 KB</span></div>
+          <div class="row"><span class="k">1 image</span><span class="v">100 KB–2 MB</span></div>
+          <div class="row"><span class="k">1 video HD/hr</span><span class="v">100 MB–5 GB</span></div>
+          <div class="row"><span class="k">1M × 1KB DB rows</span><span class="v">~1 GB</span></div>
+        </div>
+        <div class="card c7">
+          <h3>Component Throughput</h3>
+          <div class="row"><span class="k">1 CPU core</span><span class="v">~1K req/s</span></div>
+          <div class="row"><span class="k">Redis QPS/node</span><span class="v">~100K</span></div>
+          <div class="row"><span class="k">Redis cache hit</span><span class="v">~1 ms</span></div>
+          <div class="row"><span class="k">Redis per instance</span><span class="v">up to 100 GB</span></div>
+          <div class="sep"></div>
+          <div class="row"><span class="k">Cache hit rate target</span><span class="v">80–90%</span></div>
+          <div class="row"><span class="k">Top 20% data</span><span class="v">80% cache benefit</span></div>
+          <div class="row"><span class="k">Disk annual failure</span><span class="v">1–2%</span></div>
+          <div class="sep"></div>
+          <div class="row"><span class="k">MySQL/Postgres writes</span><span class="v">2K–5K/s</span></div>
+          <div class="row"><span class="k">DB query SSD</span><span class="v">1–5 ms</span></div>
+          <div class="row"><span class="k">DB query (cache miss)</span><span class="v">20–50 ms</span></div>
+          <div class="sep"></div>
+          <div class="row"><span class="k">Kafka throughput</span><span class="v">~100 MB/s</span></div>
+          <div class="row"><span class="k">Kafka msg size limit</span><span class="v">&lt;1 MB</span></div>
+          <div class="sep"></div>
+          <div class="sl">Modern server (AWS 2025)</div>
+          <div class="row"><span class="k">M6i.32xlarge RAM</span><span class="v">512 GB</span></div>
+          <div class="row"><span class="k">X1e.32xlarge RAM</span><span class="v">4 TB</span></div>
+          <div class="row"><span class="k">Datacenter NIC</span><span class="v">25–100 Gbps</span></div>
+        </div>
+        <div class="card c9">
+          <h3>DB Selection Guide</h3>
+          <div class="b"><b>ACID / structured</b> → MySQL, PostgreSQL</div>
+          <div class="b"><b>Flexible / unstructured</b> → MongoDB</div>
+          <div class="b"><b>Ever-growing, finite queries</b> → Cassandra</div>
+          <div class="b"><b>Caching / sessions</b> → Redis</div>
+          <div class="b"><b>Blob (image / video)</b> → S3 + CDN</div>
+          <div class="b"><b>Full text / fuzzy search</b> → Elasticsearch</div>
+          <div class="b"><b>Time series</b> → InfluxDB / OpenTSDB</div>
+          <div class="b"><b>Big data / warehouse</b> → Hadoop, BigQuery</div>
+          <div class="b"><b>Vector / AI embeddings</b> → Pinecone, pgvector</div>
+          <div class="b"><b>Graph data</b> → Neo4j</div>
+          <div class="sep"></div>
+          <div class="note"><b>Storage:</b> size × items/user × users × retention</div>
+          <div class="note"><b>Servers:</b> total QPS ÷ QPS per server</div>
+        </div>
+      </div>
+      <div class="cs-section-label">🎯 Senior-Level Numbers <span class="new">NEW</span></div>
+      <div class="grid3">
+        <div class="card c13">
+          <h3>Server + Connection Sizing</h3>
+          <div class="sl">Server capacity</div>
+          <div class="row"><span class="k">Threads per CPU core</span><span class="v">2–4</span></div>
+          <div class="row"><span class="k">Lightweight req/core/s</span><span class="v">~1K</span></div>
+          <div class="row"><span class="k">Heavy req/core/s (DB)</span><span class="v">~100–200</span></div>
+          <div class="row"><span class="k">Servers needed</span><span class="v">QPS ÷ req/server</span></div>
+          <div class="sep"></div>
+          <div class="sl">Connection limits</div>
+          <div class="row"><span class="k">WebSocket conns/server</span><span class="v">10K–100K</span></div>
+          <div class="row"><span class="k">DB conns per app server</span><span class="v">10–100</span></div>
+          <div class="row"><span class="k">Conn pool formula</span><span class="v">(cores×2) + spindles</span></div>
+          <div class="sep"></div>
+          <div class="sl">Memory sizing</div>
+          <div class="row"><span class="k">Cache RAM needed</span><span class="v">hot data × 1.2×</span></div>
+          <div class="row"><span class="k">Redis max per instance</span><span class="v">~100 GB</span></div>
+          <div class="row"><span class="k">JVM heap (app server)</span><span class="v">4–32 GB</span></div>
+        </div>
+        <div class="card c14">
+          <h3>Replication + CDN + Protocol</h3>
+          <div class="sl">Replication lag</div>
+          <div class="row"><span class="k">Same region replica</span><span class="v">~10 ms</span></div>
+          <div class="row"><span class="k">Cross region replica</span><span class="v">50–150 ms</span></div>
+          <div class="row"><span class="k">Sync replication cost</span><span class="v">+replica latency</span></div>
+          <div class="sep"></div>
+          <div class="sl">CDN impact</div>
+          <div class="row"><span class="k">90% CDN hit rate</span><span class="v">10× less origin</span></div>
+          <div class="row"><span class="k">80% CDN hit rate</span><span class="v">5× less origin</span></div>
+          <div class="row"><span class="k">CDN edge latency</span><span class="v">&lt;10 ms to user</span></div>
+          <div class="sep"></div>
+          <div class="sl">Protocol overhead</div>
+          <div class="row"><span class="k">gRPC vs REST payload</span><span class="v">~7× smaller</span></div>
+          <div class="row"><span class="k">Protobuf vs JSON</span><span class="v">3–10× smaller</span></div>
+          <div class="row"><span class="k">WebSocket overhead</span><span class="v">~2B per frame</span></div>
+        </div>
+        <div class="card c15">
+          <h3>DB Scaling + Storage Limits</h3>
+          <div class="sl">When to shard</div>
+          <div class="row"><span class="k">Single Postgres comfort</span><span class="v">few TB</span></div>
+          <div class="row"><span class="k">Shard when writes</span><span class="v">&gt;5K/s sustained</span></div>
+          <div class="sep"></div>
+          <div class="sl">Index cost</div>
+          <div class="row"><span class="k">Index write overhead</span><span class="v">10–30% slower</span></div>
+          <div class="row"><span class="k">Index read speedup</span><span class="v">10–1000× faster</span></div>
+          <div class="row"><span class="k">Max indexes per table</span><span class="v">keep &lt;5–6</span></div>
+          <div class="sep"></div>
+          <div class="sl">Object storage</div>
+          <div class="row"><span class="k">S3 object size limit</span><span class="v">5 TB</span></div>
+          <div class="row"><span class="k">S3 multipart upload</span><span class="v">&gt;100 MB</span></div>
+          <div class="sep"></div>
+          <div class="sl">Queue sizing</div>
+          <div class="row"><span class="k">Kafka partition limit</span><span class="v">~1K/broker</span></div>
+          <div class="row"><span class="k">Consumer lag alert</span><span class="v">&gt;10K msgs</span></div>
+        </div>
+      </div>
+      <div class="cs-section-label">🚦 Scale Triggers — When to Add Capacity</div>
+      <div class="grid3">
+        <div class="card c2">
+          <h3>Caching + Databases</h3>
+          <div class="sl">Cache — scale/shard when</div>
+          <div class="row"><span class="k">Hit rate</span><span class="v">&lt;80%</span></div>
+          <div class="row"><span class="k">Read latency</span><span class="v">&gt;1 ms</span></div>
+          <div class="row"><span class="k">Memory used</span><span class="v">&gt;80% of instance</span></div>
+          <div class="row"><span class="k">Eviction rate climbing</span><span class="v">churn/thrash</span></div>
+          <div class="sep"></div>
+          <div class="sl">Database — scale/shard when</div>
+          <div class="row"><span class="k">Write throughput</span><span class="v">&gt;5–10K TPS</span></div>
+          <div class="row"><span class="k">Uncached read latency</span><span class="v">&gt;5 ms</span></div>
+          <div class="row"><span class="k">Replica lag</span><span class="v">growing</span></div>
+          <div class="row"><span class="k">Users far from region</span><span class="v">go multi-region</span></div>
+        </div>
+        <div class="card c8">
+          <h3>App Servers + Queues</h3>
+          <div class="sl">App tier — add instances when</div>
+          <div class="row"><span class="k">CPU utilization</span><span class="v">&gt;70%</span></div>
+          <div class="row"><span class="k">Memory utilization</span><span class="v">&gt;80%</span></div>
+          <div class="row"><span class="k">p99 latency</span><span class="v">&gt; SLA target</span></div>
+          <div class="row"><span class="k">Conns per instance</span><span class="v">near 100K</span></div>
+          <div class="sep"></div>
+          <div class="sl">Queue — add brokers/partitions when</div>
+          <div class="row"><span class="k">Throughput</span><span class="v">&gt;80% of broker max</span></div>
+          <div class="row"><span class="k">Consumer lag</span><span class="v">growing, not draining</span></div>
+          <div class="row"><span class="k">Partitions/cluster</span><span class="v">ceiling ~200K</span></div>
+        </div>
+        <div class="card c10">
+          <h3>Reading the Triggers</h3>
+          <div class="sl">Rules of thumb</div>
+          <div class="row"><span class="k">Scale at</span><span class="v">70–80% of max</span></div>
+          <div class="row"><span class="k">Never scale at</span><span class="v">100% (no headroom)</span></div>
+          <div class="row"><span class="k">Trigger on</span><span class="v">sustained, not spikes</span></div>
+          <div class="sep"></div>
+          <div class="sl">Order to reach for</div>
+          <div class="row"><span class="k">1. Cache harder</span><span class="v">cheapest win</span></div>
+          <div class="row"><span class="k">2. Scale out (stateless)</span><span class="v">app tier</span></div>
+          <div class="row"><span class="k">3. Replicas</span><span class="v">read-heavy</span></div>
+          <div class="row"><span class="k">4. Shard</span><span class="v">write-heavy, last</span></div>
+          <div class="sep"></div>
+          <div class="sl">Interview note</div>
+          <div class="row"><span class="k">Say the trigger</span><span class="v">not just the fix</span></div>
+        </div>
+      </div>
+      <div class="cs-section-label">🆚 Classic vs Modern Numbers (2025)</div>
+      <div class="grid3" style="margin-bottom:16px;">
+
+        <div class="card c5">
+          <h3>Storage & Disk Evolution</h3>
+          <div class="sl">Disk Seek</div>
+          <div class="row"><span class="k">Classic (HDD)</span><span class="v">10 ms</span></div>
+          <div class="row"><span class="k">Modern (NVMe)</span><span class="v">~100 µs</span></div>
+          <div class="sep"></div>
+          <div class="sl">Read 1MB Sequential</div>
+          <div class="row"><span class="k">Classic (HDD)</span><span class="v">30 ms</span></div>
+          <div class="row"><span class="k">Modern (NVMe)</span><span class="v">~0.1 ms</span></div>
+          <div class="sep"></div>
+          <div class="sl">Read 1MB from SSD</div>
+          <div class="row"><span class="k">Classic (SATA SSD)</span><span class="v">1 ms</span></div>
+          <div class="row"><span class="k">Modern (NVMe SSD)</span><span class="v">~0.1 ms</span></div>
+          <div class="sep"></div>
+          <div class="note" style="color:#f87171;"><b>Why:</b> NVMe uses PCIe lanes directly — no SATA bottleneck. HDDs
+            nearly gone from prod systems.
+            NVMe changed the economics — what needed a cluster in 2010 can run on one beefy server today.</div>
+        </div>
+
+        <div class="card c7">
+          <h3>Component Throughput Evolution</h3>
+          <div class="sl">Redis QPS</div>
+          <div class="row"><span class="k">Classic</span><span class="v">~100K QPS</span></div>
+          <div class="row"><span class="k">Modern (Redis 7+)</span><span class="v">500K–1M QPS</span></div>
+          <div class="sep"></div>
+          <div class="sl">MySQL / Postgres Writes</div>
+          <div class="row"><span class="k">Classic (HDD)</span><span class="v">2K–5K/s</span></div>
+          <div class="row"><span class="k">Modern (NVMe)</span><span class="v">10K–50K/s</span></div>
+          <div class="sep"></div>
+          <div class="sl">Datacenter Round Trip</div>
+          <div class="row"><span class="k">Classic</span><span class="v">500 µs</span></div>
+          <div class="row"><span class="k">Modern same AZ</span><span class="v">&lt;100 µs</span></div>
+          <div class="sep"></div>
+          <div class="sl">1 CPU Core</div>
+          <div class="row"><span class="k">Classic</span><span class="v">~1K req/s</span></div>
+          <div class="row"><span class="k">Modern (async)</span><span class="v">10K–100K req/s</span></div>
+          <div class="sep"></div>
+          <div class="note" style="color:#f87171;"><b>Why:</b> Async frameworks (Node, Go, FastAPI), better CPUs, NVMe —
+            all pushed limits up dramatically.</div>
+        </div>
+
+        <div class="card c13">
+          <h3>Media & Network Evolution</h3>
+          <div class="sl">Video Size per Hour (HD)</div>
+          <div class="row"><span class="k">Classic (H.264)</span><span class="v">~4 GB/hr</span></div>
+          <div class="row"><span class="k">Modern (H.265/AV1)</span><span class="v">1–2 GB/hr</span></div>
+          <div class="sep"></div>
+          <div class="sl">Network Bandwidth</div>
+          <div class="row"><span class="k">Classic datacenter</span><span class="v">1 Gbps</span></div>
+          <div class="row"><span class="k">Modern datacenter</span><span class="v">25–100 Gbps</span></div>
+          <div class="sep"></div>
+          <div class="sl">Image Size</div>
+          <div class="row"><span class="k">Classic JPEG</span><span class="v">~1 MB</span></div>
+          <div class="row"><span class="k">Modern WebP/AVIF</span><span class="v">~100–300 KB</span></div>
+          <div class="sep"></div>
+          <div class="sl">What stays the same</div>
+          <div class="b">L1/L2 cache latency — same order</div>
+          <div class="b">Memory reference — same order</div>
+          <div class="b">CA → Netherlands RTT — same ~150ms</div>
+        </div>
+      </div>

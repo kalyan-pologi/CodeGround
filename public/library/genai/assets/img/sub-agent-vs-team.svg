@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 470" font-family="'Comic Sans MS','Segoe Print',cursive" role="img" aria-label="Sub-agents report only back to the main session and are isolated from each other, while an agent team has a lead plus peers that message each other and share a task list">
+  <defs>
+    <filter id="rough">
+      <feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="9" result="n"/>
+      <feDisplacementMap in="SourceGraphic" in2="n" scale="3.5"/>
+    </filter>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6" fill="none" stroke="#2b2b2b" stroke-width="1.4"/>
+    </marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="7" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6" fill="none" stroke="#2b2b2b" stroke-width="1.4"/>
+    </marker>
+  </defs>
+
+  <style>
+    .box  { filter:url(#rough); stroke:#2b2b2b; stroke-width:2; fill:#fff; }
+    .green{ fill:#5fbf72; }
+    .red  { fill:#ec6a3c; }
+    .grey { fill:#f4f4f4; }
+    .lbl  { font-size:16px; fill:#1c1c1c; }
+    .lblw { font-size:15px; fill:#fff; font-weight:bold; }
+    .sub  { font-size:11px; fill:#555; }
+    .subw { font-size:11px; fill:#f2f2f2; }
+    .edge { stroke:#2b2b2b; stroke-width:1.8; fill:none; filter:url(#rough); marker-end:url(#arrow); }
+    .peer { stroke:#2b2b2b; stroke-width:1.8; fill:none; filter:url(#rough); marker-end:url(#arrow2); marker-start:url(#arrow2); }
+    .elbl { font-size:11px; fill:#333; }
+    text  { text-anchor:middle; }
+    .hdr  { font-size:19px; fill:#1c1c1c; font-weight:bold; }
+  </style>
+
+  <!-- divider -->
+  <line x1="380" y1="60" x2="380" y2="450" stroke="#ccc" stroke-width="1.5" stroke-dasharray="6 6"/>
+
+  <!-- ============ LEFT: SUB-AGENTS ============ -->
+  <text x="185" y="40" class="hdr">Sub-agents</text>
+  <text x="185" y="60" class="sub">isolated · report back only</text>
+
+  <rect class="box grey" x="115" y="80" width="140" height="52" rx="6"/>
+  <text x="185" y="105" class="lbl">Main session</text>
+  <text x="185" y="122" class="sub">you talk here</text>
+
+  <!-- three sub agents -->
+  <rect class="box green" x="40" y="250" width="90" height="60" rx="6"/>
+  <text x="85" y="278" class="lblw">Sub 1</text>
+  <text x="85" y="296" class="subw">own ctx</text>
+
+  <rect class="box green" x="140" y="250" width="90" height="60" rx="6"/>
+  <text x="185" y="278" class="lblw">Sub 2</text>
+  <text x="185" y="296" class="subw">own ctx</text>
+
+  <rect class="box green" x="240" y="250" width="90" height="60" rx="6"/>
+  <text x="285" y="278" class="lblw">Sub 3</text>
+  <text x="285" y="296" class="subw">own ctx</text>
+
+  <!-- spawn down + report up -->
+  <path class="edge" d="M150,132 C110,170 90,210 86,246"/>
+  <path class="edge" d="M185,132 L185,246"/>
+  <path class="edge" d="M220,132 C260,170 282,210 285,246"/>
+  <text x="120" y="200" class="elbl">spawn</text>
+
+  <path class="edge" d="M110,310 C120,360 150,370 175,372"/>
+  <path class="edge" d="M285,310 C275,360 240,370 210,372"/>
+  <rect class="box grey" x="120" y="360" width="130" height="46" rx="6"/>
+  <text x="185" y="388" class="lbl">results only ↑</text>
+  <text x="185" y="440" class="sub">✗ can't talk to each other</text>
+
+  <!-- ============ RIGHT: AGENT TEAM ============ -->
+  <text x="575" y="40" class="hdr">Agent team <tspan font-size="11" fill="#ec6a3c">(experimental)</tspan></text>
+  <text x="575" y="60" class="sub">peers message each other</text>
+
+  <rect class="box red" x="505" y="80" width="140" height="52" rx="6"/>
+  <text x="575" y="105" class="lblw">Lead</text>
+  <text x="575" y="122" class="subw">coordinates</text>
+
+  <!-- shared task list -->
+  <rect class="box grey" x="490" y="150" width="170" height="40" rx="6"/>
+  <text x="575" y="175" class="sub" font-weight="bold" fill="#222">📋 shared task list</text>
+
+  <path class="edge" d="M575,132 L575,148"/>
+
+  <!-- peers -->
+  <rect class="box green" x="455" y="250" width="90" height="60" rx="6"/>
+  <text x="500" y="284" class="lblw">Agent A</text>
+
+  <rect class="box green" x="605" y="250" width="90" height="60" rx="6"/>
+  <text x="650" y="284" class="lblw">Agent B</text>
+
+  <path class="edge" d="M540,190 C520,210 510,228 505,246"/>
+  <path class="edge" d="M610,190 C630,210 640,228 645,246"/>
+
+  <!-- peer to peer messaging -->
+  <path class="peer" d="M547,280 L603,280"/>
+  <text x="575" y="330" class="elbl">↔ direct messages</text>
+  <text x="575" y="440" class="sub">✓ collaborate in parallel</text>
+</svg>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GenAI Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Syne:wght@400;500;600;700&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/style.css?v=2">
+</head>
+<body>
+
+<!-- ═══════════════ SIDEBAR ═══════════════ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🤖</div>
+    <div class="logo-text">GenAI Notes</div>
+  </div>
+
+  <!-- GETTING STARTED -->
+  <div class="sidebar-section-label">Getting Started</div>
+  <div class="nav-item nav-item-top" data-note="home">
+    <span class="nav-dot">🏠</span> Home
+  </div>
+
+  <!-- CORE CONCEPTS -->
+  <div class="sidebar-section-label">Core Concepts</div>
+
+  <div class="nav-item nav-item-top" data-note="claude-code">
+    <span class="nav-dot">⌨️</span> Claude Code
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🧠</span> Foundations <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="llm">LLMs & How They Work</div>
+      <div class="nav-item" data-note="tokens">Tokens & Tokenization</div>
+      <div class="nav-item" data-note="context">Context Window</div>
+      <div class="nav-item" data-note="temperature">Temperature & Sampling</div>
+      <div class="nav-item" data-note="prompting">Prompt Engineering</div>
+      <div class="nav-item" data-note="sysprompt">System Prompts</div>
+      <div class="nav-item" data-note="fewshot">Few-Shot & Zero-Shot</div>
+      <div class="nav-item" data-note="cot">Chain-of-Thought (CoT)</div>
+      <div class="nav-item" data-note="hallucination">Hallucinations & Grounding</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🔢</span> Embeddings & Vector Search <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="embeddings">Embeddings</div>
+      <div class="nav-item" data-note="semanticsearch">Semantic Search</div>
+      <div class="nav-item" data-note="vectordb">Vector Databases</div>
+      <div class="nav-item" data-note="similarity">Similarity Metrics</div>
+      <div class="nav-item" data-note="chunking">Chunking Strategies</div>
+      <div class="nav-item" data-note="hybridsearch">Hybrid Search</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">📥</span> RAG <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="ragbasics">RAG Fundamentals</div>
+      <div class="nav-item" data-note="ragpipeline">RAG Pipeline Design</div>
+      <div class="nav-item" data-note="advancedrag">Naive vs Advanced RAG</div>
+      <div class="nav-item" data-note="reranking">Re-ranking</div>
+      <div class="nav-item" data-note="contexteng">Context Engineering</div>
+      <div class="nav-item" data-note="rageval">RAG Evaluation</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🤖</span> Agents & Orchestration <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="agents">AI Agents</div>
+      <div class="nav-item" data-note="react">ReAct Pattern</div>
+      <div class="nav-item" data-note="tooluse">Tool Use & Function Calling</div>
+      <div class="nav-item" data-note="mcp">Model Context Protocol (MCP)</div>
+      <div class="nav-item" data-note="memory">Memory Types</div>
+      <div class="nav-item" data-note="planning">Planning & Task Decomposition</div>
+      <div class="nav-item" data-note="multiagent">Multi-Agent Systems</div>
+      <div class="nav-item" data-note="agenticloops">Agentic Loops & Stopping</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🔧</span> Frameworks & Tooling <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="langchain">LangChain</div>
+      <div class="nav-item" data-note="langgraph">LangGraph</div>
+      <div class="nav-item" data-note="llamaindex">LlamaIndex</div>
+      <div class="nav-item" data-note="openaisdk">OpenAI SDK</div>
+      <div class="nav-item" data-note="claudesdk">Anthropic SDK (Claude)</div>
+      <div class="nav-item" data-note="huggingface">Hugging Face</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">⚙️</span> Fine-Tuning & Alignment <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="finetuning">Fine-Tuning Fundamentals</div>
+      <div class="nav-item" data-note="lora">LoRA & QLoRA</div>
+      <div class="nav-item" data-note="rlhf">RLHF</div>
+      <div class="nav-item" data-note="peft">PEFT</div>
+      <div class="nav-item" data-note="instructiontune">Instruction Tuning</div>
+      <div class="nav-item" data-note="ragvsfine">Fine-Tune vs RAG vs Prompt</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🎨</span> Multimodal & Diffusion <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="multimodal">Multimodal Models</div>
+      <div class="nav-item" data-note="diffusion">Diffusion Models</div>
+      <div class="nav-item" data-note="imagegen">Image Generation Pipeline</div>
+      <div class="nav-item" data-note="vlm">Vision-Language Models (VLMs)</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🚀</span> Production & Reliability <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="latency">Latency & Throughput</div>
+      <div class="nav-item" data-note="streaming">Streaming Responses</div>
+      <div class="nav-item" data-note="costopt">Cost Optimization</div>
+      <div class="nav-item" data-note="llmcaching">Caching LLM Responses</div>
+      <div class="nav-item" data-note="promptinjection">Prompt Injection & Security</div>
+      <div class="nav-item" data-note="guardrails">Guardrails & Validation</div>
+      <div class="nav-item" data-note="observability">Observability & Tracing</div>
+      <div class="nav-item" data-note="evals">Evals & Benchmarking</div>
+    </div>
+  </div>
+
+  <!-- KEY TECHNOLOGIES -->
+  <div class="sidebar-section-label">Key Technologies</div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">💡</span> Models & APIs <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="openai">OpenAI API</div>
+      <div class="nav-item" data-note="claude">Claude (Anthropic)</div>
+      <div class="nav-item" data-note="gemini">Gemini (Google)</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🗄️</span> Vector Stores <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="pinecone">Pinecone</div>
+      <div class="nav-item" data-note="chroma">Chroma</div>
+      <div class="nav-item" data-note="weaviate">Weaviate</div>
+      <div class="nav-item" data-note="pgvector">pgvector</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">⚡</span> Infra & Serving <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="ollama">Ollama (local models)</div>
+      <div class="nav-item" data-note="vllm">vLLM (serving)</div>
+    </div>
+  </div>
+
+  <!-- PATTERNS -->
+  <div class="sidebar-section-label">Patterns</div>
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🧩</span> GenAI Patterns <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="p-rag">RAG Pattern</div>
+      <div class="nav-item" data-note="p-agent">Agent Loop Pattern</div>
+      <div class="nav-item" data-note="p-multiagent">Multi-Agent Pattern</div>
+      <div class="nav-item" data-note="p-memory">Memory Pattern</div>
+      <div class="nav-item" data-note="p-streaming">Streaming Pattern</div>
+      <div class="nav-item" data-note="p-caching">Caching Pattern</div>
+      <div class="nav-item" data-note="p-eval">Eval Pattern</div>
+      <div class="nav-item" data-note="p-guardrail">Guardrail Pattern</div>
+      <div class="nav-item" data-note="p-fanout">Fan-out Pattern</div>
+      <div class="nav-item" data-note="p-summarize">Summarization Pattern</div>
+      <div class="nav-item" data-note="p-toolrouter">Tool Router Pattern</div>
+    </div>
+  </div>
+
+  <!-- QUESTION BREAKDOWNS -->
+  <div class="sidebar-section-label">Question Breakdowns</div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🛒</span> Classic GenAI Products <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="q-chatgpt">Design ChatGPT</div>
+      <div class="nav-item" data-note="q-copilot">Design GitHub Copilot</div>
+      <div class="nav-item" data-note="q-cursor">Design Cursor AI</div>
+      <div class="nav-item" data-note="q-perplexity">Design Perplexity</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">📄</span> RAG Systems <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="q-docsearch">Document Search Bot</div>
+      <div class="nav-item" data-note="q-codeassist">Code Assistant</div>
+      <div class="nav-item" data-note="q-emailagent">Email Agent</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🕹️</span> Agent Systems <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="q-researchagent">Research Agent</div>
+      <div class="nav-item" data-note="q-customerservice">Customer Service Agent</div>
+      <div class="nav-item" data-note="q-codegen">Code Generation Agent</div>
+    </div>
+  </div>
+
+  <div class="sidebar-group">
+    <div class="sidebar-group-header">
+      <span class="g-icon">🖼️</span> Multimodal <span class="chevron">›</span>
+    </div>
+    <div class="sidebar-group-items">
+      <div class="nav-item" data-note="q-imagegen">Image Generation System</div>
+      <div class="nav-item" data-note="q-videoanalysis">Video Analysis Pipeline</div>
+    </div>
+  </div>
+
+</nav>
+
+<!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+<main id="main">
+  <div id="content"></div>
+</main>
+
+<script src="assets/app.js"></script>
+</body>
+</html>

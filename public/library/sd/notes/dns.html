@@ -1,0 +1,226 @@
+<div class="section-header">
+        <div class="tag">Networking Essentials</div>
+        <h1>🌐 DNS - Domain Name System</h1>
+        <p>How domain names resolve to IP addresses: hierarchical lookup, caching, and record types.</p>
+      </div>
+
+      <div class="cs-section-label">📚 What It Is</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Definition</h3>
+          <span class="b">A distributed, hierarchical system that translates human-readable domain names, like
+            <b>example.com</b>, into machine IP addresses.</span>
+          <span class="b">"Distributed" is the key word: no single server holds the whole mapping. Responsibility is
+            split across millions of servers organized in a tree.</span>
+        </div>
+        <div class="card c2">
+          <h3>Think of it as</h3>
+          <span class="b">The internet's phonebook. You look up a name and get back a number (IP) you can actually
+            connect to.</span>
+          <span class="b">Without it you would have to memorize IP addresses for every site you visit, and every
+            time a company changed hosting providers, every user would need the new number.</span>
+        </div>
+        <div class="card c8">
+          <h3>Built on</h3>
+          <span class="b"><b>Transport:</b> UDP for most queries, TCP for large/zone transfers.</span>
+          <span class="b"><b>Port:</b> 53.</span>
+          <span class="b"><b>Query size:</b> Tiny, usually under 512 bytes.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">❓ Why Introduced</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>The Human Memory Problem</h3>
+          <span class="b">Computers address each other by IP, but IPs are hard for humans to remember and can
+            change when infrastructure changes.</span>
+          <span class="b">Before DNS, an early version of the internet used a single flat file (HOSTS.TXT) manually
+            synced across machines. That approach could never scale past a few thousand hosts.</span>
+          <span class="b">As the internet grew, keeping that file consistent everywhere became physically
+            impossible, which is exactly the problem DNS was designed to solve.</span>
+        </div>
+        <div class="card c2">
+          <h3>Indirection Enables Change</h3>
+          <span class="b">DNS decouples a stable, memorable name from a mutable IP. A service can change servers or
+            IPs without users needing to know or do anything differently.</span>
+          <span class="b">This indirection is also what makes load balancing, failover, and CDNs possible at the
+            name resolution layer.</span>
+          <span class="b">The same idea shows up everywhere in system design: adding a layer of indirection to
+            decouple "what something is called" from "where it currently lives."</span>
+        </div>
+        <div class="card c8">
+          <h3>Scale Requires Distribution</h3>
+          <span class="b">A single central lookup table doesn't scale globally: every query in the world would hit
+            one place. DNS is hierarchical and distributed so no single server is a bottleneck or a single point of
+            failure.</span>
+          <span class="b">The hierarchy also spreads ownership: a company controls its own domain's records without
+            needing permission from whoever runs the root or TLD servers.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚙️ How It Works - Resolution Path</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Lookup Chain</h3>
+          <div class="row"><span class="k">1.</span><span class="v">Browser/OS cache checked first</span></div>
+          <div class="row"><span class="k">2.</span><span class="v">Recursive resolver queried</span></div>
+          <div class="row"><span class="k">3.</span><span class="v">Root nameserver, finds the TLD</span></div>
+          <div class="row"><span class="k">4.</span><span class="v">TLD nameserver, finds authoritative NS</span></div>
+          <div class="row"><span class="k">5.</span><span class="v">Authoritative nameserver returns the IP</span></div>
+          <div class="sep"></div>
+          <span class="b">The recursive resolver does the multi-hop work on the client's behalf and caches the
+            result so the next user's query is fast.</span>
+        </div>
+        <div class="card c2">
+          <h3>Record Types</h3>
+          <span class="b"><b>A:</b> Domain to IPv4 address.</span>
+          <span class="b"><b>AAAA:</b> Domain to IPv6 address.</span>
+          <span class="b"><b>CNAME:</b> Alias pointing to another domain.</span>
+          <span class="b"><b>MX:</b> Mail server for the domain.</span>
+          <span class="b"><b>TXT:</b> Arbitrary text, used for verification, SPF, DKIM.</span>
+          <span class="b"><b>NS:</b> Which servers are authoritative for this domain.</span>
+        </div>
+        <div class="card c8">
+          <h3>Caching (TTL)</h3>
+          <span class="b">Every DNS record has a <b>TTL</b> (time to live), which tells resolvers how long they may
+            cache it before re-querying the authoritative server.</span>
+          <span class="b">Low TTL means faster failover and propagation of changes, but more query load on your
+            nameservers.</span>
+          <span class="b">High TTL means fewer queries and lower latency for users, but changes take longer to
+            reach everyone, since old records linger in caches.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">✅ When to Use / Use Cases</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Every Service, Always</h3>
+          <span class="b">Every internet-facing service needs it. It's the required first step before any
+            domain-based access works at all.</span>
+          <span class="b">Even internal microservices increasingly use DNS-based service discovery (like
+            Kubernetes' internal DNS) instead of hardcoded IPs, for the same "stable name, mutable location" reason.</span>
+        </div>
+        <div class="card c2">
+          <h3>Load Balancing & Failover</h3>
+          <span class="b"><b>DNS-based load balancing and failover</b>: return different IPs to different clients
+            based on health checks, region, or simple round robin.</span>
+          <span class="b">Used as a coarse, cheap first tier of routing before traffic even reaches a dedicated L4
+            or L7 load balancer inside a region.</span>
+        </div>
+        <div class="card c8">
+          <h3>Geo-Routing</h3>
+          <span class="b"><b>Geo-routing (GeoDNS)</b>: resolvers can return the IP of the nearest region to cut
+            latency, which is how many CDNs and multi-region services route users automatically.</span>
+          <span class="b">This is often the very first decision point in a global system's request path: which
+            region does this user even talk to, decided before a single byte of the actual request is sent.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚖️ Trade-offs</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Caching TTL</h3>
+          <span class="b">High TTL gives fast lookups and low origin load, but slows propagation of an IP change,
+            which can mean stale routing during a failover event.</span>
+          <span class="b">Low TTL trades that away: faster recovery and change propagation, at the cost of more
+            queries hitting your nameservers and slightly slower average lookups for everyone.</span>
+        </div>
+        <div class="card c2">
+          <h3>Hierarchy Depth</h3>
+          <span class="b">More hops (root, then TLD, then authoritative) means more latency on a cold, uncached
+            lookup, but each layer is independently cacheable and horizontally scalable.</span>
+          <span class="b">In practice this cost is mostly paid once: recursive resolvers cache root and TLD
+            answers aggressively, so most real-world lookups skip straight to the authoritative server.</span>
+        </div>
+        <div class="card c8">
+          <h3>DNS Load Balancing</h3>
+          <span class="b">Simple and cheap to operate, but coarse. There's no per-request routing, and some clients
+            ignore TTL and hold onto stale cached records longer than intended.</span>
+          <span class="b">Compared to an L4/L7 load balancer, DNS-based routing can't react to real-time server
+            load, only to whichever IPs you chose to return at query time.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚨 Failure Modes + Mitigations</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Availability Failures</h3>
+          <span class="b"><b>DNS server down:</b> Multiple redundant NS records across providers.</span>
+          <span class="b"><b>Slow first lookup:</b> Caching plus deliberate TTL tuning.</span>
+          <span class="b"><b>Whole DNS provider outage:</b> Secondary DNS provider as a backup NS set.</span>
+          <span class="b"><b>Resolver timeout:</b> Client falls back to a secondary resolver.</span>
+        </div>
+        <div class="card c2">
+          <h3>Security Failures</h3>
+          <span class="b"><b>DNS spoofing / cache poisoning:</b> DNSSEC, cryptographically signed records.</span>
+          <span class="b"><b>DDoS against a resolver:</b> Anycast routing plus rate limiting.</span>
+          <span class="b"><b>Domain hijacking:</b> Registry lock, MFA on the registrar account.</span>
+          <span class="b"><b>DNS tunneling for data exfiltration:</b> Monitor for abnormal query patterns/volume.</span>
+        </div>
+        <div class="card c8">
+          <h3>Operational Failures</h3>
+          <span class="b"><b>Stale cached IP after failover:</b> Lower TTL ahead of a planned migration.</span>
+          <span class="b"><b>Misconfigured record:</b> Staged rollout, monitor before wide propagation.</span>
+          <span class="b"><b>Forgotten expired domain:</b> Auto-renewal plus expiry alerts.</span>
+          <span class="b"><b>Wrong TTL set before a migration:</b> Lower TTL days in advance, not at cutover time.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚫 When NOT to Rely on It Alone</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Not for Sub-Second Failover</h3>
+          <span class="b">Don't use DNS failover as your only mechanism when you need sub-second recovery. TTL and
+            client-side caching mean propagation isn't instant, sometimes minutes.</span>
+        </div>
+        <div class="card c2">
+          <h3>Not for Fine-Grained Routing</h3>
+          <span class="b">For per-request routing, like a canary rollout to a small percentage of traffic or
+            header-based routing, use an L7 load balancer instead of DNS tricks.</span>
+        </div>
+        <div class="card c8">
+          <h3>Not a Security Boundary</h3>
+          <span class="b">DNS alone doesn't authenticate or encrypt anything. It just resolves a name. Access
+            control still has to happen at the app or network layer.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🗺️ Where It Fits in a System Diagram</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Request Path</h3>
+          <div class="row"><span class="k">1.</span><span class="v">DNS resolve, before any connection</span></div>
+          <div class="row"><span class="k">2.</span><span class="v">Load Balancer</span></div>
+          <div class="row"><span class="k">3.</span><span class="v">App Server</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Always First</h3>
+          <span class="b">Always the very first step before TCP or HTTP even begins. Resolve name to IP, then open
+            the actual connection.</span>
+        </div>
+        <div class="card c8">
+          <h3>Cached After First Hit</h3>
+          <span class="b">Once resolved, the OS and browser cache the IP for the record's TTL, so most subsequent
+            requests skip DNS entirely until it expires.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🌍 Real-World Examples</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Managed DNS Providers</h3>
+          <span class="b"><b>AWS:</b> Route 53.</span>
+          <span class="b"><b>Cloudflare:</b> Cloudflare DNS.</span>
+          <span class="b"><b>Google:</b> Cloud DNS.</span>
+        </div>
+        <div class="card c2">
+          <h3>GeoDNS in Practice</h3>
+          <span class="b">Netflix and other large services use GeoDNS combined with health-checked failover to
+            route users automatically to the nearest healthy region.</span>
+        </div>
+        <div class="card c8">
+          <h3>Protecting DNS Itself</h3>
+          <span class="b">Large providers run DNS on anycast networks with hundreds of PoPs, so a regional outage or
+            attack doesn't take resolution down globally.</span>
+        </div>
+      </div>

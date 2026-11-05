@@ -1,0 +1,240 @@
+<div class="section-header">
+  <div class="tag">Claude Code</div>
+  <h1>⌨️ Claude Code</h1>
+  <p>Claude with hands: an intelligent agent that lives in your terminal, IDE, or desktop app and can act directly on your machine. Quick reference guide for setup, configuration, and core concepts.</p>
+</div>
+
+<div class="note-body">
+
+<!-- 1 · WHAT IT IS -->
+<h2>1 · What Claude Code is</h2>
+<p>
+  Claude (claude.ai or desktop app) is a <b>brain</b> that can only chat and reason. Claude Code is the
+  <b>same brain with hands</b>: it can read, write, and edit files on your disk, run terminal commands,
+  call external APIs, and interact with tools. All execution happens on your machine (not a remote server).
+  That's why it requires installation and asks for permission before taking actions. Everything operates via the <b>agentic loop</b>.
+</p>
+<div class="note"><b>Key difference:</b> Claude chat is passive (answers questions). Claude Code is active (makes changes, runs code, automates tasks).</div>
+
+<figure class="note-figure">
+  <img src="assets/img/agentic-loop.svg" alt="Loop: your prompt goes to Think, then Act with a tool, then Observe the result; it loops until done, then returns the final answer">
+  <figcaption>The agentic loop: think, act, observe, repeat until task complete</figcaption>
+</figure>
+
+<div class="note">
+  <b>The loop works like this:</b> You send a prompt. Claude thinks and decides what to do. It calls a tool (read a file, run bash, etc.).
+  The tool runs and Claude observes the result. If the task isn't done, it loops back to think about the next step.
+  This repeats until Claude decides the task is complete and returns an answer.
+</div>
+
+<!-- 2 · SETUP & COST -->
+<h2>2 · Setup and cost</h2>
+<div class="grid2">
+  <div class="card c3">
+    <h3>Install and check</h3>
+    <div class="b">Install via the official npm command (macOS/Linux terminal, Windows PowerShell/cmd): <code>npm install -g claude</code></div>
+    <div class="b"><b><code>claude doctor</code></b> runs diagnostics to check installation, Node.js version, and PATH configuration</div>
+    <div class="b">Windows: manually add Claude to your PATH if the command isn't recognized; use <code>where claude</code> to verify</div>
+    <div class="b">Run in terminal (bash, zsh, PowerShell), VS Code extension, Cursor, JetBrains IDEs, or standalone desktop app</div>
+    <div class="b">Requires Node.js 18 or later; check your version with <code>node --version</code></div>
+    <div class="b">Installation takes ~2 minutes; first launch will prompt for Anthropic API key or subscription login</div>
+  </div>
+  <div class="card c4">
+    <h3>Paying for it (not free)</h3>
+    <div class="b"><b>Subscription</b> (Pro/Max) has daily/weekly limits, like a gym membership</div>
+    <div class="b"><b>API key</b> (Anthropic console) means pay-per-token, like paying per visit</div>
+    <div class="b"><b>3rd-party</b> options include Bedrock, Vertex, or local models (generally weaker)</div>
+    <div class="note"><b>Token ≈ ¾ of a word.</b> You pay on input plus output tokens; output costs more.</div>
+  </div>
+</div>
+
+<div class="sl">Model tiers: choose based on task complexity and speed needs</div>
+<div class="row"><span class="k">Haiku</span><span class="v">Fastest and cheapest; use for simple tasks, maintenance, quick lookups</span></div>
+<div class="row"><span class="k">Sonnet</span><span class="v">Balanced performance; everyday building and most work (recommended default)</span></div>
+<div class="row"><span class="k">Opus</span><span class="v">Most powerful; for planning, architecture, hard problems (burns limit faster)</span></div>
+<div class="note">
+  <b>Typical workflow:</b> Use Opus for complex architecture decisions and planning, switch to Sonnet for implementation and most daily work, then drop to Haiku for bug fixes and maintenance.
+  Each model change costs a few tokens but saves money in the long run. Switch models mid-session using <code>/model</code>.
+</div>
+
+<!-- 3 · COMMANDS, MODES, SESSIONS -->
+<h2>3 · Commands, modes and sessions</h2>
+<p>Slash commands are keyboard-shortcut-style controls that don't consume conversation context and cost no tokens.</p>
+<div class="grid3">
+  <div class="card c1">
+    <h3>Session and context</h3>
+    <div class="b"><code>/context</code> shows what's currently filling your context window</div>
+    <div class="b"><code>/cost</code> and <code>/usage</code> display your cumulative spend so far</div>
+    <div class="b"><code>/compact</code> summarizes history and frees up context space</div>
+    <div class="b"><code>/clear</code> starts a fresh new session</div>
+    <div class="b"><code>/rewind</code> undoes code and chat back to a checkpoint</div>
+    <div class="b"><code>/resume</code> reopens a past session or forks to a branch</div>
+  </div>
+  <div class="card c2">
+    <h3>Configuration</h3>
+    <div class="b"><code>/model</code> and <code>/effort</code> switch the brain model and thinking depth</div>
+    <div class="b"><code>/init</code> generates a CLAUDE.md briefing for an existing repo</div>
+    <div class="b"><code>/agents</code> and <code>/mcp</code> manage sub-agents and MCP server connections</div>
+    <div class="b"><code>/login</code> and <code>/logout</code> control auth; <code>/fast</code> enables faster mode</div>
+    <div class="b"><code>!cmd</code> runs a raw shell command without context overhead</div>
+    <div class="b"><code>btw ...</code> lets you ask questions without polluting chat history</div>
+  </div>
+  <div class="card c5">
+    <h3>Permission modes <span class="note">(shift+tab)</span></h3>
+    <div class="b"><b>Plan</b> is read-only and proposes a plan before acting</div>
+    <div class="b"><b>Default</b> asks for confirmation before each edit or command</div>
+    <div class="b"><b>Accept edits</b> auto-applies changes without asking (93% use this)</div>
+    <div class="b"><b>Auto</b> auto-applies changes plus background safety checks</div>
+    <div class="b"><b>Bypass</b> (risky) skips all prompts; avoid unless you trust everything</div>
+  </div>
+</div>
+<div class="note">
+  <b>Sessions</b> are saved automatically with unique ID, full chat history, and uncommitted code changes.
+  Don't start a fresh session every day: resuming old sessions via <code>/resume</code> keeps your accumulated context, memory, and in-progress work.
+  Always exit cleanly with the <code>exit</code> command (not Ctrl+C) so your session saves properly.
+</div>
+
+<!-- 4 · CLAUDE.md -->
+<h2>4 · CLAUDE.md: the project brain</h2>
+<p>
+  Every session starts with <b>zero memory</b>. <code>CLAUDE.md</code> is the briefing file loaded into
+  context <b>automatically each time</b>. It contains project overview, tech stack, key commands, naming conventions, hard rules, and how to verify work.
+  A good CLAUDE.md makes Claude feel like a teammate with months of context.
+</p>
+<div class="grid2">
+  <div class="card c3">
+    <h3>What belongs in it</h3>
+    <div class="b">Project overview and tech stack description</div>
+    <div class="b">Key terminal commands and naming conventions</div>
+    <div class="b">Folder layout and critical rules/guardrails</div>
+    <div class="b">How to verify work (tests, build steps, deployment)</div>
+    <div class="b">Short pointers and links, not full copies</div>
+  </div>
+  <div class="card c5">
+    <h3>What doesn't belong</h3>
+    <div class="b">Full API documentation or code snippets</div>
+    <div class="b">One-off task details or solved-problem instructions</div>
+    <div class="b">Stale information or anything outdated</div>
+    <div class="b">Huge files or anything loaded every session unnecessarily</div>
+  </div>
+</div>
+<div class="note">
+  <b>Quality over quantity:</b> 60 focused lines beat 400 rambling paragraphs. LLMs follow about 150 to 200 well-written instructions effectively; beyond that, quality degrades significantly.
+  <b>Primacy and recency:</b> place the most critical rules at the very top and very bottom of CLAUDE.md so they stick in the model's memory.
+  <b>Scope precedence:</b> enterprise settings override global ~/.claude, which override project .claude/, which override local settings.json.
+  Treat CLAUDE.md like tech debt: review and prune it regularly; don't let it grow unbounded over time.
+</div>
+
+<!-- 5 · CONTEXT -->
+<h2>5 · Context management (context rot)</h2>
+<p>
+  LLM calls are <b>stateless</b>. Every message resends the <b>entire</b> history (system prompt, tools, MCP definitions, files). Context fills up, cost <b>snowballs exponentially</b>, and quality degrades (context rot): Claude starts ignoring CLAUDE.md, repeating work, making mistakes it wouldn't have made 20 messages earlier.
+</p>
+
+<figure class="note-figure">
+  <img src="assets/img/compact-vs-clear.svg" alt="Decision flowchart: if same task use /compact, if new task use /clear, otherwise compact when unsure; then check /context">
+  <figcaption>Same task: /compact. New task: /clear. Unsure: compact.</figcaption>
+</figure>
+
+<div class="sl">Keep the window lean and efficient</div>
+<div class="b">Keep CLAUDE.md minimal; move detailed docs into skills, agents, or settings (loaded on-demand)</div>
+<div class="b">Disable unused MCP servers; each one adds fixed token overhead to every message</div>
+<div class="b">Use extended thinking separately or in a side channel (doesn't pollute main conversation context)</div>
+<div class="b">Plan before you build. Review the first version so early mistakes don't cascade</div>
+<div class="b">Pro tip: keep a <code>changelog.md</code> that Claude updates and reviews at session start</div>
+
+<!-- 6 · .claude DIR -->
+<h2>6 · The .claude directory</h2>
+<p>The hidden <code>.claude/</code> folder (project-level or <code>~/.claude</code> for global settings) is where everything making Claude Code "smart and yours" lives.</p>
+<div class="row"><span class="k">settings.json</span><span class="v">Permissions, hooks, environment variables, default model. Use .local.json to keep secrets out of git.</span></div>
+<div class="row"><span class="k">rules/</span><span class="v">Split out coding, testing, security rules separately to keep CLAUDE.md lean</span></div>
+<div class="row"><span class="k">skills/</span><span class="v">Reusable playbooks that pair instructions (SKILL.md) with supporting scripts</span></div>
+<div class="row"><span class="k">agents/</span><span class="v">Sub-agent definitions, each with custom model, tools, and permissions</span></div>
+<div class="row"><span class="k">hooks/ and commands/</span><span class="v">Event scripts that fire on git/tool events plus custom slash commands</span></div>
+
+<!-- 7 · SKILLS -->
+<h2>7 · Skills</h2>
+<p>
+  A skill is a reusable, invocable <b>playbook</b> consisting of <code>SKILL.md</code> (plain instructions, no LLM training needed) plus optional supporting scripts/files.
+  Teach Claude a repeatable workflow once, and invoke it forever. Skills load <b>only when needed</b>: Claude reads the description first and decides whether to invoke.
+</p>
+<div class="b"><b>Invocation:</b> automatic (Claude matches the description to your task) or manual via <code>/skill-name</code></div>
+<div class="b"><b>Arguments:</b> make skills dynamic (input path, model choice, effort level)</div>
+<div class="b"><b>Bundled scripts</b> run deterministically and cheaply; you avoid re-writing code each time</div>
+<div class="b">Use the skill-creator tool to build, test, and refine skills. Scope is project, personal, or plugin-level</div>
+
+<!-- 8 · HOOKS -->
+<h2>8 · Hooks</h2>
+<p>
+  Hooks are shell scripts that fire automatically on lifecycle <b>events</b> in Claude Code
+  (<code>PreToolUse</code>, <code>PostToolUse</code>, <code>UserPromptSubmit</code>, <code>Stop</code>, <code>SessionStart/End</code>, etc.).
+  Configured in <code>settings.json</code>. <b>Zero tokens, no LLM, fully deterministic</b>. They always run exactly as written.
+</p>
+<div class="grid3">
+  <div class="card c1"><h3>Automation</h3><div class="b">Auto-format code after every edit, cleanup temp files, lint on save</div></div>
+  <div class="card c6"><h3>Logging</h3><div class="b">Silently record every bash command, session start/end, cost tracking</div></div>
+  <div class="card c5"><h3>Guardrails</h3><div class="b">Block dangerous patterns like <code>rm -rf</code>, <code>git push --force</code>, or credential leaks</div></div>
+</div>
+<div class="note"><b>Exit code 2</b> (hard block) stops execution even in bypass mode ("you shall not pass"). Exit 0 allows. Exit 1 warns but continues. Async hooks run in the background without blocking.</div>
+
+<!-- 9 · MCP -->
+<h2>9 · MCP: Model Context Protocol</h2>
+<p>
+  Open standard (developed by Anthropic) for connecting any AI to external tools and data: Gmail, GitHub, Slack, Tavily, browser automation (Playwright), and more.
+  It's a <b>toolbox of pre-built APIs you don't have to maintain</b>. Give Claude the tools so it can act on the external world directly.
+</p>
+<div class="row"><span class="k">Local server</span><span class="v">Runs on your machine (npx or uvx), spawned on demand. You maintain updates.</span></div>
+<div class="row"><span class="k">Remote server</span><span class="v">Hosted on the web with zero maintenance (e.g., Tavily search). The future default.</span></div>
+<div class="note">
+  MCP tools consume context (each tool definition adds tokens). Disable servers you don't use. Sonnet has <b>tool search</b> that loads tools on demand.
+  <b>MCP vs skill:</b> Use MCP to prototype fast. For production and token-sensitive work, wrap the exact API call in a reusable skill instead.
+</div>
+
+<!-- 10 · SUB-AGENTS -->
+<h2>10 · Sub-agents and agent teams</h2>
+<p>
+  A <b>sub-agent</b> is a mini Claude Code session with its <b>own isolated context window</b>, model choice, tools, and permissions.
+  Delegate noisy or parallelizable tasks (codebase exploration, code review, test writing) to a sub-agent. It works in isolation and returns <b>only a summary</b>, saving your main session's context and money.
+</p>
+
+<figure class="note-figure">
+  <img src="assets/img/sub-agent-vs-team.svg" alt="Left: sub-agents are isolated and report results only back to the main session, and cannot talk to each other. Right: an agent team has a lead plus peer agents that message each other and share a task list">
+  <figcaption>Sub-agents: isolated, report back only. Agent teams: peers that message each other.</figcaption>
+</figure>
+
+<div class="b"><b>When to use sub-agents:</b> isolated self-contained tasks, codebase exploration, code review, test generation, cheaper models for routine work</div>
+<div class="b"><b>Skill vs sub-agent:</b> Skill uses your current context; sub-agent spawns a fresh isolated session with its own window</div>
+<div class="b"><b>Agent teams</b> <span class="new">experimental</span> are parallel instances that message each other and share a task list. Use git worktrees to avoid conflicts. Powerful (has built a C compiler) but expensive; disabled by default.</div>
+
+<!-- 11 · PLUGINS -->
+<h2>11 · Plugins and marketplaces</h2>
+<p>
+  A plugin <b>bundles</b> skills, hooks, agents, MCP servers, and custom commands into one shareable package
+  (with a <code>.claude-plugin/plugin.json</code> manifest). Install from marketplaces or version-control a shared plugin so your whole team codes with the same setup, spending, and conventions.
+</p>
+<div class="note">Best practice for teams: maintain a shared plugin and .claude directory in version control. Instant onboarding and enforced uniformity. Always vet third-party plugins because they can execute arbitrary scripts and call external APIs. Related: <b>LSP plugins</b> give Claude real code intelligence (go-to-definition, find references, type errors) instead of treating code as plain text.</div>
+
+<!-- 12 · SCHEDULING -->
+<h2>12 · Scheduling and automation</h2>
+<p>Unlike dumb cron jobs, scheduled Claude <b>reasons and diagnoses</b>: it reads errors, tries alternatives, and reports findings. Three methods:</p>
+<div class="row"><span class="k">/loop</span><span class="v">Repeats a prompt or skill on a defined interval, but only while the session stays open</span></div>
+<div class="row"><span class="k">Headless mode</span><span class="v"><code>claude -p "..."</code> runs without the UI. Pair with system cron for true server automation.</span></div>
+<div class="row"><span class="k">Claude routines</span><span class="v">Cloud-hosted on claude.ai. Runs on schedule, API trigger, or GitHub event with your laptop off.</span></div>
+<div class="sl">Safety when automation runs unwatched</div>
+<div class="b">Start in <b>read-only</b> mode and write output to a <b>non-destructive path</b></div>
+<div class="b">Use <b>human gates</b> for irreversible actions (write summary, ask for confirmation, don't auto-deploy)</div>
+<div class="b"><b>Log everything</b>. Test before scheduling. Use an environment variable to disable all schedules in emergencies.</div>
+
+<div class="sep"></div>
+
+<!-- SEE ALSO -->
+<h2>See also</h2>
+<p>
+  <a href="#mcp">Model Context Protocol</a> -
+  <a href="#multiagent">Multi-Agent Systems</a> -
+  <a href="#agents">AI Agents</a> -
+  <a href="#context">Context Window</a> -
+  <a href="#tokens">Tokens and Tokenization</a>
+</p>
+
+</div>

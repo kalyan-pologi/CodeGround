@@ -1,0 +1,221 @@
+<div class="section-header">
+  <div class="tag">Embeddings & Vector Search</div>
+  <h1>🧠 Embeddings</h1>
+  <p>Turning meaning into numbers, the foundation of semantic search and RAG.</p>
+</div>
+
+<div class="cs-section-label">🧠 Core Concept</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>What Is It</h3>
+    <div class="b"><b>Vector representation</b> of meaning: text, image, or other data turned into a list of numbers.</div>
+    <div class="b">Each number is one <b>coordinate</b> in a high-dimensional space. The vector is a point, and the whole model is a map where <b>position encodes meaning</b>.</div>
+    <div class="b">Similar meaning means <b>close together</b> in vector space, regardless of shared words. "How do I reset my password" and "I forgot my login" have zero words in common but land next to each other.</div>
+    <div class="b">The individual dimensions are <b>not human-readable</b>. There is no "formality axis" you can point at; meaning is smeared across all 1536 numbers.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">typical size</span><span class="v">1024 to 1536 dims</span></div>
+    <div class="row"><span class="k">compared via</span><span class="v">cosine similarity</span></div>
+    <div class="row"><span class="k">output</span><span class="v">fixed length, any input length</span></div>
+  </div>
+  <div class="card c2">
+    <h3>Why Introduced</h3>
+    <div class="b">Models need <b>numbers</b>, not raw text. Some encoding step is unavoidable.</div>
+    <div class="b">The old answer was <b>one-hot / bag-of-words</b>: one slot per vocabulary word, 1 if present. A 50,000-word vocabulary gives a 50,000-long vector that is almost all zeros.</div>
+    <div class="b">That encoding has two fatal flaws: it is <b>sparse and huge</b>, and every pair of distinct words is <b>equally far apart</b>. "cat" is exactly as unrelated to "kitten" as it is to "invoice".</div>
+    <div class="b">Keyword search inherits the same flaw, which is why it fails on <b>synonyms, paraphrase, and typos</b>.</div>
+    <div class="sep"></div>
+    <div class="note">Solves the "meaning as distance" problem: dog and puppy should sit near each other, dog and spreadsheet should not. Embeddings make relatedness a <b>measurable number</b> instead of a lookup hit or miss.</div>
+  </div>
+  <div class="card c3">
+    <h3>How It Works</h3>
+    <div class="b">A transformer encoder reads the text and produces one vector per token, then a <b>pooling step</b> collapses them into a single fixed-length vector.</div>
+    <div class="b">Training uses <b>contrastive learning</b>: show the model a query with its correct passage (the positive) plus many wrong passages (the negatives).</div>
+    <div class="b">The loss (typically <b>InfoNCE</b>) pulls the query and positive together while pushing the negatives away. Repeat over millions of pairs and the geometry of the space becomes meaningful.</div>
+    <div class="b"><b>Hard negatives</b> matter most: passages that look plausible but are wrong teach far more than random ones.</div>
+    <div class="sep"></div>
+    <div class="b">Training pairs come from naturally paired data: question and accepted answer, title and body, caption and image, translation pairs.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🔬 Deeper Look</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>Types of Embeddings</h3>
+    <div class="b"><b>Word embeddings</b> (older): word2vec, GloVe. One fixed vector per word, learned from co-occurrence statistics. No context, so "bank" in "river bank" and "bank account" gets the identical vector.</div>
+    <div class="b"><b>Contextual embeddings</b> (BERT era): the same word gets a different vector depending on its sentence. This is what makes modern retrieval work on ambiguous language.</div>
+    <div class="b"><b>Sentence / chunk embeddings</b> (current default): a whole passage becomes one vector. These are what you store in a vector DB.</div>
+    <div class="b"><b>Multimodal embeddings</b>: text and images mapped into one shared space (CLIP style), so you can search photos with a text query.</div>
+    <div class="b"><b>Multi-vector / late interaction</b> (ColBERT): keep one vector per token and match at token level. Much more accurate, much more storage.</div>
+  </div>
+  <div class="card c11">
+    <h3>Dimensionality & Cost</h3>
+    <div class="b">Dimension count is the main <b>accuracy vs cost dial</b>. More dimensions give the model more room to separate fine distinctions.</div>
+    <div class="b">Returns diminish fast. Going 256 to 768 usually helps a lot; 1536 to 3072 often buys very little on ordinary corpora.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">more dims</span><span class="v">more nuance</span></div>
+    <div class="row"><span class="k">more dims</span><span class="v">more storage + slower search</span></div>
+    <div class="row"><span class="k">1M chunks @ 1536</span><span class="v">~6 GB as float32</span></div>
+    <div class="row"><span class="k">same, int8</span><span class="v">~1.5 GB</span></div>
+    <div class="sep"></div>
+    <div class="b">Many providers now offer <b>variable dimension</b> embeddings (Matryoshka style): the model is trained so the <b>first N numbers</b> are already a usable smaller embedding, so you can truncate 1536 to 512 and keep most of the quality.</div>
+    <div class="b"><b>Quantization</b> (float32 to int8 or binary) is the other lever, cutting memory 4x to 32x for a few points of recall.</div>
+  </div>
+  <div class="card c12">
+    <h3>Relation to Tokenization</h3>
+    <div class="b">Text is first split into <b>tokens</b> (subword pieces), each mapped to a learned input vector.</div>
+    <div class="b">The encoder contextualizes those token vectors, then <b>pooling</b> collapses them into one chunk-level embedding.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">mean pooling</span><span class="v">average all token vectors</span></div>
+    <div class="row"><span class="k">CLS pooling</span><span class="v">use one special token</span></div>
+    <div class="row"><span class="k">last-token</span><span class="v">common in LLM-based encoders</span></div>
+    <div class="sep"></div>
+    <div class="b">Because pooling <b>averages meaning</b>, a chunk covering three unrelated topics produces a vector that sits between all three and matches none of them well. This is <b>topic dilution</b>.</div>
+    <div class="note">This is why chunk size and boundaries matter so much for embedding quality. Aim for one coherent idea per chunk, roughly 200 to 500 tokens, with a little overlap so ideas are not cut mid-sentence.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚙️ Practical Mechanics</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>Normalization & Distance</h3>
+    <div class="b">Most models return <b>unit-length</b> vectors already normalized to length 1. If yours does not, normalize before storing.</div>
+    <div class="b">On normalized vectors, <b>cosine similarity and dot product are the same ranking</b>, so many DBs let you use the cheaper dot product.</div>
+    <div class="b">Cosine ignores magnitude and compares <b>direction only</b>, which is what you want: a long document should not outrank a short one just for being long.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">cosine</span><span class="v">1.0 identical, 0 unrelated</span></div>
+    <div class="row"><span class="k">dot product</span><span class="v">same order if normalized</span></div>
+    <div class="row"><span class="k">euclidean</span><span class="v">smaller is closer</span></div>
+    <div class="sep"></div>
+    <div class="b">Absolute scores are <b>not calibrated</b>. Real-world corpora often score 0.7 to 0.85 for everything, so a fixed threshold like "keep above 0.8" transfers badly between models.</div>
+    <div class="note">Pick the metric your vector DB index was built with, mixing them silently degrades recall. Tune thresholds per model on your own data, or just take top-k and re-rank.</div>
+  </div>
+  <div class="card c2">
+    <h3>Asymmetric Embedding</h3>
+    <div class="b">A short query and a long passage are <b>different shapes</b> of text. A question and its answer rarely look alike on the surface.</div>
+    <div class="b">So many models are trained <b>asymmetrically</b> and expect a prefix or input type telling them which side they are encoding.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">API style</span><span class="v">input_type="query" / "document"</span></div>
+    <div class="row"><span class="k">E5 style</span><span class="v">"query: " / "passage: "</span></div>
+    <div class="row"><span class="k">BGE style</span><span class="v">instruction prefix on queries only</span></div>
+    <div class="sep"></div>
+    <div class="b">Get it wrong and nothing errors. You just lose several points of recall, quietly, forever.</div>
+    <div class="b"><b>Symmetric</b> tasks (dedup, clustering, similar-item lookup) compare like with like, so both sides use the same mode.</div>
+    <div class="note">Forgetting this is one of the most common silent retrieval-quality bugs. Wrap the provider call in one helper that always sets the mode.</div>
+  </div>
+  <div class="card c3">
+    <h3>Batching, Limits & Caching</h3>
+    <div class="b">Embed in <b>batches</b> (dozens to hundreds per call) instead of one request per chunk. Network round-trips, not compute, dominate ingestion time.</div>
+    <div class="b">Respect the model's <b>max input tokens</b>. Some APIs silently <b>truncate</b> instead of erroring, so the tail of a long chunk is dropped without warning.</div>
+    <div class="b">Expect <b>429 rate limits</b> on large backfills. Retry with exponential backoff and a concurrency cap.</div>
+    <div class="sep"></div>
+    <div class="b">Cache by <b>content hash</b> so unchanged chunks are never re-embedded. On a re-index of a mostly-unchanged corpus this saves nearly the entire bill.</div>
+    <div class="b">Store the <b>model name and version</b> alongside every vector. Without it you cannot tell which rows need re-embedding after an upgrade.</div>
+    <div class="sep"></div>
+    <div class="note">Changing embedding model means re-embedding the <b>whole corpus</b>. Plan for a dual-write window: build the new index alongside the old, verify on your golden set, then cut over.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🧪 Choosing & Improving a Model</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>How to Choose</h3>
+    <div class="b">Start from a <b>leaderboard</b> (MTEB) but treat it as a shortlist, not an answer. Leaderboard corpora are generic; yours is not.</div>
+    <div class="b">Shortlist three models, embed a few thousand of your own chunks, and score them on your own queries. This takes an afternoon and settles the question.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">dimensions</span><span class="v">storage and latency budget</span></div>
+    <div class="row"><span class="k">max context</span><span class="v">512 vs 8k token chunks</span></div>
+    <div class="row"><span class="k">languages</span><span class="v">English-only vs multilingual</span></div>
+    <div class="row"><span class="k">price</span><span class="v">per million tokens, both passes</span></div>
+    <div class="sep"></div>
+    <div class="b"><b>API</b> (Voyage, OpenAI, Cohere): zero ops, best quality, but per-token cost and your text leaves the building.</div>
+    <div class="b"><b>Self-hosted</b> (BGE, E5, Nomic, GTE): free at volume, data stays in-house, fully version-pinned, but you own the GPUs and the serving.</div>
+    <div class="note">Cost has two sides: a one-time ingestion pass over the whole corpus, plus one small query embedding on <b>every single search</b> forever.</div>
+  </div>
+  <div class="card c11">
+    <h3>Measuring Quality</h3>
+    <div class="b">Build a small <b>golden set</b>: real user queries paired with the chunks that should have been retrieved. Mine them from support tickets or search logs.</div>
+    <div class="b">Fifty to a hundred labeled queries is enough to rank candidate models confidently.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">recall@k</span><span class="v">is the right chunk in the top k</span></div>
+    <div class="row"><span class="k">MRR</span><span class="v">1 / rank of first correct hit</span></div>
+    <div class="row"><span class="k">nDCG</span><span class="v">rank quality, graded relevance</span></div>
+    <div class="sep"></div>
+    <div class="b"><b>recall@k is the metric that matters most</b> for RAG: if the right chunk never enters the top k, no re-ranker and no LLM can recover it. Precision problems are fixable downstream, recall problems are not.</div>
+    <div class="b">Run the golden set in CI. Chunking tweaks and prompt changes silently move retrieval quality.</div>
+    <div class="note">Fifty labeled queries beats any leaderboard for your specific domain.</div>
+  </div>
+  <div class="card c12">
+    <h3>Improving Retrieval</h3>
+    <div class="b"><b>Fix chunking first.</b> It is free and usually the biggest win. Most "the embedding model is bad" complaints are really topic dilution from oversized chunks.</div>
+    <div class="b"><b>Contextual chunk headers</b>: prepend the document title and section heading to each chunk before embedding, so an isolated paragraph carries its context into the vector.</div>
+    <div class="b"><b>Hybrid search</b>: combine dense vectors with BM25 keyword scores, fused with Reciprocal Rank Fusion. Covers the exact-match cases dense retrieval misses (IDs, error codes, product names).</div>
+    <div class="b"><b>Re-rank</b>: retrieve the top 50 cheaply, then score each against the query with a <b>cross-encoder</b> that reads query and passage together, and keep the top 5. Far more accurate than vector distance, too slow to run over the whole corpus.</div>
+    <div class="b"><b>Query rewriting</b>: expand vague or pronoun-laden queries with an LLM before embedding, or generate a hypothetical answer and embed that instead (HyDE).</div>
+    <div class="sep"></div>
+    <div class="b"><b>Fine-tune</b> last. With a few thousand in-domain query and passage pairs you can beat any off-the-shelf model on your jargon, but it costs a training loop, an eval harness, and a re-embed of everything.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🎯 Applying It</div>
+<div class="grid3">
+  <div class="card c4">
+    <h3>Use Cases</h3>
+    <div class="b"><b>Semantic search</b>: find by meaning, so "cancel my plan" matches a doc titled "Terminating a subscription".</div>
+    <div class="b"><b>RAG retrieval</b>: the standard way to pick which chunks get pasted into the LLM prompt.</div>
+    <div class="b"><b>Clustering and topic discovery</b>: embed then run k-means or HDBSCAN to find themes in tickets or feedback with no labels.</div>
+    <div class="b"><b>Recommendations</b>: "more like this" by nearest neighbors, and cold-start items work immediately since content, not history, drives the vector.</div>
+    <div class="b"><b>Deduplication</b>: near-duplicate detection by high cosine similarity, catching reworded copies that hashing misses.</div>
+    <div class="b"><b>Classification</b>: embed once, then a cheap logistic regression on top, or just compare to a few labeled examples. Far cheaper than an LLM call per item.</div>
+    <div class="b"><b>Guardrails and routing</b>: match an incoming message against known jailbreak patterns or against intent examples to pick a handler.</div>
+  </div>
+  <div class="card c5">
+    <h3>Trade-offs</h3>
+    <div class="b"><b>Lossy</b>: a whole passage is compressed into a few thousand numbers, so fine nuance, negation, and numeric detail get blurred. "Refunds allowed" and "refunds not allowed" can sit uncomfortably close.</div>
+    <div class="b"><b>Model lock-in</b>: vectors from different models (or even different versions) live in incompatible spaces and cannot be compared. Switching means re-embedding everything.</div>
+    <div class="b"><b>No exact matching</b>: no guarantee on IDs, error codes, or verbatim strings. Dense retrieval is about resemblance, not equality.</div>
+    <div class="b"><b>Opaque</b>: you get a score, never a reason. Debugging a bad result means eyeballing neighbors, not reading an explanation.</div>
+    <div class="b"><b>Ongoing cost</b>: storage and compute per chunk, plus an extra network hop of latency on every query.</div>
+  </div>
+  <div class="card c6">
+    <h3>When NOT to Use</h3>
+    <div class="b"><b>Exact or deterministic lookups</b> (SKU, order ID, clause number): use a database index. It is faster, cheaper, and always correct.</div>
+    <div class="b"><b>Structured filtering</b> ("orders over $500 last month"): that is SQL, not similarity. Use metadata filters, not vectors.</div>
+    <div class="b"><b>Small datasets</b>: under a few hundred documents, keyword search or just putting everything in the prompt usually wins on both quality and simplicity.</div>
+    <div class="b"><b>Auditability requirements</b>: when you must explain exactly why a document matched, keyword or rule-based retrieval is defensible and cosine distance is not.</div>
+    <div class="b"><b>Ultra low latency, uncached paths</b> where an extra embedding API call blows the budget.</div>
+    <div class="note">These are rarely either-or. The common production answer is hybrid: metadata filters narrow the set, then vectors rank what is left.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚠️ Reliability</div>
+<div class="grid3">
+  <div class="card c7">
+    <h3>Failure Modes</h3>
+    <div class="b"><b>Out-of-domain jargon</b> embeds poorly. Legal, medical, and internal codenames were rare or absent in training, so the model has no real sense of where they belong. Project "Bluebird" lands near actual birds.</div>
+    <div class="b"><b>Missed exact matches</b>: an error code or invoice number is exactly the query where dense retrieval is weakest and keyword search is strongest.</div>
+    <div class="b"><b>Negation blindness</b>: "is X supported" and "X is not supported" are lexically and semantically near-identical to an embedder.</div>
+    <div class="b"><b>Silent version drift</b>: a provider updates a model behind the same name and new vectors no longer align with the old ones. Quality decays with no error anywhere.</div>
+    <div class="b"><b>Topic dilution</b>: bad chunking mixes unrelated concepts into one averaged vector that matches nothing well.</div>
+    <div class="b"><b>Prefix mismatch</b>: queries embedded in document mode. No error, just quietly worse recall.</div>
+    <div class="sep"></div>
+    <div class="note" style="color:#4ade80;">Mitigate with hybrid search (dense plus sparse), re-ranking, domain-tuned models, version-locking your embedding model, and a golden-set eval in CI so drift shows up as a failed build instead of a user complaint.</div>
+  </div>
+  <div class="card c8">
+    <h3>Where It Fits</h3>
+    <div class="b">Docs, then Chunking, then <b>Embedding</b>, then Vector DB, then Retrieval, then Re-rank, then LLM Context.</div>
+    <div class="sep"></div>
+    <div class="b">Embedding runs on <b>both sides</b> of the pipeline: once over the corpus at ingestion (batch, expensive, cacheable) and once per query at serve time (tiny, latency-critical).</div>
+    <div class="b">Both sides <b>must use the same model and version</b>, or the query lands in a different space than the documents and results become noise.</div>
+    <div class="sep"></div>
+    <div class="note">Sits between raw ingestion and the retrieval layer, the translation step that makes semantic search possible. Quality here caps everything downstream: a chunk that is never retrieved cannot be re-ranked, and an answer the LLM never sees cannot be generated.</div>
+  </div>
+  <div class="card c9">
+    <h3>Real World Example</h3>
+    <div class="b"><b>Voyage AI</b> embeddings, used in Anthropic-oriented retrieval workflows, with domain variants (voyage-code, voyage-law, voyage-finance) tuned per vertical.</div>
+    <div class="b"><b>OpenAI text-embedding-3</b> (small and large), commonly stored in Pinecone, Chroma, or pgvector, and supporting dimension truncation.</div>
+    <div class="b"><b>Cohere embed</b>, notable for strong multilingual coverage and int8 / binary compression modes.</div>
+    <div class="b"><b>Open-weight</b>: BGE, E5, GTE, Nomic. Run locally via sentence-transformers or Ollama when data cannot leave your infrastructure.</div>
+    <div class="sep"></div>
+    <div class="note">A typical production stack: chunk to ~400 tokens with headers, embed with an API model, store in pgvector with metadata, retrieve top 50 hybrid, cross-encoder re-rank to top 5, then hand those to the LLM.</div>
+  </div>
+</div>

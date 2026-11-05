@@ -1,0 +1,745 @@
+<div class="section-header">
+  <div class="tag">Spring</div>
+  <h1>🍃 Spring Framework Topics</h1>
+  <p>Definitions and use cases for Spring Framework concepts: core IoC/DI, Spring Boot, AOP, MVC/REST, Security, Data JPA, caching, integration/batch/cloud, WebFlux, scheduling/events, and transactions.</p>
+</div>
+<div class="note-body">
+
+<h2>Core / IoC / DI</h2>
+
+<h3>Spring Framework</h3>
+<p>Comprehensive framework for enterprise Java applications providing IoC, AOP, and integration capabilities. Use case: enterprise applications, dependency management, modular development.</p>
+
+<h3>Inversion of Control (IoC)</h3>
+<p>Design principle where object creation and wiring is handled by the Spring container. Use case: loose coupling, testability, configuration management.</p>
+
+<h3>Dependency Injection (DI)</h3>
+<p>IoC implementation where dependencies are injected into objects rather than created internally. Use case: testable code, modular design, configuration flexibility.</p>
+
+<h3>ApplicationContext</h3>
+<p>Advanced IoC container providing enterprise features like AOP, internationalization, event handling. Use case: enterprise applications, resource management, bean lifecycle.</p>
+
+<h3>BeanFactory</h3>
+<p>Basic IoC container for simple dependency injection. Use case: lightweight applications, memory-constrained environments, basic DI needs.</p>
+
+<h3>Bean Lifecycle</h3>
+<p>Managed object lifecycle: instantiation, dependency injection, initialization, destruction. Use case: resource management, cleanup operations, initialization logic.</p>
+
+<h3>Bean Scopes</h3>
+<p>Defines bean instance creation strategy: singleton, prototype, request, session, application. Use case: state management, performance optimization, web applications.</p>
+
+<h3>@Component</h3>
+<p>Marks a class as a Spring-managed bean for component scanning. Use case: auto-detection, service layer classes, general-purpose beans.</p>
+
+<h3>@Service</h3>
+<p>Specialization of @Component for service layer classes. Use case: business logic layer, service classes, semantic clarity.</p>
+
+<h3>@Repository</h3>
+<p>Specialization of @Component for the data access layer with exception translation. Use case: DAO classes, database operations, exception handling.</p>
+
+<h3>@Controller</h3>
+<p>Specialization of @Component for web layer request handlers. Use case: MVC controllers, request mapping, web applications.</p>
+
+<h3>@Configuration</h3>
+<p>Marks a class as configuration containing @Bean methods. Use case: Java-based configuration, bean definitions, application setup.</p>
+
+<h3>@Bean</h3>
+<p>Method-level annotation creating Spring-managed beans. Use case: third-party object integration, custom bean creation, configuration methods.</p>
+
+<h3>@Autowired</h3>
+<p>Automatic dependency injection by type. Use case: constructor, field, setter injection, reducing boilerplate code.</p>
+
+<h3>@Qualifier</h3>
+<p>Resolves ambiguity when multiple beans of the same type exist. Use case: bean selection, dependency disambiguation, specific bean injection.</p>
+
+<h3>@Primary</h3>
+<p>Gives precedence when multiple beans of the same type exist. Use case: default bean selection, preference indication, autowiring conflicts.</p>
+
+<h3>@Value</h3>
+<p>Injects values from properties files or expressions. Use case: configuration values, property injection, externalized configuration.</p>
+
+<h3>@ConfigurationProperties</h3>
+<p>Maps properties to POJO fields for type-safe configuration. Use case: hierarchical properties, configuration validation, type safety.</p>
+
+<h3>@Profile</h3>
+<p>Conditional bean creation based on active profiles. Use case: environment-specific beans, deployment flexibility, configuration switching.</p>
+
+<h3>@Conditional</h3>
+<p>Creates beans based on custom conditions. Use case: complex conditional logic, feature toggles, environment-based configuration.</p>
+
+<h3>@PostConstruct</h3>
+<p>Method executed after dependency injection completion. Use case: bean initialization, resource setup, post-injection logic.</p>
+
+<h3>@PreDestroy</h3>
+<p>Method executed before bean destruction. Use case: resource cleanup, connection closing, graceful shutdown.</p>
+
+<h3>@PropertySource</h3>
+<p>Specifies property files for configuration. Use case: external configuration, environment-specific properties, configuration management.</p>
+
+<h3>@Import</h3>
+<p>Imports additional configuration classes. Use case: configuration composition, modular configuration, configuration reuse.</p>
+
+<h3>BeanPostProcessor</h3>
+<p>Processes beans before/after initialization. Use case: bean modification, proxy creation, custom initialization logic.</p>
+
+<h3>BeanFactoryPostProcessor</h3>
+<p>Modifies bean definitions before instantiation. Use case: configuration modification, bean definition customization, framework integration.</p>
+
+<h2>Spring Boot</h2>
+
+<h3>Spring Boot</h3>
+<p>Opinionated framework providing auto-configuration and embedded servers. Use case: rapid development, microservices, standalone applications.</p>
+
+<h3>Auto-Configuration</h3>
+<p>Automatic bean configuration based on classpath dependencies. Use case: reducing boilerplate, convention over configuration, quick setup.</p>
+
+<h3>@SpringBootApplication</h3>
+<p>Combines @Configuration, @EnableAutoConfiguration, @ComponentScan. Use case: main application class, Spring Boot startup, component scanning.</p>
+
+<h3>@EnableAutoConfiguration</h3>
+<p>Enables Spring Boot's auto-configuration mechanism. Use case: automatic bean creation, dependency-based configuration, rapid setup.</p>
+
+<h3>Spring Boot Starter</h3>
+<p>Pre-configured dependency bundles for specific functionality. Use case: simplified dependency management, quick project setup, best practices.</p>
+
+<h3>Spring Boot Actuator</h3>
+<p>Production-ready features for monitoring and management. Use case: health checks, metrics, application monitoring, DevOps integration.</p>
+
+<h3>ApplicationRunner vs CommandLineRunner</h3>
+<p>Interfaces for running code after application startup. Use case: initialization tasks, data loading, startup operations.</p>
+
+<h2>Spring AOP</h2>
+
+<h3>Spring AOP</h3>
+<p>Aspect-Oriented Programming for cross-cutting concerns. Use case: logging, security, transactions, monitoring, caching.</p>
+
+<h3>@Aspect</h3>
+<p>Marks a class as an aspect containing advice and pointcuts. Use case: cross-cutting concern implementation, modular design, separation of concerns.</p>
+
+<h3>@Pointcut</h3>
+<p>Defines where advice should be applied. Use case: advice targeting, method selection, aspect configuration.</p>
+
+<h3>@Before</h3>
+<p>Advice executed before method execution. Use case: pre-processing, validation, logging, security checks.</p>
+
+<h3>@After</h3>
+<p>Advice executed after method execution (regardless of outcome). Use case: cleanup, logging, resource management, monitoring.</p>
+
+<h3>@AfterReturning</h3>
+<p>Advice executed after successful method return. Use case: result processing, success logging, post-processing.</p>
+
+<h3>@AfterThrowing</h3>
+<p>Advice executed when a method throws an exception. Use case: exception handling, error logging, cleanup after errors.</p>
+
+<h3>@Around</h3>
+<p>Most powerful advice, wrapping method execution. Use case: performance monitoring, caching, transaction management, complete control.</p>
+
+<h2>Spring MVC / REST</h2>
+
+<h3>Spring MVC</h3>
+<p>Web framework following the Model-View-Controller pattern. Use case: web applications, REST APIs, request handling, view rendering.</p>
+
+<h3>DispatcherServlet</h3>
+<p>Front controller handling all requests in Spring MVC. Use case: request routing, handler mapping, view resolution, centralized control.</p>
+
+<h3>@RestController</h3>
+<p>Combines @Controller and @ResponseBody for REST API development. Use case: REST APIs, JSON responses, microservices.</p>
+
+<h3>@RequestMapping</h3>
+<p>Maps requests to handler methods with URL patterns. Use case: URL routing, HTTP method mapping, request handling.</p>
+
+<h3>@GetMapping/@PostMapping/@PutMapping/@DeleteMapping</h3>
+<p>Specialized request mappings for HTTP methods. Use case: RESTful services, HTTP-method-specific handling, cleaner code.</p>
+
+<h3>@PathVariable</h3>
+<p>Extracts values from URL path segments. Use case: RESTful URLs, dynamic routing, URL parameters.</p>
+
+<h3>@RequestParam</h3>
+<p>Extracts query parameters from a request. Use case: query string handling, optional parameters, form data processing.</p>
+
+<h3>@RequestBody</h3>
+<p>Maps the request body to a method parameter (usually JSON). Use case: REST APIs, JSON processing, POST/PUT operations.</p>
+
+<h3>@ResponseBody</h3>
+<p>Converts a method's return value to the response body. Use case: JSON responses, REST APIs, AJAX endpoints.</p>
+
+<h3>@ModelAttribute</h3>
+<p>Binds request parameters to object attributes. Use case: form handling, data binding, model population.</p>
+
+<h3>Model and ModelAndView</h3>
+<p>Objects for passing data to views. Use case: MVC pattern, view data passing, template rendering.</p>
+
+<h3>ViewResolver</h3>
+<p>Resolves logical view names to actual view implementations. Use case: view technology abstraction, template resolution, rendering configuration.</p>
+
+<h3>@ControllerAdvice</h3>
+<p>Global exception handling across multiple controllers. Use case: centralized exception handling, error responses, logging.</p>
+
+<h3>@ExceptionHandler</h3>
+<p>Handles specific exceptions in controllers. Use case: exception handling, error responses, graceful error management.</p>
+
+<figure class="note-figure">
+  <img src="assets/img/http-status-codes-table.png" alt="Table of common HTTP status codes and their meaning for REST APIs">
+  <figcaption>HTTP status codes for REST responses and @ExceptionHandler mapping</figcaption>
+</figure>
+
+<h3>@Valid</h3>
+<p>Triggers validation on request parameters/body. Use case: input validation, data integrity, error prevention.</p>
+
+<h3>@Validated</h3>
+<p>Spring's validation annotation supporting validation groups. Use case: method-level validation, validation groups, complex validation scenarios.</p>
+
+<h3>HandlerInterceptor</h3>
+<p>Intercepts requests before/after handler execution. Use case: authentication, logging, request preprocessing, response modification. Sits in the Spring servlet chain after the DispatcherServlet, so it has access to Spring beans and the request context, unlike servlet filters. Implement <code>preHandle</code> to run before the handler, <code>postHandle</code> after a successful handler return, and <code>afterCompletion</code> after the response is written for cleanup.</p>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-mvc-request-flow-diagram.png" alt="Spring MVC request flow showing HTTP request through Servlet Container, Servlet Filter, DispatcherServlet, HandlerInterceptor, and Controller">
+  <figcaption>Spring MVC request flow lifecycle</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/filter-vs-spring-interceptor-vs-feign-interceptor-comparison.png" alt="Comparison table of Servlet Filter, Spring HandlerInterceptor, and Feign Interceptor">
+  <figcaption>Filter vs Spring interceptor vs Feign interceptor</figcaption>
+</figure>
+
+<h2>Spring Security</h2>
+
+<h3>Spring Security</h3>
+<p>Comprehensive security framework for authentication and authorization. Use case: application security, user management, access control.</p>
+
+<h3>@Secured</h3>
+<p>Method-level security annotation for role-based access. Use case: method security, role checking, access control.</p>
+
+<h3>@PreAuthorize/@PostAuthorize</h3>
+<p>Expression-based method security. Use case: complex authorization logic, dynamic security, fine-grained access control.</p>
+
+<h3>@EnableWebSecurity</h3>
+<p>Enables Spring Security web features. Use case: security configuration, web security setup, authentication.</p>
+
+<h3>@EnableMethodSecurity</h3>
+<p>Enables method-level security annotations. Use case: method security, authorization, access control.</p>
+
+<h3>UserDetailsService</h3>
+<p>Interface for loading user-specific data during authentication. Use case: custom user loading, authentication, user management.</p>
+
+<h3>PasswordEncoder</h3>
+<p>Interface for password hashing and verification. Use case: password security, authentication, credential management.</p>
+
+<h3>SecurityContextHolder</h3>
+<p>Holds security context for the current thread. Use case: authentication information access, user details retrieval, security context.</p>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-security-authentication-architecture-diagram.png" alt="Diagram of Spring Security authentication architecture, filters, and context holder">
+  <figcaption>Spring Security authentication architecture</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-security-authentication-flow-table.png" alt="Table describing the Spring Security authentication flow step by step">
+  <figcaption>Spring Security authentication flow</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-security-authorization-flow-table.png" alt="Table describing the Spring Security authorization flow step by step">
+  <figcaption>Spring Security authorization flow</figcaption>
+</figure>
+
+<h3>CORS Configuration</h3>
+<p>Cross-Origin Resource Sharing configuration for web security. Use case: frontend-backend communication, API access, web security.</p>
+
+<h3>@CrossOrigin</h3>
+<p>Enables CORS for specific endpoints. Use case: frontend-backend communication, API access, cross-domain requests.</p>
+
+<h3>CSRF Protection</h3>
+<p>Cross-Site Request Forgery protection mechanism. Use case: web security, form protection, token-based security.</p>
+
+<h3>OAuth2 Integration</h3>
+<p>OAuth2 authentication and authorization support. Use case: third-party authentication, SSO, secure API access.</p>
+
+<h3>JWT Integration</h3>
+<p>JSON Web Token support for stateless authentication. Use case: microservices authentication, stateless security, token-based auth.</p>
+
+<h2>Spring Data JPA</h2>
+
+<h3>Spring Data JPA</h3>
+<p>Simplifies JPA-based data access with repositories. Use case: database operations, CRUD operations, query generation.</p>
+
+<h3>JpaRepository</h3>
+<p>Repository interface providing CRUD and batch operations. Use case: database operations, entity management, data persistence.</p>
+
+<h3>@Entity</h3>
+<p>Marks a class as a JPA entity mapped to a database table. Use case: object-relational mapping, database entities, persistence.</p>
+
+<h3>@Table</h3>
+<p>Specifies table details for entity mapping. Use case: custom table naming, schema specification, database mapping.</p>
+
+<h3>@Id</h3>
+<p>Marks a field as the primary key. Use case: entity identification, database mapping, primary key specification.</p>
+
+<h3>@GeneratedValue</h3>
+<p>Specifies the primary key generation strategy. Use case: auto-generated keys, database sequences, key management.</p>
+
+<h3>@Column</h3>
+<p>Maps an entity field to a database column. Use case: custom column mapping, database constraints, field specification.</p>
+
+<h3>@JoinColumn</h3>
+<p>Specifies the foreign key column for relationships. Use case: entity relationships, foreign key mapping, association management.</p>
+
+<h3>@OneToMany/@ManyToOne/@ManyToMany/@OneToOne</h3>
+<p>Entity relationship mappings. Use case: database relationships, entity associations, relational mapping.</p>
+
+<h3>@Query</h3>
+<p>Custom JPQL or native SQL queries in repositories. Use case: complex queries, custom database operations, performance optimization.</p>
+
+<h3>@NamedQuery</h3>
+<p>Named queries defined at the entity level. Use case: reusable queries, query organization, performance optimization.</p>
+
+<h3>@Modifying</h3>
+<p>Indicates a query modifies data (UPDATE/DELETE). Use case: data modification, bulk operations, non-select queries.</p>
+
+<h3>Specification</h3>
+<p>Type-safe query building using the Criteria API. Use case: dynamic queries, search functionality, complex filtering.</p>
+
+<h3>Pageable</h3>
+<p>Pagination and sorting support for repository methods. Use case: large dataset handling, performance optimization, user experience.</p>
+
+<h3>@EntityGraph</h3>
+<p>Controls the entity fetching strategy to avoid N+1 problems. Use case: performance optimization, lazy loading control, query optimization.</p>
+
+<h3>N+1 Query Problem</h3>
+<p>Happens when fetching a list of parent entities lazily loads each one's related child collection with a
+  separate query, one query for the parent list plus N more queries, one per parent, instead of a single join.
+  It is easy to miss locally with a handful of test rows and only shows up as real latency once the dataset
+  grows. Fixed with <code>@EntityGraph</code>, a <code>JOIN FETCH</code> in a custom <code>@Query</code>, or
+  batch fetching (<code>@BatchSize</code>/<code>hibernate.default_batch_fetch_size</code>). Worth tracing with
+  a SQL logging tool or a request-level query counter, since it will not show up as a single slow query, it
+  shows up as an endpoint issuing dozens of small fast ones.</p>
+
+<h3>DataIntegrityViolationException</h3>
+<p>Thrown when a write violates a database-level constraint, a unique index, a foreign key, a not-null column.
+  Rather than treating it purely as an error to log and fail on, it can be used as an expected signal for
+  race-safe upserts: fire the insert, catch this exception on a unique-constraint collision, then read back the
+  row the other concurrent writer already inserted. This avoids distributed locking for a class of races where
+  two requests can both pass a cache-miss check before either has written, since the database's own constraint
+  becomes the single source of truth for who won the race.</p>
+
+<h3>@CreatedDate/@LastModifiedDate</h3>
+<p>Automatic auditing of creation/modification times. Use case: data auditing, change tracking, timestamp management.</p>
+
+<h3>@CreatedBy/@LastModifiedBy</h3>
+<p>Automatic auditing of creation/modification users. Use case: user auditing, change tracking, accountability.</p>
+
+<h3>@Version</h3>
+<p>Optimistic locking support for concurrent updates. Use case: concurrency control, data consistency, conflict resolution.</p>
+
+<h3>OptimisticLockException</h3>
+<p>Thrown when a <code>@Version</code>-annotated entity is saved but its version number no longer matches the
+  row in the database, meaning another transaction updated it in between the read and the write. Unlike
+  pessimistic locking (<code>SELECT ... FOR UPDATE</code>), which blocks concurrent readers, optimistic locking
+  lets both transactions proceed and only fails the losing write at commit time, which scales better for
+  read-heavy workloads where actual write conflicts are rare. The typical handling pattern is catching this
+  exception and retrying the read-modify-write cycle from scratch, often paired with Spring Retry's
+  <code>@Retryable</code>.</p>
+
+<h3>Flyway</h3>
+<p>Version-controlled, numbered SQL migration files applied automatically at application startup, so schema
+  changes are tracked in source control and reproducible across dev, UAT, and prod rather than applied by hand
+  against each environment. Each migration is idempotent (guarded with <code>IF NOT EXISTS</code> checks where
+  relevant) so rerunning is safe, and a tracking table records which migrations have already been applied.
+  A migration that only gets tested against databases that already have the target schema can pass everywhere
+  it's tried and still fail the moment it runs against a genuinely fresh, empty database, since it implicitly
+  assumed the schema already existed. The fix is a baseline migration that explicitly creates the schema first,
+  ordered ahead of everything else purely by its own version number, so correctness does not depend on anyone
+  remembering to run a manual setup step first.</p>
+
+<h2>Spring Cache</h2>
+
+<h3>Spring Cache</h3>
+<p>Declarative caching abstraction. Use case: performance optimization, data caching, response time improvement.</p>
+
+<h3>@Cacheable</h3>
+<p>Caches method return values. Use case: read-heavy operations, performance optimization, data caching.</p>
+
+<h3>@CachePut</h3>
+<p>Updates the cache with a method return value. Use case: cache updates, data synchronization, cache management.</p>
+
+<h3>@CacheEvict</h3>
+<p>Removes entries from the cache. Use case: cache invalidation, data consistency, memory management.</p>
+
+<h3>@Caching</h3>
+<p>Combines multiple cache annotations. Use case: complex caching scenarios, multiple cache operations, advanced caching.</p>
+
+<h3>CacheManager</h3>
+<p>Manages cache instances and operations. Use case: cache configuration, cache lifecycle, multi-cache management.</p>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-redis-caching-config-flow-diagram.png" alt="Diagram of Spring configuration flow when using Redis as the cache provider">
+  <figcaption>Spring + Redis caching configuration flow</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/caching-strategies-full-table.png" alt="Full comparison table of caching strategies such as cache-aside, read-through, write-through, and write-behind">
+  <figcaption>Caching strategies, full comparison</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/top-5-caching-strategies-diagram.png" alt="Diagram summarizing the top 5 caching strategies">
+  <figcaption>Top 5 caching strategies</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/redis-use-cases-table.png" alt="Table of common Redis use cases beyond caching, such as session storage and rate limiting">
+  <figcaption>Redis use cases</figcaption>
+</figure>
+
+<h2>Spring Integration &amp; Messaging (Kafka/RabbitMQ)</h2>
+
+<h3>Spring Integration</h3>
+<p>Framework for enterprise integration patterns. Use case: system integration, message routing, data transformation.</p>
+
+<h3>@MessageEndpoint</h3>
+<p>Marks a class as a message-driven endpoint. Use case: asynchronous messaging, event processing, integration patterns.</p>
+
+<h3>@ServiceActivator</h3>
+<p>Connects service methods to message channels. Use case: message processing, service integration, decoupled communication.</p>
+
+<h3>MessageChannel</h3>
+<p>Abstraction for message communication. Use case: asynchronous messaging, loose coupling, integration patterns.</p>
+
+<figure class="note-figure">
+  <img src="assets/img/kafka-flow-detailed-table.png" alt="Detailed table of the Kafka producer to broker to consumer message flow">
+  <figcaption>Kafka message flow, detailed</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/kafka-topic-partitions-consumer-groups-diagram.png" alt="Diagram of Kafka topics, partitions, and consumer groups">
+  <figcaption>Kafka topics, partitions, and consumer groups</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/rabbitmq-exchange-bindings-queues-diagram.png" alt="Diagram of RabbitMQ exchanges, bindings, and queues">
+  <figcaption>RabbitMQ exchanges, bindings, and queues</figcaption>
+</figure>
+
+<h2>Spring Batch</h2>
+
+<h3>Spring Batch</h3>
+<p>Framework for batch processing applications. Use case: large data processing, ETL operations, scheduled jobs.</p>
+
+<h3>@Job</h3>
+<p>Defines batch job configuration. Use case: batch processing, job scheduling, data processing workflows.</p>
+
+<h3>@Step</h3>
+<p>Defines individual steps within a batch job. Use case: processing stages, error handling, job organization.</p>
+
+<h3>ItemReader/ItemProcessor/ItemWriter</h3>
+<p>Components for reading, processing, and writing batch data. Use case: ETL operations, data transformation, bulk processing.</p>
+
+<h2>Spring Cloud</h2>
+
+<h3>Spring Cloud</h3>
+<p>Framework for distributed system patterns. Use case: microservices, cloud-native applications, distributed systems.</p>
+
+<h3>@EnableEurekaClient</h3>
+<p>Enables service registration with Eureka. Use case: service discovery, microservices, load balancing.</p>
+
+<h3>@EnableCircuitBreaker</h3>
+<p>Enables the circuit breaker pattern. Use case: fault tolerance, cascading failure prevention, resilience.</p>
+
+<h3>@FeignClient</h3>
+<p>Declarative HTTP client for service-to-service calls. Use case: microservice communication, REST client, service integration.</p>
+
+<h3>@LoadBalanced</h3>
+<p>Enables client-side load balancing for RestTemplate. Use case: service load balancing, microservices, fault tolerance.</p>
+
+<h2>Spring WebFlux (Reactive)</h2>
+
+<h3>Spring WebFlux</h3>
+<p>Reactive web framework for non-blocking applications. Use case: high-concurrency applications, reactive programming, streaming data.</p>
+
+<h3>@RestController (WebFlux)</h3>
+<p>Reactive REST controller. Use case: reactive APIs, non-blocking operations, high throughput.</p>
+
+<h3>Mono/Flux</h3>
+<p>Reactive types for 0-1 and 0-N asynchronous values. Use case: reactive programming, non-blocking operations, streaming data.</p>
+
+<h3>WebClient</h3>
+<p>Non-blocking HTTP client replacing RestTemplate. Use case: reactive HTTP calls, non-blocking communication, high performance.</p>
+
+<h3>Mono.zip</h3>
+<p>Combines multiple independent <code>Mono</code> sources and waits for all of them to complete before
+  emitting a single combined result. Useful when several async calls all need to succeed together, if any one
+  of them errors, the whole combined <code>Mono</code> errors and none of the individual results are used.
+  Good fit for calls that are only meaningful as a group, for example fetching several required fields that
+  together make up one report section.</p>
+
+<h3>onErrorResume</h3>
+<p>Catches an error on a reactive stream and substitutes a fallback publisher instead of letting the error
+  propagate and terminate the stream. On a <code>Flux</code> of independent optional calls, wrapping each one
+  with <code>onErrorResume</code> means one failing call degrades to a fallback or empty value instead of
+  aborting the entire pipeline, which matters when a report or response should still succeed with partial data
+  rather than failing outright because one non-critical enrichment call timed out.</p>
+
+<h2>Async, Scheduling &amp; Events</h2>
+
+<h3>@Async</h3>
+<p>Enables asynchronous method execution. Use case: background processing, performance optimization, non-blocking operations.</p>
+
+<h3>@EnableAsync</h3>
+<p>Enables asynchronous processing support. Use case: async configuration, thread pool management, performance optimization.</p>
+
+<h3>@Scheduled</h3>
+<p>Declarative task scheduling. Use case: cron jobs, periodic tasks, background processing.</p>
+
+<h3>@EnableScheduling</h3>
+<p>Enables scheduled task support. Use case: task scheduling configuration, cron jobs, periodic execution.</p>
+
+<h3>@EventListener</h3>
+<p>Handles application events. Use case: event-driven programming, loose coupling, application events.</p>
+
+<h3>ApplicationEvent</h3>
+<p>Base class for custom application events. Use case: event publishing, decoupled communication, application messaging.</p>
+
+<h2>Transactions</h2>
+
+<h3>@Transactional</h3>
+<p>Declarative transaction management. Use case: data consistency, transaction boundaries, rollback management.</p>
+
+<h3>PlatformTransactionManager</h3>
+<p>Abstraction for transaction management. Use case: transaction handling, commit/rollback operations, transaction coordination.</p>
+
+<h3>Transaction Propagation</h3>
+<p>@Transactional propagation defines how Spring should handle transactions when a method is called within another transaction.</p>
+
+<h3>When @Transactional Works</h3>
+<p>@Transactional only takes effect when the method is public, it is called via the Spring proxy (i.e. from a different bean, not a self-invocation), the bean itself is Spring-managed, and the thrown exception type is one that supports rollback.</p>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-transaction-propagation-types-table.png" alt="Table of Spring transaction propagation types such as REQUIRED, REQUIRES_NEW, NESTED, and MANDATORY">
+  <figcaption>Transaction propagation types</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-transactional-attributes-table.png" alt="Table of @Transactional attributes such as isolation, timeout, readOnly, and rollbackFor">
+  <figcaption>@Transactional attributes</figcaption>
+</figure>
+
+<figure class="note-figure">
+  <img src="assets/img/spring-transactional-when-it-will-not-work-table.png" alt="Table listing common cases where @Transactional silently does not work, such as self-invocation and private methods">
+  <figcaption>Cases where @Transactional will not work</figcaption>
+</figure>
+
+<h2>Testing</h2>
+
+<h3>Testcontainers</h3>
+<p>Spins up a real database (or other dependency) in a Docker container for integration tests, instead of
+  relying on an in-memory substitute like H2 that may not actually match the target database's behavior on
+  things like unique constraint upserts or cascading deletes. Declare the container as a <code>static</code>
+  field annotated <code>@Container</code> so it is shared across every test method in the class and only
+  started once, rather than once per test.</p>
+
+<h3>@DynamicPropertySource</h3>
+<p>Injects a container's connection details (host, port, credentials) into the Spring datasource
+  configuration before the application context starts, which is what lets Testcontainers work with Spring's
+  own dependency injection: it runs early enough to override datasource properties before any bean attempts to
+  connect, so the context boots directly against the containerized database rather than a hardcoded
+  connection string.</p>
+
+<h2>Observability</h2>
+
+<h3>Micrometer &amp; Telemetry</h3>
+<p>Collects application metrics data for downstream monitoring systems. Use case: instrumenting Spring applications for observability.</p>
+
+<h3>Sleuth, Zipkin, Jaeger</h3>
+<p>Trace requests across distributed services. Use case: distributed tracing, latency analysis across microservices.</p>
+
+<h3>Prometheus &amp; Grafana</h3>
+<p>Metrics collection and dashboards. Use case: visualizing application and infrastructure metrics.</p>
+
+<h3>ELK &amp; Splunk</h3>
+<p>Logs aggregation and search. Use case: centralized log search and analysis.</p>
+
+<h3>Dynatrace, Datadog</h3>
+<p>All-in-one observability solutions. Use case: combined metrics, tracing, and logging in a single platform.</p>
+
+<h2>Real-World Architecture Reference</h2>
+<p>Metrics and configuration tables from a production Kafka-based fraud and credit risk platform
+  (see <a href="#proj-citibank">Citibank project write-up</a>), useful for grounding Spring/Kafka
+  topics in a concrete real system.</p>
+
+<figure class="note-figure">
+  <img src="assets/img/citibank-kafka-fraud-credit-risk-architecture-diagram.png" alt="Citibank Kafka fraud and credit risk architecture diagram">
+  <figcaption>Fraud and credit risk architecture</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-system-scale-performance-metrics-table.png" alt="Citibank system scale and performance metrics table">
+  <figcaption>System scale and performance</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-kafka-cluster-topics-metrics-table.png" alt="Citibank Kafka cluster and topics metrics table">
+  <figcaption>Kafka cluster and topics</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-kafka-producer-configuration-table.png" alt="Citibank Kafka producer configuration table">
+  <figcaption>Kafka producer configuration</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-kafka-consumer-configuration-table.png" alt="Citibank Kafka consumer configuration table">
+  <figcaption>Kafka consumer configuration</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-postgresql-database-metrics-table.png" alt="Citibank PostgreSQL database metrics table">
+  <figcaption>PostgreSQL database metrics</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-redis-state-caching-metrics-table.png" alt="Citibank Redis state and caching metrics table">
+  <figcaption>Redis state and caching</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-threading-concurrency-metrics-table.png" alt="Citibank threading and concurrency metrics table">
+  <figcaption>Threading and concurrency</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-deployment-scaling-metrics-table.png" alt="Citibank deployment and scaling metrics table">
+  <figcaption>Deployment and scaling</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-reliability-failure-handling-metrics-table.png" alt="Citibank reliability and failure handling metrics table">
+  <figcaption>Reliability and failure handling</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/citibank-monitoring-observability-metrics-table.png" alt="Citibank monitoring and observability metrics table">
+  <figcaption>Monitoring and observability</figcaption>
+</figure>
+
+<h2>Twelve-Factor App Principles</h2>
+<p>A set of practices for building cloud-native, horizontally scalable applications, codebase in
+  version control, dependencies explicitly declared, config kept in the environment rather than
+  the code, backing services treated as attached resources, strict separation of build/release/run
+  stages, processes kept stateless, services exported via port binding, scaling out through
+  process concurrency, fast startup and graceful shutdown (disposability), dev/prod parity, logs
+  treated as event streams rather than files, and admin tasks run as one-off processes.</p>
+<figure class="note-figure">
+  <img src="assets/img/twelve-factor-app-principles-list.png" alt="Twelve factor app principles list">
+  <figcaption>Twelve-Factor App principles</figcaption>
+</figure>
+
+<h2>Logging Practices, Dev to Prod</h2>
+<p>Logging needs change as a service moves toward production, verbose debug logging locally,
+  structured JSON logs with correlation/trace IDs in staging and prod so logs can be tied back to
+  a specific request across services, log levels that can be adjusted without a redeploy, and
+  aggregation into a central system rather than reading logs off individual containers.</p>
+<figure class="note-figure">
+  <img src="assets/img/devops-logging-dev-to-prod-practices.png" alt="DevOps logging practices from dev to prod">
+  <figcaption>Logging practices, dev to prod</figcaption>
+</figure>
+
+<h2>Security Practices</h2>
+<p>Baseline practices across the pipeline, secrets kept out of source control and pulled from a
+  secrets manager at runtime, least-privilege IAM roles per service, image scanning in CI before a
+  build is allowed to deploy, network policies restricting which services can talk to which, and
+  regular dependency updates to close known vulnerabilities.</p>
+<figure class="note-figure">
+  <img src="assets/img/devops-security-practices-list.png" alt="DevOps security practices list">
+  <figcaption>Security practices</figcaption>
+</figure>
+
+<h2>Root Cause Analysis</h2>
+<p>When a production incident happens, the goal of RCA is identifying the actual underlying
+  cause rather than just the symptom that paged someone, categories worth checking include code
+  defects, configuration drift between environments, infrastructure/capacity limits, third-party
+  dependency failures, and deployment/rollout issues. A good RCA documents the timeline, the
+  detection method, the fix, and a concrete follow-up action to prevent recurrence.</p>
+<figure class="note-figure">
+  <img src="assets/img/rca-root-cause-categories-part3.png" alt="RCA root cause categories">
+  <figcaption>Root cause categories</figcaption>
+</figure>
+<figure class="note-figure">
+  <img src="assets/img/full-logging-debugging-rca-table.png" alt="Full logging, debugging, and RCA reference table">
+  <figcaption>Logging, debugging, and RCA reference</figcaption>
+</figure>
+
+<hr>
+
+<h2>From My Own Work</h2>
+
+<div class="story-block">
+  <h3>1. Two separate Spring Boot starter modules to enforce a write-path boundary</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> A paid appraisal history write path and a free property cache write path had to never share a write path, since a bug crossing them could double-charge someone or corrupt the audit trail.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Enforce that separation more strongly than a code review convention could.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I kept the two write paths in two completely separate Spring Boot starter modules, so crossing the boundary required a deliberate new dependency, not just a few lines added to an existing shared service class.</div>
+  <div class="star-row"><span class="star-label">Result:</span> The two systems have coexisted without one leaking into the other, and the separation is visible from the module structure itself, not tribal knowledge.</div>
+</div>
+
+<div class="story-block">
+  <h3>2. @ConditionalOnProperty closing a gap between a feature flag and its infrastructure</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> A cache feature's kill switch only gated behavior, not bean creation, so its DataSource was still built eagerly on startup and could fail the whole application on a bad connection string, even with the flag off.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Make the flag genuinely remove the dependency, not just skip calling it.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I used @ConditionalOnProperty so the DataSource bean itself is only created when the flag is true.</div>
+  <div class="star-row"><span class="star-label">Result:</span> Turning the flag off now actually removes the dependency, which taught me to think about failure of infrastructure I own, not just the systems I call into.</div>
+</div>
+
+<div class="story-block">
+  <h3>3. @Version optimistic locking on a frequently written parent row</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> A message insert and its parent session's last-message-timestamp update were two separate writes, so a failure between them could leave the session showing stale data.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Prevent concurrent updates from silently overwriting each other without serializing every send to that session.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I combined both writes into one @Transactional boundary and used @Version-based optimistic locking on the session row, catching OptimisticLockException and retrying rather than using a pessimistic row lock.</div>
+  <div class="star-row"><span class="star-label">Result:</span> Optimistic locking was the right fit since sends are frequent and short-lived; a row lock would have serialized unrelated sends for no real benefit.</div>
+</div>
+
+<div class="story-block">
+  <h3>4. Spring Retry with @Recover to turn a silent failure into a visible one</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> If an appraisal database save failed, the original code silently logged the error and returned the computed valuation, giving the team no visibility into how often it happened.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Keep the good user experience while giving the team real visibility into failures.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I used @Retryable with backoff for transient failures, and @Recover to escalate to a clearly marked critical log once retries were exhausted, while still returning the valuation to the user.</div>
+  <div class="star-row"><span class="star-label">Result:</span> Failing gracefully for the user and failing silently for the team turned out to be two different problems that both needed deliberate handling.</div>
+</div>
+
+<div class="story-block">
+  <h3>5. Flyway baseline migration ordered ahead of everything by version number</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> Migrations for a new cache schema worked fine in dev and UAT, since those databases already had the schema from earlier testing, but failed against a genuinely fresh, empty database.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Make the migrations correct for any environment, not just the ones already partially set up.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I added a baseline migration that explicitly creates the schema first, guarded with an if-not-exists check, ordered ahead of everything else purely by its own version number.</div>
+  <div class="star-row"><span class="star-label">Result:</span> Migrations then succeeded reliably on a truly empty database, not just on ones that happened to already have the schema.</div>
+</div>
+
+<div class="story-block">
+  <h3>6. Scoping a @RestControllerAdvice with assignableTypes to limit blast radius</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> An endpoint always returned 200 regardless of outcome, and I needed to introduce real status codes without breaking consumers who might have fragile logic built around always getting a 200.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Change error signaling for one controller without affecting error handling anywhere else in the application.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I scoped the @RestControllerAdvice to that one controller using assignableTypes, and kept the response DTO shape unchanged so only the status code changed.</div>
+  <div class="star-row"><span class="star-label">Result:</span> We shipped more accurate error signaling without a coordinated rollout across every consuming team, since the blast radius was limited to exactly the controller being changed.</div>
+</div>
+
+<div class="story-block">
+  <h3>7. DataIntegrityViolationException as an expected concurrency signal</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> Two parallel calls could hit the same cache key within milliseconds and both pass a miss check before either had written.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Guarantee only one write wins without adding a distributed lock's latency to every request.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I relied on a database-level unique constraint, catching the resulting DataIntegrityViolationException as an expected signal and reading back the row the other request had already written, scoping the retry to its own fresh transaction.</div>
+  <div class="star-row"><span class="star-label">Result:</span> Intermittent exceptions under concurrent load stopped completely, with the database's own constraint doing the concurrency-safety work instead of application-level locking.</div>
+</div>
+
+<div class="story-block">
+  <h3>8. Mono.zip versus onErrorResume for required versus optional calls</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> A report pipeline made around 20 calls to a third party API, where some had to succeed together and others should degrade independently.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Express that composition correctly in WebFlux without one optional failure aborting the whole report.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I used Mono.zip for the required group, since it errors the combined result if any source errors, and Flux with onErrorResume per call for the optional group, so a single failure degrades to a fallback instead of terminating the stream.</div>
+  <div class="star-row"><span class="star-label">Result:</span> Required calls failed fast together and optional calls soft-failed independently, exactly matching the actual business requirement instead of treating every call the same way.</div>
+</div>
+
+<div class="story-block">
+  <h3>9. Testcontainers over H2 to catch real database-specific behavior</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> Repository tests ran against in-memory H2, but I needed to verify behavior specific to real SQL Server, like genuine unique constraint upserts and cascading deletes.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Get real database behavior under test without slowing the whole suite down.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I declared the container as a static @Container field shared across the test class, and used @DynamicPropertySource to inject its connection details before the Spring context starts.</div>
+  <div class="star-row"><span class="star-label">Result:</span> The tests caught real constraint and cascade behavior H2 would have silently handled differently, giving much more confidence in that part of the system.</div>
+</div>
+
+<div class="story-block">
+  <h3>10. @DependsOn fixing a bean initialization order bug in observability</h3>
+  <div class="star-row"><span class="star-label">Situation:</span> Application performance monitoring logs had a gap right after startup, since a log-clearing configuration bean was initializing after the APM appender had already registered.</div>
+  <div class="star-row"><span class="star-label">Task:</span> Fix the ordering, since Spring doesn't guarantee bean creation order beyond explicit dependency edges.</div>
+  <div class="star-row"><span class="star-label">Action:</span> I used an explicit @DependsOn so the log-clearing bean runs before the APM appender registers, instead of relying on implicit ordering.</div>
+  <div class="star-row"><span class="star-label">Result:</span> The logging gap disappeared, and it reinforced that bean lifecycle ordering should never be assumed without an explicit dependency declaration.</div>
+</div>
+
+</div>

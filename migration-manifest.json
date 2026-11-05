@@ -1,0 +1,1772 @@
+[
+  {
+    "repo": "interview",
+    "file": "public/library/interview/.gitignore",
+    "sha256": "83e3a17aa7790971b7530815c63e7e285e8207da47dbbd51def9241b32d5155b"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/app.js",
+    "sha256": "7849d395eb4393fb4ad7661dcc9660c2a6a3bcc1e04149657a7097989578822b"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/.gitkeep",
+    "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/111-java-interview-prep-questions-cheatsheet.jpg",
+    "sha256": "26d77edfe14c6f1ac45678589a1c593fd2b607d1857bfb652923fd465765f606"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/angular-vs-react-comparison-table.png",
+    "sha256": "46a3ffa148becd674ba2c3811902b94aeb019685dd82f4828fd63e2cc5a16765"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/aws-services-for-spring-boot-table.png",
+    "sha256": "88fdbb4e86dcd469dfcebfb7debd380aae30b83f4ac333eb8c6c730734676b02"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/caching-strategies-full-table.png",
+    "sha256": "58fde7b556e7be4f154b048285d074c4bb6588e66608bd0872f110aceb362b02"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-deployment-scaling-metrics-table.png",
+    "sha256": "6692a42196c36e95b9ea0bcc402ba591853786c36f473860e46726a84f6f6b0c"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-kafka-cluster-topics-metrics-table.png",
+    "sha256": "78fe103fb05aacb1ef2de8571af481686299cf0ff80ea4af32e173a61cc545de"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-kafka-consumer-configuration-table.png",
+    "sha256": "323bfd4e5c7f11774e7ec6b22ede8d74df500bfab791eade7f05b590aa40aeeb"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-kafka-fraud-credit-risk-architecture-diagram.png",
+    "sha256": "56e8b89aabe371d02ccd0c287944b224f1965f4d71e1bae11fa1de0e0884ea9b"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-kafka-producer-configuration-table.png",
+    "sha256": "5333e547e28cc65acbfb29d1d7785a7780311d9e804b11d5c0d978b2ea22380f"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-monitoring-observability-metrics-table.png",
+    "sha256": "83de6b20c7b9f79682e85bc963ffdd10aa2927b0ada9021c3ad30cffcd6a2666"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-postgresql-database-metrics-table.png",
+    "sha256": "235d2313a56b519d628df0e75b8d2c7e0652b4cf553aefdd4a16b13a9ef75da0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-redis-state-caching-metrics-table.png",
+    "sha256": "c137e67383efaa12a6d0c6ffa1fae98fad70eb9acae3bde25d4896c099aaf13d"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-reliability-failure-handling-metrics-table.png",
+    "sha256": "482c10d6ce17aa010bc81a6d34f0a83eb4f90e9e6028825b500e0eac49bf8a80"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-system-scale-performance-metrics-table.png",
+    "sha256": "db9bed44b59d5d4a55e16c207029c6f40d6a4904bf63f0f9198876ddbc1e01bc"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/citibank-threading-concurrency-metrics-table.png",
+    "sha256": "dafda9518bf1a9ebf72c56dde96a53c46ac8f7620e25a245b70bbf20c9af5fe8"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/design-patterns-junior-middle-senior-cheatsheet.png",
+    "sha256": "12248651344f131665384d590caf6763e743d4da95b1ec6f4ceed03fbb02078b"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/devops-logging-dev-to-prod-practices.png",
+    "sha256": "1b85f1f0211a6f7d6b98afbf3317ec26a046435227d2c4d704e3c65e3fcbc66d"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/devops-security-practices-list.png",
+    "sha256": "a10bb0e43d8b844baf5a49be96cbaecb5ea587f3fbfe5b2413fb939ea66cfdf0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/essential-design-patterns-overview-diagram.png",
+    "sha256": "2dbc93984f50e40ba3fe2a8caa29e01175a21ed2637b9196286c069b032ef820"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/filter-vs-spring-interceptor-vs-feign-interceptor-comparison.png",
+    "sha256": "37ef522aa497c711f8b750135dae19016f000cf3334b6db2724ec49eec39cdd3"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/full-logging-debugging-rca-table.png",
+    "sha256": "ea8fc5b591af30318f11b97d272405040fcb723b7007e269ac69949858e6ea10"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/http-status-codes-table.png",
+    "sha256": "016eaea0961c46176beb99783ae1b45aa9f7a9f89a0e8bbe04319947f2f71a11"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/java-collections-overview-table.png",
+    "sha256": "a9a3e82490887e2da2efab1f5ab6f1a090c34efefb93616ea83b63059cbd57b5"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/java-comparator-sorting-techniques-table.png",
+    "sha256": "f553ebfe9d3b38033ae33b68b5dfaaa9251fa23bf04b61b171495db82cd7b3e3"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/java-concurrency-cheat-sheet-collections-1.png",
+    "sha256": "ef076888d39935e75a3fe6bc80b4ac450b183d173271af606566d8b049be93eb"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/java-concurrency-cheat-sheet-collections-2.png",
+    "sha256": "85e1ecf98916ea9a693f5cb230a7c468e9c72425d4035ac11f209807248c94d0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/java-functional-interfaces-table.png",
+    "sha256": "84ca1b07917fa65041b4065195b5790b5adb210af28a518ecd31d990ef9f2db2"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/junit-mockito-annotations-cheat-sheet.png",
+    "sha256": "a5acac683ac842feec07ef90e5ef72162432e42807fd9105e5ce3726aa19d0a5"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/Kafka Internals.png",
+    "sha256": "624a986d9839418ccdf5ad5ea4dff118de038588d24914e016831cbf4a2e60c1"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/kafka-flow-detailed-table.png",
+    "sha256": "bc512c2579374203d9aac0ee5445b9f6fb8f00cf085cdfadfef9fae7ae8836a8"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/kafka-topic-partitions-consumer-groups-diagram.png",
+    "sha256": "903ac7eef3f53cc8ff464ebb416f19019e4dd874131fea0bb7445d13dca36a98"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/rabbitmq-exchange-bindings-queues-diagram.png",
+    "sha256": "39c142b2556653e2abb05f4878abeccc2914d2db32fab6f609177973fdf811ac"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/rca-root-cause-categories-part3.png",
+    "sha256": "8ab14263d10d7aa7819f37b1c9cac29598fb34c4cc72e1a503eb32f99f58363a"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/react-component-comparison-table.png",
+    "sha256": "34515b663ee2c221abd91cc7c9789f21079f1754ea223f51c502ba45fa28f29e"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/redis-use-cases-table.png",
+    "sha256": "8d630582d0812ac5578d5271d080cb43414a75208ee07cd8a9538112280c3897"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/solid-principles-diagram.png",
+    "sha256": "d46ba8e6c98706b87bbabc20383dc0478c021b8b5f5a54765f9abd7157104653"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-mvc-request-flow-diagram.png",
+    "sha256": "72b7f825e3356779653168aaa863c90fdad471fe55b2529b91ac51912d5aec1c"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-redis-caching-config-flow-diagram.png",
+    "sha256": "bd0f9f79f5b6aad87a28e910c33bf0e356ce0ad8377571da5c3933759bce5538"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-security-authentication-architecture-diagram.png",
+    "sha256": "8784504da2c7f6eae24184ec607aec446d9ab0dfb31a6ddbfbf9e71939f422b0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-security-authentication-flow-table.png",
+    "sha256": "30a4aa654947625115f192ba3d99c40bf371fec0054c600a28ebf7947f4bf5ae"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-security-authorization-flow-table.png",
+    "sha256": "fac26544d84f5cfb736f32c2881adfb19a6dbc8314e16aadd068fc1511414c73"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-transaction-propagation-types-table.png",
+    "sha256": "ea12faba72eb1345864fc1ab4eca6a5401b72453863e16848f11be4006faf3c9"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-transactional-attributes-table.png",
+    "sha256": "f1aaec8e49c5bc0cb24f0cc3daa4bc3307f7f06c46dd67b375fb927339489ead"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/spring-transactional-when-it-will-not-work-table.png",
+    "sha256": "f4bcc1313a599240295f494696f38259fedfd12ae7df23a57234a96f8354df00"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/sql-isolation-levels-vs-locks-table.png",
+    "sha256": "55d946b2ee4c4502fd91297bd455ff671a51a632ffef18876a702c1d395d28f6"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/top-5-caching-strategies-diagram.png",
+    "sha256": "548f6ae8b3a3e3d3439ea6013a5186b12c9f39ea9a493e3aa8b1731724eede49"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/twelve-factor-app-principles-list.png",
+    "sha256": "507d90e7de3e25deafe84fb9769629c01e38be39e783d251ebedbee1f93ef833"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/img/typescript-key-features-table.png",
+    "sha256": "16b9e595d284337db070eecdc1ff80ab805a9c188ddadb08a89b927bae98cdc9"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/assets/style.css",
+    "sha256": "636eb8f2a431c86d56172af176548c273f11463d6021c6fab9895146be34ab46"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/CLAUDE.md",
+    "sha256": "0d536c0933cee5cfc6fe2d15266ed7cd91bb742a128b5070544e21e504b60c8e"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/index.html",
+    "sha256": "5abb4d572f688aa59c06cced1f3633721a77391b3b5be44d6505a887b28479a0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/interview-prep.md",
+    "sha256": "63cbae4e0d6b5127d0236d2b0cad14f2ab9b4c37685f61c39cbd664e85ccf09e"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/angular.html",
+    "sha256": "e0ed3eb4cb4b42ccfd88057b6da0775a483adc5450a439684e44a084973c6625"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/azure.html",
+    "sha256": "6058e361857c60a22b2d21c4274513fda3f7b1219aebd0821ff7aeffade6290b"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-01.html",
+    "sha256": "859759870933246944dfe62838a48059c648849d2247e528a9e6a19117dea893"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-02.html",
+    "sha256": "6151702f73932cc3b9b11ba559b8b814c6fd1db769ceb07a4f4fcaad19647930"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-03.html",
+    "sha256": "f56151a2780b6e2ce753292881629ab2d0f7a445cbfa55dbc9b4c7126cb2aba2"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-04.html",
+    "sha256": "ea32ee5e23e98864a2b1889b1fd02387630065e8c4622f6568a5425e8b1f9ca5"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-05.html",
+    "sha256": "6827bb414ad89a02ca02bc6f23d3473c4f4c63c7785f6e3e1b82f158ee0772f4"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-06.html",
+    "sha256": "cb917cdfef4fa4b64655ddaf72453fc5438fc084782226489efea1be32ad211c"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-07.html",
+    "sha256": "084775a0e1ab60208f94b1a4fe41e64c0621ec05d43a850ea8c80e624b27d83a"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-08.html",
+    "sha256": "de6dd997db59a805e50960dd7da68fcef91d2652f6088f00e6549238b99c4324"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-09.html",
+    "sha256": "a168aafe2a8d1e0addc35c5de97e32cf2fdffbe28281222bbdb1da22a49d365e"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-10.html",
+    "sha256": "8d2e6b1b0cb205208adcc2666c0dd80c6385f02e896469ac3bee5e339584680f"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-11.html",
+    "sha256": "2a2767b600f970f8a7da84870cd5a04e4b69ab3514f56d4d7d97f3161d1660d0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-12.html",
+    "sha256": "dd4a8849ddea74a3185a323f5ed97161587ec59a608fc1a04e13e8ed6006e7f0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-13.html",
+    "sha256": "f07e8d5d121f0d2954602310b413625b48d5cc14b910a8453ffa6d4311dba8cc"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-14.html",
+    "sha256": "10492c36c19c7ff1e6d95ec174cb2d204d859fbab2f3c7f115c567b2c96acbb8"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-15.html",
+    "sha256": "0263e400994662bddcc327831207a9feac91bb2b19df642b1b7af318714f9f4d"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-16.html",
+    "sha256": "88d82af08a711a521933fad789fa7bbe6415c717c03e0ba2659da2ff140f1806"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-17.html",
+    "sha256": "b7015525df277f65c6828191b1e633b98d9e07287d9c0c6120649717efd2d96d"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-18.html",
+    "sha256": "df4fcecbf8b3ce4c0da6bb5bf7a9db5ab092a3048215a12edf28f8a5fb042f58"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-19.html",
+    "sha256": "9e621a53dec0631a961e93e472e303d75488f173e81e3f0bc8c927974feff019"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-20.html",
+    "sha256": "7a62a2fb3177a317c27a133e08c167ae7b2a1041fb9d2b366f1c5953bde76928"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-questions.html",
+    "sha256": "f9d78c27cb1bc46bd10ac9a0764de7f6200d0c0718aef7c660d6a0deb518526a"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/behavioral-stories.html",
+    "sha256": "1494b5d263195006bec2d417c5473535c9d49eefb1cb21dda46fc1fb6dbd1439"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/css.html",
+    "sha256": "92557284210d51521610b61e0a459c464cbe2a80b4ff249341ac874bdf0e24dd"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/devops-daily.html",
+    "sha256": "8156383913e282b0bfff2b4a3e5f1319b7070e29c77b96fbac35c3193f9393e8"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/devops-useful.html",
+    "sha256": "f38ff19fc9367e1fcda5b0c9fffcccce56dcb2c70de28566da7d5c5e6639f4f6"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/docker.html",
+    "sha256": "5db6333ec8d4acb7d406c792864c979417aaf171bb12351caa0a38982ed874a9"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/frontend-quickref.html",
+    "sha256": "b67b3dd04aa69571ba638e9aee5d703044a82025fa493390df6096f5d272f037"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/git-commands.html",
+    "sha256": "71bd70264623def7affb561cac83acfc031c7d52793abf3efacef248851002f3"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/home.html",
+    "sha256": "593953a89f633eb8ff42d675115cccc5d5fbf44639613994dd61d0f5b3c8f239"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/html.html",
+    "sha256": "7c1b56a1ea51b7bc17d75158cf7f786c8ee233d8f62dfe70d2a29863f3d7a3b9"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/intro.html",
+    "sha256": "79ceb9a4c103a013d5056317ec9b5a47c28976591b67f95551c7cb8c41b747c5"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/java-snippets.html",
+    "sha256": "73845dd67d29e86ff977f1eb9cdb015f29d86a2b2a79ec3b1f6f97c6e9df9f82"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/java-topics.html",
+    "sha256": "1a7b513a65f6b1db7d61ebc75cc036240ab3ce263dc95d95e614cbc60851bbe8"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/javascript.html",
+    "sha256": "a59307a76c604c651758f1a104611e4bc3e35fc2cdc30afb17bfcad52601c77a"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/junit-concepts.html",
+    "sha256": "f66495a7f9c10a332629f366b24b31c69845c01c01014e6ad3654a1696017309"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/kubernetes.html",
+    "sha256": "ea2eceff43f96aafeeeaf2801a5017795156895af1f9f476a7c05f6346ad06a1"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/minikube.html",
+    "sha256": "8a4083fb9edccadd40cec883525af15407441bda5d1540986755439127815b60"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/mongodb.html",
+    "sha256": "d9fd9cc073b069c128c6f2dab3407ffef72a02845ce02ad3de043345056ffdb0"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/proj-accenture.html",
+    "sha256": "5c3ad815f5a2bc92f47ad02f9d63c344a5694de5b250cf592b8f8fb5000cecb6"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/proj-citibank.html",
+    "sha256": "647066eb54f549c57f5b4594c9e9403d35b99ca6c654a2e881f631324a245c8e"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/proj-reidyai.html",
+    "sha256": "fc69a5a2e2cfccfef0b5b16d329dbd26528fe6fd8e52d16d9c5c3c3b4162937e"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/react.html",
+    "sha256": "b5fbb4623ba23b7e3d2cd34280ed9cc7f029334461adb5864400d1c6ca4cf5fc"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/redux.html",
+    "sha256": "d86538c913ac451d0e8a8a45296d2e307f4125b66429ef196d2735ac60f86fdf"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/solid-patterns.html",
+    "sha256": "1e1082c7a89d3cb065d97a1d6169d5e9bca424b43496327140110e5fe857544f"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/spring-topics.html",
+    "sha256": "bc476dc481d678c3cb1fd051217f12a329ddf78f3aac79d5fce580a4b098d0d1"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/sql-snippets.html",
+    "sha256": "1f5495676db0d74c10f8210cc53a9b1af26e123a5bfe2ccc5a475b5e4315e829"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/notes/typescript.html",
+    "sha256": "fa1ee66ddfae69122deca957b5eff890a6f1e5d3fb86b56b54f27230d292abc4"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/Project_Documentation.docx",
+    "sha256": "f5e3bb877cddbe542d7e9e58e755b1823dc081509ce536d6294c1197cd686517"
+  },
+  {
+    "repo": "interview",
+    "file": "public/library/interview/Project_Documentation_WITH_BEHAVIORAL.txt",
+    "sha256": "c86794e486a2c5c264aba498fc57891e9dfaa437c2c2d8de442db48ed537853a"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/.gitignore",
+    "sha256": "3ac9808ab9a5deae43ec21c2f7e59bdf0176ef4315ce643c441cd09c6075888c"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/assets/app.js",
+    "sha256": "ad2729a2a2b6e6d080fa4e3e037464c9c44231e5913c1baf04b5997ef2af36a0"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/assets/style.css",
+    "sha256": "bbe8177f7803dabff77a3652ade503ed3426c343dee630e1b4d0dac8e9ee8837"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/CLAUDE.md",
+    "sha256": "7dc50f46a1cbc2ceb6265b07fb7dcbc72fab501b0984e0a3ff810af944f5d75c"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/index.html",
+    "sha256": "362b58bb91859ae162cac344a4d60c50e1500d8519433a238872a780ec5a7830"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/acid.html",
+    "sha256": "810eef4d269d3b0c018588e25502ef68416580d959b0eae5c39f616a60a87b57"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/apidesign.html",
+    "sha256": "e5fc40099338dc9940044a18feb1a9e1fdbf813451d87c66089531182d4a6ab6"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/apigateway.html",
+    "sha256": "82330f5f7e13d9f5809768f4c407291691bdb85d8bcebfa3e41c20ce3bb23538"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/apigw.html",
+    "sha256": "b3b35f3620f5cce7feebbaa6571d6fd8498b2a670bd9558f59f304abba7f6b81"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/auth.html",
+    "sha256": "4e05e6b6aab80efa8b285c80e7f4680eea9e7eab3e7b311e6919bc5a2bb3698f"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/autoscaling.html",
+    "sha256": "17c2a56f77ab12b5d043b55a6990ebe4e6999dc2578fc865a284c8b63e88bd3f"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/availability.html",
+    "sha256": "95a90cbbcdf658720698a8d3d38a3ebffe66982f2b9f95d58f8c0d740c0ec2c9"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/backpressure.html",
+    "sha256": "994ed780b6d97b645789552e1b71d7bd57599f75ef48f763828359035a4e6bd2"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/bloomfilter.html",
+    "sha256": "c65109e2abf08d37e4bce0939bcaed538af95771681100bb731fd6d55f95e8e7"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/btree.html",
+    "sha256": "a776e4dc9178a8afb73902a2f2cf8b32518351ba299e3ed2841a5550ecc96c89"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/cacheeviction.html",
+    "sha256": "81036b1b039c40b18708296ed79afcfd48442495dd696bc605b0b2c83844bee1"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/cachestrategies.html",
+    "sha256": "e0450262be54081e3b00cb93ccf17ed0e123e47474084ca58841f9b1d1704413"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/caching.html",
+    "sha256": "24e3db8e2f5ae171ea620853ef4334ecf7437bc1da08cffd71738437c6bb51ea"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/cap.html",
+    "sha256": "5bba2a5267dd777de2c95510730d75a0695e43db16911185ceb2e839ce2a9c95"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/cassandra.html",
+    "sha256": "3fe8db940927bd7a0ee91c1a9d8fef5a9f6eefcfac9c2b348f3215ab1f6338e2"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/cdn.html",
+    "sha256": "baf0b00904c0543364210fe97849abb8d43e3860873813eb149171b26c6ce3de"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/circuitbreaker.html",
+    "sha256": "ee692575d466f0f5ff1957e705b1d099d3e550f2b484feb9c02d172a2f50a075"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/clientserver.html",
+    "sha256": "8a6f189063051f0a87a84b15a10a7378793392cf2f90f8b01b951e8730b7fc38"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/consistency.html",
+    "sha256": "e3671eac4f72a18dca578156d21b76d89d4a0a6b1c75bc1b1c2023e1f9ec9053"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/delivery.html",
+    "sha256": "e9310d0e6becab214b15c7d463371ba74c95fef3eaa6109d72a0dccb6bc402e2"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/dfs.html",
+    "sha256": "73deb71fabf9684e664ae1d25e8f1064f622e3525fe6df906f8011dbabcca1ab"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/disaster.html",
+    "sha256": "f664e16797b19fd95e6e3390f0f3a393d7d24dc3092beb495c3e90bdb6e83ca7"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/distrcache.html",
+    "sha256": "c63bc4a94174e63431d6861d8507dd600b7cf4e793964c6e84c73309182c86d1"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/distrlog.html",
+    "sha256": "077f851d27aa620e2929d1c1f35669591635780758311d9ebc2f36f3262fca77"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/distrtx.html",
+    "sha256": "e8c7fa03619845cbb72f621bbfff613232eae602777b425174e15af6fdf8ef2b"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/dns.html",
+    "sha256": "9e926d8d9b5c35fa590818f9bd70fe4b9d9ca7d63aa4b57815cc610a7c04cf16"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/dynamodb.html",
+    "sha256": "c0676df9b31c22f935a0937e9b97b0f6be7952c20e88d3f6c690461486acc685"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/elastic.html",
+    "sha256": "9644edb81ac30a2e867712c2490025cd00b38d338c2d4eb10d09851128204abf"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/envelope.html",
+    "sha256": "4e61d2cdc93efd6d395589a184595cd592a4c2a846ecf416b272a4a0df3eaddf"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/faulttolerance.html",
+    "sha256": "b7fa2846f6778703dc01298ec85771c26afa688a7e692bd218fad5f886a175c1"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/flink.html",
+    "sha256": "c4b7536a92c8da80e0db05fcf4da0630c1e08f462d9eb55911802321af12d502"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/gossip.html",
+    "sha256": "03fa6851849761ff6a831bf82b5de25f3d584ec5889431b2448e3b7ee54c15eb"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/hashing.html",
+    "sha256": "dff9e75d324949d89bd1df1e6004f217c90bfb4efe2b1235ba2331042310ce77"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/home.html",
+    "sha256": "d5770bf97d82f8545f59927f51c64b432b285f750f1fe534d8c04f7ddd6bf979"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/hotspots.html",
+    "sha256": "c2483efc177b8fd24422c204c0b4958be6295bc41d31d13121563b1b4ee6b2c0"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/indexing.html",
+    "sha256": "89987e8ea2d6f0fbf1d4f1c336b88e1af54fad4c96dcd5369201a0359fe9a3f3"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/indextypes.html",
+    "sha256": "9954ffa13580e2e8a5ea98b0e13f671649dbeeab1698fb72032c82e8ea2b3fae"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/isolation.html",
+    "sha256": "905f2b570467692f1f6ce4c64b02110cfc48b31bcc9f5ae8dfa992ba5c95a8f2"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/kafka.html",
+    "sha256": "6a5a4e6d31142b89b1e43067be03a1e91604b897a5fe36b0a9e98ecc22e535a7"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/kubernetes.html",
+    "sha256": "f53a8177d0a2d0566069c7af3020781c3ccf41ccb6db5c7a96766ec251ec9955"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/kvstore.html",
+    "sha256": "2d1377a4c2f05cdd90dc3f39ae928911e890b0d14e22ded6d46999cc747e294c"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/leaderelection.html",
+    "sha256": "2e7bd9b3f9e54f44dd1ca474521c42319a8aaac6f397d620b22198612b858263"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/loadbalancing.html",
+    "sha256": "e44fdce8b9a539ea94a26f456e3e14aa4d639e9e385d45c7fe0c727a48130457"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/merkle.html",
+    "sha256": "a3dfcfdf4f20dcac2a8af48d94f2367195c2e5cd8cae1a5e710ba5a5ed0e3d9d"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/monitoring.html",
+    "sha256": "542605cb6d1911bdacf5d2a574b3e7e5b9ed8b0ec1adb52bbf23f5e9e0224c29"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/msgsemantics.html",
+    "sha256": "cdfd7277dadc01d4b1ba349c598de47fb58abf4e4d1eab034f54f4e3fc929063"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/nginx.html",
+    "sha256": "a3357e4f2f0144749caf668cd3a159d1a5077c3200cf19bb2a7433d196927500"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/normalization.html",
+    "sha256": "3df2c6db57c014d270fd29b6befb984ae2015e7477056014f52c9110c372da60"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-blobs.html",
+    "sha256": "4acbe7edfedcc47038f3b2ce246746b734613fad7ca13b2b4da0f505e615d82b"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-contention.html",
+    "sha256": "26c3868dc6dfe0ee8f5206fdec6c3814bef4245c6d9b68626427b22d978c4e36"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-dedup.html",
+    "sha256": "6683e82b6d686a4cf23df661d7e41b875c65fb68bd9302b3ee57fb90f51f6947"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-fanout.html",
+    "sha256": "9fffaab40a1e238f2640f264b70b647c963e7dbf8bf4c7431b36a284776b1cbf"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-geo.html",
+    "sha256": "06876001f695cae3fc1fce5cf87b6da7ffc7a1c556f4dd2e1bd578b91481d24d"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-longtasks.html",
+    "sha256": "28d46984535676b1540919bb8a03ff8a956717aa0676bafec8347278eb25b3b4"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-multistep.html",
+    "sha256": "c3c32a9d0fab415319ed2fac593122cd68496a6e94586669d7a74838748ff802"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-notification.html",
+    "sha256": "593bb2394ad9dde3593df3d804f11309da1a97fdc9f5a3287d29857030055488"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-ratelimit.html",
+    "sha256": "d5c3eb7c3a8637b54f57d807909f3a0a3277141d2530c37b02204614c732b42f"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-realtime.html",
+    "sha256": "a3953136c42d3f9126fe867c31e5fbe298c1b3d38af39f66e6edc4a5c95d7637"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-scalereads.html",
+    "sha256": "2196dbeeda3546d47319f54ef2a4fe1a3b734e9573fa70521559dc7a5ff7d84e"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-scalewrites.html",
+    "sha256": "2429139317821896ba23f8ce9e81e4a0d3d5833ab97c286bfb1998290cad88e4"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-search.html",
+    "sha256": "cd5bcb83bb617f36c88aebc806c1c1ec44f12c17d679721fa520543bc9ff1f26"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/p-topk.html",
+    "sha256": "a8b06bd29765a84ef14ce1d3ac7323e12dfa1e0bbd9e4cdfe7fa5fa9077d0660"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/pacelc.html",
+    "sha256": "49a6faaa1bc413d99ba7feb95efb3f6812b0cfd1b83499e4d06f77a7c02b9a61"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/postgres.html",
+    "sha256": "016cc13af961cd6d24892753f8bc8b5315c95e37cc2e161ceab0b816e0239188"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/practice.html",
+    "sha256": "f9a89e1ce46230c371696a5359cdc5bb2693317d01d7b0af0322ce7e9b8b1e9f"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/proxy.html",
+    "sha256": "c1e5ad5b116610294abb3bdb8a408e64bd9017901a792e73ff5015be2f68d526"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/pubsub.html",
+    "sha256": "86dc3aabfd65ec15a66dd776a387f5efa27245376a39469cdba18f7021d67673"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-adclick.html",
+    "sha256": "5c49ff8b46487eb54d47cc64ed3f96f7587d6c17d27c448eccb11d4319c016b2"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-auction.html",
+    "sha256": "89a998890b1b1f0a73fb0961b6a3255fbe09d2c8e2212a187edcf32f2c24c6d7"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-bitly.html",
+    "sha256": "9c03678cea4430f1e500f5406cca0a58f20ddbbe463d80a3b133a0cad7f95c23"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-chatgpt.html",
+    "sha256": "0f9a27e23a572774c16c17c3f8fb7ba038d8305f1e38a95aaa3846e250b8f05c"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-crawler.html",
+    "sha256": "3aa959baf511b0635d32730b99ca06068c746158ff09cc55aa21af6682ab865e"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-delivery.html",
+    "sha256": "f49b456d46c391af65a9c36321fcdc88a7176b566f2ee51dc05d95683d862639"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-distrcache.html",
+    "sha256": "33d257307594563407839a48ccec92c1cb10178674b9bd89c909f8b7d7c6d537"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-dropbox.html",
+    "sha256": "c7b2ce58b39fa538b93b6353921fae5716432c362ce67ee057d7b3135e37e8f5"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-fb-feed.html",
+    "sha256": "1522e22cb8e8e90da98cda3157b1dd64772897d80bb0e2a4d0caa8446fd04b5d"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-fb-live.html",
+    "sha256": "dc4b36a1ed14f4c8778a3b5fa9974d417ea12f56186a7b36f49cafe8f5eca968"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-fb-search.html",
+    "sha256": "569bb53b31e0ea994e85bd8a1a37169f953bd1ae5364886c4f194a3e478afea4"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-gdocs.html",
+    "sha256": "68f3ce49f5b5e2e2d0940d53603f8c2947363c1e1f4957c2e3d97aecffc6cfa2"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-instagram.html",
+    "sha256": "73e0f845e8a0895b18ace38215ccf92fc15a7a14536f36c0143a47dd0148bbfa"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-jobscheduler.html",
+    "sha256": "75957c2346794f41061d24ec642b2195408f769d04694bbad146e98c286b2830"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-leetcode.html",
+    "sha256": "4e05e5ee2b5cb5ae460ce4808a56f3dce5746ea9d65659619c6fa993cbbdc484"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-metrics.html",
+    "sha256": "ababc16c55c440ba5d50a8f6d82e45d3a0595191b4dffb308260471ced5d7737"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-netflix.html",
+    "sha256": "3b5aa1b6918ccb86fae9436ce0921e5d621907f14e5a1d3cf8c5b563343281c9"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-news.html",
+    "sha256": "7c8eedb2884dc54dc244ba4df1e979d1dcd7bf9892845b384bdc203f8579590a"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-payment.html",
+    "sha256": "57b3434314b2a1ee7b54d3947915a6ee754a7c39fc55a3129ab4b35db00aefa2"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-price.html",
+    "sha256": "883038f1ee34d67ebda1ad5eb99f539e9e26e614576e0eb97ebd7d4f9ab83212"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-ratelimiter.html",
+    "sha256": "f6593b6a740b556a2e3c90a6bbd7346212a4df8a51db138bd713401598ce50c8"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-robinhood.html",
+    "sha256": "482ba177e4a64a5650ac6967adb8846be01c072433359dedb9e6e2fb32c0d35f"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-s3.html",
+    "sha256": "1a1fef311c45c3c34c210c42f4623ebb5c19c87e09cb8f6c1ce596ae75d9d699"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-strava.html",
+    "sha256": "d5a0c9edfd11932dfe3375d6b18d9bbcdc04682f4b8eeb8ef1c0d0d69618e310"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-ticketmaster.html",
+    "sha256": "46eadb4666a50fa3198d69ef3a4ffafc897b553b2a8282ba38c65249b84fdcf7"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-tinder.html",
+    "sha256": "653dee8ae7b1b609b1accb9e2f66f261b348ab352a5910333d1bfa83c4868f3f"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-uber.html",
+    "sha256": "8d00f239d364cb318ed6ffbf5bbbc51ef258412ad0c40c74353a8cc72ea9eb25"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-whatsapp.html",
+    "sha256": "e449cdd0835eb779175a72c7d1adae6971808df41d0ae70889f97af5de8223e9"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-yelp.html",
+    "sha256": "ce945699ee7f481e83561e2c8963b30bd3ee189a90034039ace1d837004f60fc"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-youtube-topk.html",
+    "sha256": "bdb1ce954350b20ce055d5d15941757b5c046b027597751e03f5b8099e28e4de"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/q-youtube.html",
+    "sha256": "16cebea63775e666176bc4337686bf4705f8a9ba313bedb6930057558abbd663"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/queues.html",
+    "sha256": "bc5d2d45f2b095c12ec4826594db616c7953ab60c6eb8cbe1287f0d49d729d98"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/rabbitmq.html",
+    "sha256": "fb528bc29a1f1f1f49798b888a3c99bacf84a35b2eceafd274c4fc0f143ea9f4"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/ratelimit.html",
+    "sha256": "cbb094cb343ae44951dd8e90c77ab271747134d3de10ad383e8392f36dd4729f"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/realtime.html",
+    "sha256": "02560ce64c48083eccd744b4e9d09c97d66356bd13f168ac3e7eb1a6b3ea6a92"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/redis.html",
+    "sha256": "88ac38925d3678173541ad5f168687441c2d18b4210bb987c4dd59db606722e1"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/replication.html",
+    "sha256": "4cf69d85d3075a9d9d58a0c4b259e17e29e241be3aac1a502e7d76ef4fa42476"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/repliclag.html",
+    "sha256": "1714fd399745342d396ae637a9c2f589b27bd1c07486000e09ee17d6b3370b66"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/restgraphql.html",
+    "sha256": "81b24272f9e880d7d9e962be90683d6071985b6bafe67baab44a32dbbdb8bd7b"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/s3cdn.html",
+    "sha256": "51a78e7546340813aac7125e6316f48fd43f6a6b728b30f60aeb0b258b5c8b02"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/scaling.html",
+    "sha256": "f2122ed5db2faa792cfc1a141bf11863d467a783ecc24197a0b38e3822603dc5"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/schema.html",
+    "sha256": "b53c864036694078419e119e4790dca47f410b9e01e349a88666a085c1a71e35"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/sharding.html",
+    "sha256": "93dddd47392b266080595f21a1983a8afa0f4d8a083008f854f37874ac2f6f52"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/shardstrats.html",
+    "sha256": "93e16c65fbcfc5a7e35b27805ba36b60a14ca59292c1ac58e0198d0187a55179"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/sqlnosql.html",
+    "sha256": "df646b257f7257af1a7821cef222ebdb237e13b5cfeace527ed441039b0f5b9d"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/storagetypes.html",
+    "sha256": "c794467745345ec053b0366e5a2fbaf701af3c1803a12fc70b433d5966cf2e39"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/tcp.html",
+    "sha256": "275c683bdcb79045dc84e91b42bc0611c5bac5738c968f5e714846dec9a7b55c"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/virtualnodes.html",
+    "sha256": "ebbbae4f986cb1105db2af284cdd018f71042b468d59197693f34f7b15ee1330"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/notes/zookeeper.html",
+    "sha256": "a8f7a3f0d4062a480612ffcfdc88b507539d1e506da2d769c18ff4008d3cffed"
+  },
+  {
+    "repo": "sd",
+    "file": "public/library/sd/README.md",
+    "sha256": "16bfbaf8f921f238de4efdf14883fc201bcbe39bbdf8bb938ddc5af6923280de"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/.gitignore",
+    "sha256": "3657c4dd2060023e88286bca5a28f631bd5fa04e8e9114f0090c4d0d74f16a7b"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/assets/app.js",
+    "sha256": "34cffbdbc75940dc785172ca8d300a056b40a0b1e3e6e623aba74a4a565264bb"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/assets/img/agentic-loop.svg",
+    "sha256": "2e2e8dc2558f26d079ff86c597a2a349dd9a2017248b0b10104e600ec40d3291"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/assets/img/compact-vs-clear.svg",
+    "sha256": "19f622d7919bf8c293462c6214378764639ebb1899fa203482cc22641d1ef271"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/assets/img/sub-agent-vs-team.svg",
+    "sha256": "c8d9711d32e309d6fdfee367468676cdf64ec131e2030b9b5a27db3817cf9f64"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/assets/style.css",
+    "sha256": "f449410b1a39c47eb2195133329eafaca8a20a6368ea32dff9e07591317e75a8"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/index.html",
+    "sha256": "294fe5590d71c770e1d4e7edbc7d9e51b93fc98324087966b4ae5d60dfa8bd48"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/advancedrag.html",
+    "sha256": "db99b598213d45ad212bedeebec2d9f4f6eef60098d53c3c6c0dd44aa71963cb"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/agenticloops.html",
+    "sha256": "cb1b993fc4b8e7453b471d42023db06f887f44895763e6607e8006725cc64658"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/agents.html",
+    "sha256": "66179e668d1e714fc9a5e830e854cf957feb0a23d9f451484d4a66c77d9fb91b"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/chroma.html",
+    "sha256": "8761d57031f5b4ba4600f6c60c0c1e35c1df0e75b709bc64303ef00f89d9729c"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/chunking.html",
+    "sha256": "993223522dd6c3473a10d8a113adfdbac7742909b2834e961c5a2f73587bcf2e"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/claude-code.html",
+    "sha256": "a8fefc50d51b7fdcbcd77f38eb44329769b3203c3f6f98b509fc59c745423418"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/claude.html",
+    "sha256": "baf7b45560dfe07875d86a7dd79064b1fea6b80598cd548ebeb621f962833e9f"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/claudesdk.html",
+    "sha256": "1d234309e16e515db3daab3b18a6514aff7794a292e487f028f4f6b129f32822"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/context.html",
+    "sha256": "a5b6f9f3bde5d793bbeea615b63f3ac995d5030837e6280cab63b9cf074fdea6"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/contexteng.html",
+    "sha256": "7a9e43d6dac7c03deec6f690d8834f6c5b284e62a645033f6caab30edd56d82b"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/costopt.html",
+    "sha256": "a16c53a3db89639d2dce3d6592f47bf63c89fe8483d5293b9332df9a368f1ef2"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/cot.html",
+    "sha256": "76d416f62e442f46bafc966851d2606b446a38b00f8dae03271321d2904dbbf0"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/diffusion.html",
+    "sha256": "11fc37c3915f5190d1c61bd218d81b61034035336b0e7dcfb7fbb4085f2aa635"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/embeddings.html",
+    "sha256": "4df21a9d8c09f98424d8dae3e03ee728ee3e8b114775b5ee41914c2836418c37"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/evals.html",
+    "sha256": "2b5310ffe790872bf4d578e424c27dd4ccbba38ac9c563e1edc1394be9df66be"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/fewshot.html",
+    "sha256": "0c817863e46e03c779a1552ab4dd80e1e974d2591ab458f63d73c3f568c3e211"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/gemini.html",
+    "sha256": "e26b52a694446e94192e7961035fe283bc8f835344a235319404d571c2e2b6cb"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/guardrails.html",
+    "sha256": "248fab5eb243612a261e1b785538a32d727e47f1a3f5dc35a7a76916aa7cf41c"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/hallucination.html",
+    "sha256": "b1fc07deed90b4a209fcda72057ee6d15e1a6d64fc3f3293135e62a9830fd80c"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/home.html",
+    "sha256": "0857b004680699ff049a801cfb60e0fef6c3394f4ad6be55f52f180ba9749aab"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/huggingface.html",
+    "sha256": "ba22dc9af2c35c911e00afe0a6bec019c5b663602d924a1ccf9f66a01cfd4965"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/hybridsearch.html",
+    "sha256": "666a57b604abc0b8488cba1530efceb9a7dbb5862d59a565193df5076a9d98c0"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/imagegen.html",
+    "sha256": "cbeb0412a89ede8aac6767ccfd97f519fb701b6449a4e75fa4ad3c9eed4572c1"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/instructiontune.html",
+    "sha256": "3c9c05b9fb25db78283b4b88ad7b1cfa41202209b03eb2718683682a2934b67a"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/langchain.html",
+    "sha256": "d762744402e88ce8fe25df707049a65143e20a2d23137def4a94d47c0d2d1d64"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/langgraph.html",
+    "sha256": "010caf2762ec6385d21f9fa89cab63013d387775df6f68d9e273dcd3d145b335"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/llamaindex.html",
+    "sha256": "e9d6ecaafe2300d50e5034b762e7be8cbfd9cbcd44d0d806e8cbf0113977450a"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/llm.html",
+    "sha256": "f5bf2caabf0db02c804136c05acfa63d8caac1443a01b61ef48139b400d1d1a2"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/llmcaching.html",
+    "sha256": "cf565149bb1a6ed26c1428df3957ba462af0c220b62893f0357d4b8612da2982"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/lora.html",
+    "sha256": "fb45106bb13593d595f7bdffce8b282536c71d687c43a503ad7867e09765cf75"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/mcp.html",
+    "sha256": "3cdbf779c6b97b1752cbbdc7cc04479287f13052d72387923af9edaa8414c91d"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/memory.html",
+    "sha256": "5bf28f285e553676a63a350187b9444095af4d2cf46c04aa4fc626830465c773"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/multiagent.html",
+    "sha256": "70bbfd18a37af2c91cf16bd6e7a0ebee23f538ead7ca7400c58c845d9dba9bfa"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/observability.html",
+    "sha256": "ff5451af0df274f255b19d307e330d6098e1e4073bcb075469b15664aa1c6dee"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/ollama.html",
+    "sha256": "a9eb1c237f902165c17be87bb653b5d2f540af15d8bd68266990afbe9800b1a4"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/openai.html",
+    "sha256": "76308cb9f0a4d7e375c2a91ab488a524b79e54ee19c11e96bc7bfafae7f31f88"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/openaisdk.html",
+    "sha256": "2404cc815d153b0f2b4de7f60f9b52bb6a2ecb86c444ae87c89fac824a08044f"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-agent.html",
+    "sha256": "075d7b6c638dbf5decea4087c04dfe950f8e4533e0041624dd0c56b3fb1be911"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-caching.html",
+    "sha256": "024a123df9e2e6fb54c0df40c624821d9735db63d1d84aa8e17ea29f19c19d35"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-eval.html",
+    "sha256": "aa2149f4b953511cedf907edbf4835e2caeab31f163af3c6732f1b6f5edd6c96"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-fanout.html",
+    "sha256": "b9402bf02d7cb469ee57bf81d77f2dacccadff9e296c6f423ddc6cccd8b8d869"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-guardrail.html",
+    "sha256": "210fa586cd1451e1ef317a63f829abecb39c1ae8d16739a35a7a7acfd8af1563"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-memory.html",
+    "sha256": "54bc9d46737fbcd8ffe72e83579807f8a6c83c7229a7048c318e0cda6febe3a4"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-multiagent.html",
+    "sha256": "3c7cb1674cee4b5c7658ccddf5f94b5aea7f9031cadac1e50f44f97e6656a8b1"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-rag.html",
+    "sha256": "405b98ff881e91a007e430e541d7347b0cd6abc55c8dade074a5bcc414122fe7"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-streaming.html",
+    "sha256": "cd100a0976c9cf6d5fb50b13052b18263addabed18826512511f44b14a245926"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-summarize.html",
+    "sha256": "1d8c6c96a3205352cd26b8fe834f56b46463419b472a61c6e739bb28b76a4e87"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/p-toolrouter.html",
+    "sha256": "eaac74a657bdfd7e0c05af2c37ee3e9209b9e0c7e2a16d9441713c3dd93af55f"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/peft.html",
+    "sha256": "857bbb4374709b90d78130f9224e06991793e60cc26be5c3e551c14dd3a62393"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/pgvector.html",
+    "sha256": "7876ecea964a28b733a185717b13ecf5c85bc93d12e8c2d179fe3bca9f7b8e01"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/pinecone.html",
+    "sha256": "28b14e1137efa38685b170ffe491e0cd7954b8fb491674b05366eb6d7d91b224"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/planning.html",
+    "sha256": "7b18bf7ebf6cb0005c4a2a994fd2f1c19ceb4abc2389b910c4c960ba29b4ca92"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/prompting.html",
+    "sha256": "62eb607ddfef75a8ed5f47b5347d1198913e217311fdb06fbab12aa0b34526b6"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/promptinjection.html",
+    "sha256": "6ce6a89b9b3acc3ff023de6c9bd6beabdf245f07a934197322beee78bd3633bd"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-chatgpt.html",
+    "sha256": "e5c1c3f521584c8958a7401c0b382676657967897fae4a3d2e90c76d895b18d7"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-codeassist.html",
+    "sha256": "d61e148583fb5243fb67a1d32bfe6e83dfd87906bf2012a265d8799a1ccf1526"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-codegen.html",
+    "sha256": "11f51ec5dfdd6224f6ccbdb8360b3f739783510a8c1cac986f5acd16178e1bfe"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-copilot.html",
+    "sha256": "c4435c777abdc0435c188c738d7588431935dbf3be82ea4dbbb5f84528c2721e"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-cursor.html",
+    "sha256": "a80ce4983e1b7c7a47a65ef8b21e6917b61bf2446d94f3d6383f02572c41ec48"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-customerservice.html",
+    "sha256": "7fc55c602ea8b8db00d3f2101da166551029e4744dfc9f0350e2628b96494c89"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-docsearch.html",
+    "sha256": "1cc05227060327f9f5c9916526add73521c36938a08ccb7281c8ea897a4adc4c"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-emailagent.html",
+    "sha256": "63c98df13a89b2d7bef682d06eb42199e044ddc309bd40a149ca5a02ff81b338"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-imagegen.html",
+    "sha256": "1ca2a27a8d285aebdaeb09cd212a0af99126bbd29a3261aaa15c4003608dbbe9"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-perplexity.html",
+    "sha256": "01c783fa921d4238126abdc4a11b02a3ccd53e10492b83d54df6453f7167910a"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-researchagent.html",
+    "sha256": "9dc15aa8d3841189664179f697d0edce0184da2f722ee9627cc3912e020823ea"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/q-videoanalysis.html",
+    "sha256": "ab56b2d375b00a961493148018844bce2dfd6102d7897f64d523afcf51619e75"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/ragbasics.html",
+    "sha256": "82d6e67cb39492560f47c6e13b081ed19a4d8c58fe9a52c02d21fe6123d5750e"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/rageval.html",
+    "sha256": "d081a47a0b4eeb1aa9adf3b0ea05ea2b09b625090d56af9bd7447ba539e3037a"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/ragpipeline.html",
+    "sha256": "b4c4ba92052eed9a005f7d8fbd1c4ad2847e3d8d6bee9ae9b5010ebcd11e1417"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/ragvsfine.html",
+    "sha256": "e17d32ed03ea3d1401ecdf683c85d23abaa9de9a8e67555d4f26523271058cfc"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/react.html",
+    "sha256": "782637f372a83a6ef8f308ad5e734697facb867206a8cb7d32c3174004dc3efe"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/reranking.html",
+    "sha256": "6264dbda990f539bfe436019c9da5088329f9acfc4a6191e29e64e7cc5e4c3c3"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/rlhf.html",
+    "sha256": "89795d77ac380cc38888322e137381ab5d1e2f5c14ef09bdc058f4f554f39505"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/semanticsearch.html",
+    "sha256": "2ee001409cff6e572cb19187247962dbb802f313102ee3db3609dd02c1bc4255"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/similarity.html",
+    "sha256": "ca0a164a5cb14e7efb00875bda0c07569b63632ca9d2b1f34e54d1c107034fbe"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/streaming.html",
+    "sha256": "c4e183430fb364351431eb4ed52f192ac4d991146da94514193919354b2b562a"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/sysprompt.html",
+    "sha256": "b7aedf9487db8f8445a33126d3ff51f083c2f34fc316643234f7affd9671003a"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/temperature.html",
+    "sha256": "3a2c89c84b3063ee9f87b4dbb35281923fa08ffabd13b6f90d8e13d29f6b8b96"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/tokens.html",
+    "sha256": "77c97d250854b33f92d454191f3839ff649c7f7e3f470ca92da6cd5a3c7cb6c4"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/tooluse.html",
+    "sha256": "d48730b316d1f44ff9f6159e20e75e671e157c972b24499677f0a4997733f280"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/vectordb.html",
+    "sha256": "49edc805cbe3eac7aab88ce8c3882177efae9a0069f8e55482fad76c9a23d0f8"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/vllm.html",
+    "sha256": "ecf82da9bb4bd68876d647ec1b3f40c6aa4cec901b29fcdf10678edd4e449fba"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/vlm.html",
+    "sha256": "f229e2b2bae70f324ffa3a2793cadb9a2bcdddf544485e78ea685cc7cc6cc9b7"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/notes/weaviate.html",
+    "sha256": "a43bcc90356743e5a1b08ffaeb025893fb030ad4d7ee0318b47705f85cf5ece4"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/README.md",
+    "sha256": "a34afb975fb2241f13d9272a26560b5a853d61aab3c5e39b27473b443adf3f26"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/REFACTOR.md",
+    "sha256": "c9267dd6ba4ee6252698091f0a6a73a7d81dd9354d501bbdcfde66febbe03982"
+  },
+  {
+    "repo": "genai",
+    "file": "public/library/genai/split-notes.js",
+    "sha256": "b0cf238c6e5770b390aaad94ea632e373312380bd420284f185fc416e74cb924"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/.gitignore",
+    "sha256": "792f668b1ca0fd2c5989ca33e903fc58f40d17a6b99defdc5abe049e402f7443"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/AUDIT.md",
+    "sha256": "a4a8eeb1c9dee77f36b76511866df38471f6c699f7e38d9c004e1852c845582c"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/index.html",
+    "sha256": "3e392d2fb6b2cd4f979298b15467208a78e9b2c6487f6f9ca50030077f3cf01d"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/package-lock.json",
+    "sha256": "c1d86edd826737c596b5972ece875d40674e3b1f6e13b3d43dbfae93d009b9ef"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/package.json",
+    "sha256": "c2d295db40d95a09708432d369f12410198d414a27371fcf27e6bf15067b34e3"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/README.md",
+    "sha256": "7eb70257593da06f682a3ddda54a9d260d4fc514f645237f5ca74b08f8da61a6"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/framework-contracts.mjs",
+    "sha256": "c8701f60acb3e5ab7cab3337d26f333a182bb89f93424efbeafb8a499275b780"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/java-edge-cases.mjs",
+    "sha256": "b2b12952d7436488c35f9e199e42e641e3c32ab580f20ee83dac34795b7f6beb"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-browser.mjs",
+    "sha256": "61a10049a39e95b1020d65750f2b2ae4b41e1bb8eb141eb9cec726b4a15fe131"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-compiler-live.mjs",
+    "sha256": "8b81a27a654ccf9bdc12b9875daf204cbd1107e716fd14361a954c242c4349b6"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-compiler.test.mjs",
+    "sha256": "9a3fecdfd9cf52f46869d004ee83b8d381e9f8cb5022b3e2845ff29a464c59fd"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-data.mjs",
+    "sha256": "d247ac83a9c9732cbf5e53b227125d0e36ed2b5e4f1a9f1acc78f4a27a6188cc"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-framework.mjs",
+    "sha256": "101e9fe569fdd9268d4ba6916b59604c522c9600ba18f1fbf77b97ecd9f3ef34"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-java.mjs",
+    "sha256": "5c6666ff590d4b86a8d840dca96dc2617a0efb511a282cb57d3f3965b9244d61"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-mcqs.mjs",
+    "sha256": "7c1f30bcfadb3188b5988f1eb1337ce19fa0f1a54dbfc96a462254dbed3fe9c0"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/scripts/validate-render.mjs",
+    "sha256": "ed3679b2a682c553856185a7b07f8ef067e9f307b13fbffba8100a1831680c36"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/App.jsx",
+    "sha256": "f1cf347fd963004cf716d381ef6325f39042b9ade97899d44fc080ee87d049a0"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/components/CodingPractice.jsx",
+    "sha256": "27831cdcffb9ddd04d1289c7cc92c5a5b275d5813434ff8380b6238ff4560965"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/components/McqPractice.jsx",
+    "sha256": "f46a7af95f864254890a1adae4d7c3ac66466c8bb1275376906b7b313031eb7e"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/components/Navigator.jsx",
+    "sha256": "36177f18f367a5164f598dc2ddf5911e162e7e213a376f84c0558888eeab17ba"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/components/TopicFilter.jsx",
+    "sha256": "fbe05a31ee351d901c472c18dc3e3ef7d97833915aaf273f08f85e5c3fd58f38"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/data/challenge-helpers.js",
+    "sha256": "bd4276cc7e63bb2000d99536532caa011541ada78bfa75d5b35bd52a78c6d359"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/data/challenges.js",
+    "sha256": "9fb98dd0f583c94a21eca91afdd0860e37ce44ea78f8dcbe794921f60f9a5917"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/data/core-challenges.js",
+    "sha256": "4c566cd5083a3e24d94b652d57c5ee3ad555019e038650dd2931c891c754a4f3"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/data/mcq-bank.js",
+    "sha256": "179285c446018f29df4a1e5709f0cf620a92445a9de20365a0242efd3ff15193"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/data/mcqs.js",
+    "sha256": "6e488bea8f58ba752883ee71a504f6d920154b078a2b0b74c3bf26cc72b216ed"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/data/spring-challenges.js",
+    "sha256": "d81229fe7a19c36551811d1bec1694f40126497e19ba2b3e9b989643c59b86c8"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/data/topics.js",
+    "sha256": "109ee5200548ac627ce28addbb90e26ab6dc42326b0e065c3ee894ca1b0d48b2"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/main.jsx",
+    "sha256": "ca605711472ebfc81282b6ab1c5d72536d864ae65fb84cad175f040a71f06b19"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/services/compiler.js",
+    "sha256": "a2957188f5e19445a07b5b2f49c6c0935c27ac7bcc76792d9c4f0eddbba0ab49"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/src/styles.css",
+    "sha256": "5572efecba3ed2297337d3cf1d8db31d38737e5b24598761605030ef114c4712"
+  },
+  {
+    "repo": "practice",
+    "file": "practice/vite.config.js",
+    "sha256": "1da1338e22667db71818204596554b26f48c6f48210bfea3caed824b4d803fe9"
+  }
+]

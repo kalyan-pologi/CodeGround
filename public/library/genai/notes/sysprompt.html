@@ -1,0 +1,106 @@
+<div class="section-header">
+    <div class="tag">Foundations</div>
+    <h1>⚙️ System Prompts</h1>
+    <p>How to configure model behavior, persona, and constraints at the system level.</p>
+  </div>
+
+<div class="cs-section-label">⚙️ Core Concept</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>What It Is</h3>
+    <div class="b">A <b>privileged message</b> prepended to every conversation, architecturally separate from the user and assistant turns that follow it.</div>
+    <div class="b">Most providers give it <b>more weight</b> than an ordinary user message. It is set once and applies for the entire session rather than being re-stated each turn.</div>
+    <div class="b">Functionally it is the developer's <b>configuration layer</b>: it defines who the model is, what it can do, and where its boundaries sit before the user ever types a word.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">set by</span><span class="v">developer / app, not end user</span></div>
+    <div class="row"><span class="k">scope</span><span class="v">entire session</span></div>
+    <div class="row"><span class="k">visibility</span><span class="v">usually hidden from the user</span></div>
+  </div>
+  <div class="card c2">
+    <h3>What Belongs In It</h3>
+    <div class="b"><b>Identity and persona</b>: "you are X, built by Y," tone, voice, level of formality.</div>
+    <div class="b"><b>Behavioral rules</b>: how to handle ambiguity, when to ask clarifying questions, how verbose to be.</div>
+    <div class="b"><b>Output format constraints</b>: JSON schemas, markdown conventions, length limits, forbidden phrasing.</div>
+    <div class="b"><b>Tool definitions and usage rules</b>: what tools exist, when to call them, and when not to.</div>
+    <div class="b"><b>Safety and refusal boundaries</b>: topics to decline, escalation paths, what never to reveal.</div>
+  </div>
+  <div class="card c3">
+    <h3>Why It Exists</h3>
+    <div class="b">Without a system prompt, every behavior would need to be <b>re-specified by the user</b> on every single message, which is impractical for a product.</div>
+    <div class="b">It lets one app built on a general-purpose model behave like a <b>narrow, purpose-built assistant</b> without any weight changes.</div>
+    <div class="b">Because it is set by the developer and outweighs user turns, it is the first line of defense against a user trying to <b>redirect the assistant's behavior</b> mid-conversation.</div>
+    <div class="sep"></div>
+    <div class="note">The system prompt is what turns a raw model into a product: same weights, completely different assistant depending on what sits in this slot.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🔬 Deeper Look</div>
+<div class="grid3">
+  <div class="card c4">
+    <h3>System Prompt vs User Turns</h3>
+    <div class="b">A system prompt is written <b>once</b> by whoever built the app; user turns are written live by whoever is using it, turn by turn.</div>
+    <div class="b">Because the system prompt outranks user instructions, a user cannot simply say "ignore your previous instructions" and expect it to reliably work, this is the basis of <b>prompt injection defense</b>.</div>
+    <div class="b">That defense is <b>not foolproof</b>. Adversarial phrasing, role-play framing, and multi-step social engineering can still sometimes get a model to violate system-level rules, so it is a mitigation layer, not a guarantee.</div>
+  </div>
+  <div class="card c5">
+    <h3>Leakage & Extraction Risk</h3>
+    <div class="b">Users can sometimes trick a model into <b>reciting its own system prompt</b> verbatim, through direct requests, translation tricks, or asking it to "repeat everything above."</div>
+    <div class="b">The practical implication: <b>never put real secrets</b> in a system prompt (API keys, internal-only policy details, unpublished pricing). Treat it as sensitive-but-not-secure.</div>
+    <div class="b">Some products accept the leak risk and design around it; others invest in extraction-resistant phrasing and layered instructions, though this is an arms race, not a solved problem.</div>
+  </div>
+  <div class="card c6">
+    <h3>Length & Complexity Trade-offs</h3>
+    <div class="b">Every token in the system prompt is <b>context budget spent before the conversation even starts</b>, competing with retrieved documents, chat history, and tool outputs.</div>
+    <div class="b">A bloated system prompt can also <b>dilute focus</b>: too many competing rules make the model less consistent at following any single one of them.</div>
+    <div class="b">Despite that, real production system prompts are often <b>surprisingly long</b>, hundreds of lines encoding edge cases discovered the hard way from real user traffic.</div>
+    <div class="note">Long is not automatically bad if every rule earns its place. The failure mode is accumulating rules without ever pruning stale or contradictory ones.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🏗️ Structure & Fine-Tuning Comparison</div>
+<div class="grid3">
+  <div class="card c7">
+    <h3>System Prompt vs Fine-Tuning</h3>
+    <div class="b">A system prompt is <b>cheap, instant, and editable</b>: change a line, redeploy, behavior changes immediately, no training run required.</div>
+    <div class="b">Fine-tuning <b>bakes behavior into the weights</b>: more reliable for deeply ingrained style or domain behavior, but expensive, slow to iterate, and much harder to reverse.</div>
+    <div class="b">In practice most teams should exhaust <b>prompting first</b> (system prompt, few-shot examples) and reach for fine-tuning only when prompting demonstrably cannot hit the bar.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">system prompt</span><span class="v">minutes to change</span></div>
+    <div class="row"><span class="k">fine-tuning</span><span class="v">a training + eval cycle to change</span></div>
+  </div>
+  <div class="card c8">
+    <h3>Production Example</h3>
+    <div class="b">A customer support bot's system prompt typically encodes <b>company policy</b> (refund windows, escalation rules), <b>tone</b> (friendly but concise), and <b>topic boundaries</b> (what it can and cannot discuss, like legal advice or competitor comparisons).</div>
+    <div class="b">It often also defines <b>tool usage rules</b>: when to look up an order, when to hand off to a human agent, and what to say while waiting on a tool result.</div>
+    <div class="note">The system prompt is effectively the compliance and brand-voice layer of the product, encoded in natural language instead of code.</div>
+  </div>
+  <div class="card c9">
+    <h3>Structure Tips</h3>
+    <div class="b">Use <b>clear sections</b> (persona, rules, format, tools, safety) rather than one undifferentiated block of prose, it is easier for the model to parse and easier for humans to maintain.</div>
+    <div class="b">State <b>explicit dos and don'ts</b> rather than vague guidance. "Never quote exact prices, always link to the pricing page" beats "be careful about pricing."</div>
+    <div class="b">Include <b>inline examples</b> of desired behavior for anything ambiguous, examples resolve edge cases far more reliably than abstract rules alone.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🎯 Applying It</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>Use Cases</h3>
+    <div class="b"><b>Persona products</b>: chatbots with a distinct brand voice or character.</div>
+    <div class="b"><b>Domain assistants</b>: coding assistants, legal-doc summarizers, medical-intake bots, each needing narrow, consistent behavior.</div>
+    <div class="b"><b>Agents with tools</b>: system prompts that define available tools and the rules for calling them correctly.</div>
+    <div class="b"><b>Multi-tenant platforms</b>: the same base model serving many different customer-configured system prompts.</div>
+  </div>
+  <div class="card c11">
+    <h3>Trade-offs & When NOT to Rely On It</h3>
+    <div class="b">Don't rely on the system prompt alone for <b>hard safety guarantees</b>, pair it with output filtering, moderation, and tool-level permission checks.</div>
+    <div class="b">Don't stuff <b>secrets or unpublished data</b> into it given the leakage risk described above.</div>
+    <div class="b">Don't use it to force behavior that fights the model's <b>base training</b>, e.g. demanding certainty on things it cannot know, a system prompt cannot manufacture knowledge the model does not have.</div>
+  </div>
+  <div class="card c12">
+    <h3>Where It Fits</h3>
+    <div class="b">User Request, then <b>System Prompt</b> applied as context, then Model Reasoning, then Tool Calls (if any), then Response.</div>
+    <div class="sep"></div>
+    <div class="note" style="color:#4ade80;">Treat the system prompt like code: version it, review changes, and test it against a regression suite of tricky prompts before shipping edits, since a single wording change can shift behavior across an entire product.</div>
+  </div>
+</div>

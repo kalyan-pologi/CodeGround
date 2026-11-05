@@ -1,0 +1,106 @@
+<div class="section-header">
+  <div class="tag">Embeddings & Vector Search</div>
+  <h1>🔍 Semantic Search</h1>
+  <p>Finding content by meaning instead of exact keywords.</p>
+</div>
+
+<div class="cs-section-label">🧠 Core Concept</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>What Is It</h3>
+    <div class="b">Search based on <b>meaning</b>, not literal word matches. Two pieces of text with almost no words in common can still be judged highly relevant to each other.</div>
+    <div class="b">Works by comparing <b>query meaning to document meaning</b> as vectors: both the search query and every candidate document are embedded into the same space, and relevance becomes a distance calculation instead of a string match.</div>
+    <div class="sep"></div>
+    <div class="note">Finds "terminate my subscription" when you search "cancel my plan," because both phrases land near each other in embedding space even though they share only one word.</div>
+  </div>
+  <div class="card c2">
+    <h3>Why Introduced</h3>
+    <div class="b">Classic keyword search (<b>TF-IDF, BM25</b>) scores documents by literal term overlap and term frequency. It's fast and precise, but it only knows about the exact words present, not what they mean.</div>
+    <div class="b">Different wording for the same intent returns <b>zero results</b> with pure keyword search: a user searching "how to end my membership" gets nothing from a help doc titled "Cancelling your plan," even though a human would consider it a perfect match.</div>
+    <div class="sep"></div>
+    <div class="note">Solves the vocabulary mismatch problem between how users ask and how content is written, one of the oldest unsolved problems in information retrieval before embeddings became practical.</div>
+  </div>
+  <div class="card c3">
+    <h3>How It Works</h3>
+    <div class="b"><b>Documents embedded once</b> at ingestion time and stored in a vector database, this is a batch, upfront cost that doesn't repeat per query.</div>
+    <div class="b">The <b>query is embedded at search time</b> with the same model used for the documents, producing a single vector that represents what the user is looking for.</div>
+    <div class="b">The vector database finds the <b>closest stored vectors</b> to the query vector (typically by cosine similarity) and returns the corresponding documents as ranked top-k results.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🔬 Deeper Look</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>ANN Search</h3>
+    <div class="b">Comparing a query against millions of vectors one by one (<b>brute-force / exact search</b>) is mathematically simple but scales linearly with corpus size, which becomes too slow past a few hundred thousand vectors.</div>
+    <div class="b"><b>Approximate Nearest Neighbor</b> (ANN) algorithms like <b>HNSW</b> (hierarchical navigable small world graphs) or <b>IVF</b> (inverted file index) build a structure that lets you find close matches in roughly logarithmic time instead of checking every vector.</div>
+    <div class="b">These indexes trade a small amount of accuracy for a massive amount of speed, and that trade is almost always worth it since the difference between the true 1st and 3rd closest match is rarely meaningful to the end user.</div>
+    <div class="sep"></div>
+    <div class="note">Trade-off: approximate means occasionally missing the true closest match, in exchange for speed. Recall@k on these indexes is typically tunable, more accuracy costs more memory and latency.</div>
+  </div>
+  <div class="card c11">
+    <h3>Query vs Document Embedding</h3>
+    <div class="b">The query and the documents must be embedded with the <b>exact same model and version</b>, mixing models means the vectors don't share a coordinate system and distances become meaningless noise.</div>
+    <div class="row"><span class="k">must match</span><span class="v">same embedding model & version</span></div>
+    <div class="row"><span class="k">mismatched models</span><span class="v">results become meaningless</span></div>
+    <div class="sep"></div>
+    <div class="b">Some models use <b>separate query and passage encoders</b> trained together (asymmetric dual-encoder setups), since a short question and a long passage look structurally different even when they mean the same thing.</div>
+  </div>
+  <div class="card c12">
+    <h3>Result Ranking</h3>
+    <div class="b">Raw similarity score alone is not always "best," a document can be semantically close to the query but stale, low quality, or the wrong version of the right answer.</div>
+    <div class="b">Production systems often <b>combine similarity with recency, popularity, or business rules</b>, boosting newer content, frequently-clicked results, or officially-endorsed sources over the raw vector distance ranking.</div>
+    <div class="sep"></div>
+    <div class="b">A <b>re-ranking step</b>, usually a cross-encoder that scores query and document together, can reorder the top candidates for relevance far more accurately than the initial retrieval pass, at the cost of being too slow to run over the whole corpus.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🎯 Applying It</div>
+<div class="grid3">
+  <div class="card c4">
+    <h3>Use Cases</h3>
+    <div class="b"><b>Document and knowledge base search</b>: internal wikis and help centers where users phrase questions differently than the docs are written.</div>
+    <div class="b"><b>FAQ and support bots</b>: matching a user's free-form question to the closest pre-written answer without needing exact phrasing.</div>
+    <div class="b"><b>Product search</b>: catching paraphrased or descriptive queries like "warm waterproof jacket" against a catalog that never uses those exact words.</div>
+    <div class="b">The <b>retrieval step inside RAG</b>: fetching the passages that get stuffed into an LLM's context window before it generates an answer.</div>
+    <div class="b"><b>Code search and ticket deduplication</b>: finding a function that does something similar, or a support ticket that's really the same underlying issue as one already filed.</div>
+  </div>
+  <div class="card c5">
+    <h3>Trade-offs</h3>
+    <div class="b">Can <b>miss exact matches</b> like order numbers or product codes, semantic similarity has no special respect for an exact string, so precise identifiers are actually its weak point.</div>
+    <div class="b">Can retrieve results that <b>sound related but are factually wrong</b>, a passage about "refunds not allowed" can score close to a query about "refund policy" even though it says the opposite of what the user wants.</div>
+    <div class="b">Quality depends entirely on the <b>embedding model and chunking</b> upstream, semantic search is only as good as the vectors it's built on, there is no independent correctness check built in.</div>
+    <div class="b">No built-in sense of <b>recency or authority</b> unless explicitly added, an outdated document and a current one can look equally relevant to the vector index.</div>
+  </div>
+  <div class="card c6">
+    <h3>When NOT to Use</h3>
+    <div class="b"><b>Exact lookups</b> by ID, SKU, or known field: a database query with an index is faster, cheaper, and always correct where semantic search is probabilistic.</div>
+    <div class="b"><b>Small structured datasets</b> where SQL filters already work, adding embeddings and a vector index is unnecessary complexity for a few hundred well-organized rows.</div>
+    <div class="b">When you need <b>fully deterministic, reproducible results</b>, ANN search can return slightly different rankings across runs depending on the index implementation.</div>
+    <div class="b"><b>Very low latency needs</b> without ANN infrastructure already in place, standing up and tuning a vector index has real setup and operational cost.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚠️ Reliability</div>
+<div class="grid3">
+  <div class="card c7">
+    <h3>Failure Modes</h3>
+    <div class="b"><b>Domain jargon</b> poorly understood by a general embedding model, legal, medical, or internal terminology the model rarely saw during training embeds without real meaning.</div>
+    <div class="b"><b>Results too loosely related to be useful</b>, when nothing in the corpus is a good match, the system still confidently returns its closest options rather than admitting no good result exists.</div>
+    <div class="b"><b>Missing exact keyword or ID matches</b>, the exact scenario dense retrieval is structurally weakest at, since it's built entirely around approximate similarity, not exact string equality.</div>
+    <div class="b"><b>Index goes stale</b> as new content is added, anything added to the source corpus after the last embedding/indexing pass is simply invisible to search until re-indexed.</div>
+    <div class="sep"></div>
+    <div class="note" style="color:#4ade80;">Mitigate with hybrid search (combining dense vectors with keyword scores like BM25), cross-encoder re-ranking, domain-tuned embeddings, and incremental re-indexing so new content shows up quickly.</div>
+  </div>
+  <div class="card c8">
+    <h3>Where It Fits</h3>
+    <div class="b">Pipeline: <b>Query</b>, then <b>Embed Query</b>, then <b>ANN Search</b> over the <b>Vector DB</b>, then <b>Top-K Results</b>, then an optional <b>Re-rank</b> pass before results are shown or handed to an LLM.</div>
+    <div class="sep"></div>
+    <div class="note">The retrieval engine right after embeddings, turning "find things like this" into a ranked result set. It's the layer that makes RAG and modern search products possible, sitting between raw vectors and the user-facing answer.</div>
+  </div>
+  <div class="card c9">
+    <h3>Real World Example</h3>
+    <div class="b"><b>Perplexity's</b> search experience, which blends semantic retrieval with live web results and citations rather than relying on keyword indexes alone.</div>
+    <div class="b">SaaS <b>"AI search"</b> features commonly backed by <b>Pinecone, Weaviate, or pgvector</b>, embedding a company's docs or product catalog once and serving semantic queries against it in production.</div>
+  </div>
+</div>

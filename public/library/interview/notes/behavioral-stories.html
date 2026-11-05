@@ -1,0 +1,161 @@
+<div class="section-header">
+  <div class="tag">Behavioral</div>
+  <h1>🗣️ Stories</h1>
+  <p>15 curated stories across 4 features. Frame each one to match whatever the question asks (leadership, debugging, learning, conflict, etc).</p>
+</div>
+
+<div class="note-body">
+
+<h2>Appraisal</h2>
+
+<div class="context-block">
+  <p><strong>What is an appraisal:</strong> A professional valuation of a real estate property. It estimates fair market value based on comparable properties, property condition, location, and market data. Used for mortgage lending, refinancing, insurance, and disputes. Residential reports run about 5 pages at 1-5MB, while commercial reports are much larger at roughly 50 pages and 10-30MB. In ReidyAI, we generate these automatically using KNN to select 6 comparable properties and agents to analyze and write the report, charging customers 10 credits (~$4) for residential and 30 credits (~$12) for commercial.</p>
+</div>
+
+<div class="story-block">
+  <h3>1. Keeping free and paid reports completely separate so they never mix up</h3>
+  <p>We had two ways to save appraisals. About 5,000 properties were free to report on, zero cost. Everything else charged credits, 10 for residential and 30 for commercial. Both looked like the same save operation to a user, so the natural instinct was to use the same code for both and just add a check inside.</p>
+  <p>But I thought about what happens if a bug mixes them up. If a customer browsing free properties somehow gets charged, that's money lost and they get angry. If a paid report someone paid for gets overwritten by free data, we have to refund them and spend time figuring out what went wrong. Even a small bug rate like 1 in 1,000 means a few refunds every week and a lot of wasted time investigating.</p>
+  <p>So instead of a shared service with an isPaid flag check, I split them into two separate Spring Boot starter modules. Crossing that boundary means adding a new dependency on purpose. You can't accidentally slip in a line of code that mixes up the two write paths, and you can't forget about it when adding features later.</p>
+  <p>Since then, zero incidents of one leaking into the other. Zero refunds from this bug. Zero corrupted audit rows. New engineers see the boundary from the module structure alone, no explanation needed.</p>
+</div>
+
+<div class="story-block">
+  <h3>2. PDF download returning 404 even though the file existed</h3>
+  <p>Users were clicking to view a PDF report they'd already paid credits for, and getting a 404. But we could see the file sitting right there in blob storage. Every single download in that environment was failing, so 100 percent broken on something a customer had just been charged 10 to 30 credits for. Support tickets started coming in within hours.</p>
+  <p>The easy thing would have been to jump into the URL building code. A 404 on a URL that looks fine usually means something went wrong while putting that string together. But instead I opened the storage console and checked by hand which account the file was actually in.</p>
+  <p>Turns out the PDF was uploaded to one storage account, but the code building the download URL was pointing at a different one with a very similar name. Since we only persisted the blob filename and generated the signed URL at read time from config plus that filename, the bug surface was tiny once I knew the real location. It came down to one line of config. No logic was broken at all.</p>
+  <p>Downloads resolved again right after deploy and the support queue cleared the same day. Checking the actual runtime state took me maybe 20 minutes. Reading through URL construction code that was never broken could easily have eaten half a day. That's the habit I kept, verify where the data actually is before assuming the code pointing at it is wrong.</p>
+</div>
+
+<div class="story-block">
+  <h3>3. Payment status stuck on Pending even though the payment went through</h3>
+  <p>A bug came in where appraisals people had already paid for were still showing as Pending. The payment id was right there on the record, so the money had clearly been taken. Every paid appraisal was hitting this. So on a flow that directly makes us money, we were telling customers the wrong thing about something they'd just been charged for. Nothing was actually broken with the money, but the screen said it was, and that's enough to get people asking for refunds.</p>
+  <p>When I traced through the status update logic, I found it was unconditionally defaulting to Pending regardless of state. There wasn't a broken condition I had to fix. There was no condition at all. The paid branch simply didn't exist.</p>
+  <p>So I added the check for the payment transaction id and set the status to FormDataReady when it was present. The part I had to be careful about was making sure that check ran against the same row the payment write had just committed, not a fresh read that could land before the write. If I got that wrong, the bug comes back intermittently instead of always, and intermittent is much harder to diagnose the second time.</p>
+  <p>Status started showing correctly right after deploy, which killed off all the "I paid but it says pending" messages coming into support. Finding it took about an hour. The fix was a few lines. I was back on my sprint work the same day.</p>
+</div>
+
+<div class="story-block">
+  <h3>4. Spotting two endpoints that weren't recording anything for billing</h3>
+  <p>I was working on something unrelated and noticed two endpoints, one for land comps and one for plex comps, were doing all the work to calculate a result and then just throwing it away. The main appraisal endpoint saved every request into the history table we bill off. These two saved nothing. They'd probably been live like that for months, so every request going through them was work we should have been charging for with no record it ever happened.</p>
+  <p>Nobody asked me to look at this, but requests we can't account for means money we're not collecting and no way to answer questions later if someone asks. I checked the logs and they were getting hit about 5 to 8 times a day between them, so somewhere around 150 to 240 requests a month we had no record of. And there's no way to go back and reconstruct them, because we weren't writing anything down.</p>
+  <p>I flagged it to the team first, then brought both endpoints in line with the main one. The choice I'd point to is that I reused the existing historyService.saveAppraisal call instead of writing a new save path. That call already had retry logic and critical log alerting on failure. Writing my own would have meant a second implementation of the same safety behavior to keep in sync forever.</p>
+  <p>Both started recording properly after that, which closed the audit gap going forward. Matching the existing pattern took less time than inventing a new one, and it left us with one save path to maintain instead of three.</p>
+</div>
+
+<div class="story-block">
+  <h3>5. Land appraisals didn't fit the tables we already had</h3>
+  <p>We supported six property types, residential, commercial, land, multiplex, duplex and triplex. We got asked to add land using the same appraisal and comp tables we already had. The problem is land has no ARV, no bedrooms or bathrooms, none of the adjustment breakdown the other types depend on, because there's no structure to compare. Realistically only about a third of the existing columns applied. Nobody gave me a spec for how a shape that fits this badly should map in, so the call was mine.</p>
+  <p>I reused the existing tables instead of building a separate land schema. I mapped the fields that did apply, as-is value and lot size, and left the rest null on purpose. That was already the established pattern, since the commercial engine left some residential-only columns null too.</p>
+  <p>A dedicated land schema would have meant another set of joins in every cross-property-type report and query, plus another migration path to maintain forever. And land was only about 5 to 10 percent of volume, so that cost wasn't worth paying.</p>
+  <p>Land shipped without forking the schema. All six types stayed queryable through one set of tables and no existing report needed rewriting. The tradeoff I made explicit was documenting exactly which columns are intentionally null per property type. The real cost isn't the nulls, it's someone six months later reading one and filing a bug for data that was never supposed to be there.</p>
+</div>
+
+<div class="story-block">
+  <h3>6. Replacing all the comps instead of figuring out which ones changed</h3>
+  <p>Our report generation runs a KNN model to pick the 6 most comparable properties to the subject, then does weighted and adjusted calculations across those to land on a value. Every time an appraisal got refreshed, that comp set had to be updated in the database. I had to pick between diffing the old and new lists and only updating what changed, or deleting the set and reinserting fresh.</p>
+  <p>Diffing sounds more precise, but comps have no stable natural key across refreshes. KNN can return a completely different 6 depending on what data changed, so the set can shrink, grow or reorder between runs. So the code has to figure out on its own which old comp matches which new comp. There's nothing reliable to match them on, so it ends up guessing, and that's exactly where it breaks. Two unrelated comps could share an address after a resale, get matched incorrectly, and silently produce a wrong adjustment on a report a customer paid credits for.</p>
+  <p>So I went with delete and reinsert. It's 6 comps per appraisal, so a full replace is single digit milliseconds. That's nothing against the ongoing cost of maintaining matching logic that can produce wrong numbers. I leaned on the foreign key's cascade delete from the parent appraisal so the whole replace ran inside one transaction, with no chance of orphaned comp rows if something failed partway.</p>
+  <p>Nobody has had to touch that logic since. The honest tradeoff is this only holds while the comp count stays at 6. If we moved to selecting hundreds, the math flips and diffing becomes worth the complexity.</p>
+</div>
+
+<h2>Mashvisor API / Caching Layer</h2>
+
+<div class="context-block">
+  <p><strong>What is Mashvisor:</strong> A third-party real estate data API providing rental market analytics and investment metrics. The rentability tab displays rent estimates, cash-on-cash return, and short-term/long-term rental comps, all powered by Mashvisor. Each API call costs 2-5 cents, and the system makes about 20 parallel calls per property view. Without caching, this adds significant latency (8-12 seconds) and costs roughly $300-800 monthly. The caching layer sits between our app and Mashvisor, reducing redundant calls while managing freshness tradeoffs since different metrics (rent estimates vs comps) age at different rates.</p>
+</div>
+
+<div class="story-block">
+  <h3>7. Two parallel cache misses racing to insert the same row</h3>
+  <p>I was building a caching layer over Mashvisor, the third party API behind our rentability tab. Opening that tab fires about 20 parallel API calls. Under load testing I started seeing roughly 1 to 2 percent of requests fail outright with <code>DataIntegrityViolationException</code>.</p>
+  <p>Each call was a read-through cache: <code>SELECT</code> by cache key, and on a miss, call Mashvisor and <code>INSERT</code> the result. The problem is the gap between that select and that insert. Nearby properties share neighborhood data, so two parallel calls would ask for the same neighborhood within milliseconds. Both ran their select before either one inserted, so both saw a miss. Both called the API. The first insert committed, the second hit the unique constraint on the cache key and threw. That exception propagated up and failed the whole tab response, not just one metric.</p>
+  <p>I looked at three ways to handle it:</p>
+  <ul>
+    <li><b>Redis distributed lock:</b> acquire a lock on the cache key before the select and insert, release it after.</li>
+    <li><b>Catch and read in a new transaction:</b> let the insert fail, catch the <code>DataIntegrityViolationException</code>, and read the existing row inside <code>@Transactional(propagation = REQUIRES_NEW)</code>, because the failed insert marks the original transaction rollback-only.</li>
+    <li><b>Insert with conflict handling:</b> the cache key already had a unique constraint, so use a SQL Server <code>MERGE ... WITH (HOLDLOCK)</code> that only inserts <code>WHEN NOT MATCHED</code>. If another thread already saved that key, the database skips the insert instead of throwing, and I read the row that is already there.</li>
+  </ul>
+  <p>I went with the third one.</p>
+  <p>That 1 to 2 percent failure rate went to effectively zero, with no measurable latency on the normal path and no locking infrastructure to run.</p>
+</div>
+
+<div class="story-block">
+  <h3>8. Cutting repeat API calls to zero without touching 20 call sites</h3>
+  <p>Our rentability tab was making around 20 calls to Mashvisor every time someone opened it, even if we'd pulled that exact same property minutes earlier. Each call costs 2 to 5 cents and we had a few hundred property views a day, so we were spending somewhere around $300 to $800 a month on data already sitting in our own database. It was slow too. Those 20 calls were most of the load time, so people waited 8 to 12 seconds before seeing any numbers.</p>
+  <p>Those 20 calls were spread across several endpoint classes I hadn't written, and the obvious approach was to wrap each call site. But that's 20 separate edits, 20 chances to implement it slightly differently, and 20 places someone has to remember later. So before writing any caching code I spent about half a day tracing how those calls actually flowed. Turned out all 20, regardless of which endpoint class triggered them, funneled through a single shared transport interface with one method. I built the cache as a decorator around that one method. A decorator is invisible to callers, so nothing at any call site changed.</p>
+  <p>The harder part was freshness, because these metrics don't age at the same rate. Rent estimates move slowly. Rental comps turn over faster. So I split it into two independent checks. One for whether we had the right id to call the endpoint at all, and separately whether the cached data for that id was still fresh. A valid id tells you nothing about whether a specific metric is stale, so combining them would make a stale record indistinguishable from a missing one.</p>
+  <p>For freshness, I kept constants in memory that set how many days each metric stays valid. Every time a request comes in, I compare the saved expiry date against the current date for that metric. If it has expired, only that endpoint calls Mashvisor again and updates the row. If not, we serve it from the database.</p>
+  <p>Repeat views on fresh data dropped from 20 external calls to zero, which cut that monthly spend by 60 to 70 percent and brought tab load into the 2 to 3 second range. Zero changes to existing endpoint classes meant no regression risk in code I didn't write, and any new endpoint added later inherits caching automatically.</p>
+</div>
+
+<div class="story-block">
+  <h3>9. My kill switch wouldn't have worked when we actually needed it</h3>
+  <p>I built a kill switch for our caching layer using a config flag. The idea was if caching ever misbehaved in production we could turn it off in seconds instead of waiting on a rollback. During code review, a teammate asked me something I hadn't thought through. What happens if the caching database itself goes down, given the app still creates that DataSource at startup?</p>
+  <p>He was right, and it was a good catch. Optional at the config level didn't mean optional at the infrastructure level. The DataSource bean was being created eagerly regardless of the flag. So a bad connection string or an unreachable cache database would fail application startup entirely, even with caching switched off. Which means my supposed safety valve had a 100 percent chance of not working in exactly the scenario I built it for, because the service wouldn't even come up to honor the flag.</p>
+  <p>I fixed it with ConditionalOnProperty so the bean only gets instantiated when the flag is true. Flipping it off now genuinely removes the dependency instead of creating the connection and declining to use it.</p>
+  <p>That turned the kill switch from decorative into actually functional. In practice that's the difference between a 30 second config change and a full rollback and redeploy, which is more like 20 to 30 minutes during an incident. What I took from it is to think about failure in infrastructure I own, not just the systems I call out to.</p>
+</div>
+
+<h2>Chat</h2>
+
+<div class="context-block">
+  <p><strong>What is Chat:</strong> A real-time messaging platform where brokers, lenders, buyers, and transaction coordinators coordinate on live real estate deals. Users can send and delete messages, attach documents, create sessions tied to transactions, and manage participants with different roles. Sessions persist full conversation history, support concurrent sends, and include features like enquiry sessions that can exist before a formal transaction starts. Performance is critical since users expect sub-second send operations, and any slowdown (30-60 seconds) breaks the core feature and kills deals.</p>
+</div>
+
+<div class="story-block">
+  <h3>10. Chat messages taking 30 to 60 seconds to send</h3>
+  <p>During testing before release, something as simple as sending or deleting a chat message was taking 30 to 60 seconds. Nothing was erroring out, it was just too slow to use. Chat is how brokers, lenders and buyers coordinate on live deals, a few hundred conversations a day, so the main feature looked completely broken. It got flagged as a blocker that would have pushed the launch back at least a sprint.</p>
+  <p>Instead of guessing from reading the JPQL, I turned on Hibernate SQL logging locally and ran EXPLAIN ANALYZE against a dataset sized like UAT. Query plans look fine on small local data and fall apart as row counts grow, so testing against realistic data mattered.</p>
+  <p>That exposed redundant queries stacking up across message, attachment, session and participant lookups. A classic N+1 from lazy loaded associations. A single send was triggering 15 to 20 database round trips where 3 or 4 would do.</p>
+  <p>I combined several separate writes into single transactions, merged the redundant lookups into joined fetch queries, and reordered validation so cheap checks like authorization ran before any database call instead of after.</p>
+  <p>That brought it from 30 to 60 seconds down to 2 to 3 seconds, about a 95 percent improvement, and we shipped chat on the original date. Digging into the performance also turned up real bugs hiding behind the slowness, like a delete endpoint returning the wrong status code, which would have gone out quietly otherwise.</p>
+</div>
+
+<div class="story-block">
+  <h3>11. Reworking transactional boundaries so a partial write can't happen</h3>
+  <p>In our message send flow, saving the message and updating the parent session's last message timestamp were two separate database writes. If anything failed between them, you end up with a message that exists but a session that doesn't reflect it. To the user that looks like an empty or stale conversation in their session list even though the message is sitting in the database. Every single send goes through this path, so even a 0.1 percent failure rate between those two writes means inconsistent conversations showing up daily.</p>
+  <p>I wanted both writes atomic without slowing down one of the hottest paths in the system. So I combined the insert and the session update into a single write inside one transaction boundary, which also cut it from two round trips to one.</p>
+  <p>I also added optimistic locking on the session with a version column, so two near simultaneous sends surface a conflict the caller can retry instead of one silently overwriting the other. I chose optimistic over a pessimistic row lock deliberately, because sends are frequent and short lived. Holding a row lock across the write would serialize unrelated sends to the same session, hurting throughput on a busy conversation, for a conflict that's genuinely rare.</p>
+  <p>The send path came out both faster and safer. Partial writes aren't just unlikely now, they're structurally impossible. It also closed a subtle bug where sessions showed stale last message data under concurrent sends.</p>
+</div>
+
+<div class="story-block">
+  <h3>12. Building enquiry sessions when the data model assumed a transaction always existed</h3>
+  <p>We got asked to let a user start a chat with a transaction coordinator before any real estate transaction existed in the system. This mattered commercially because it's the top of the funnel, someone asking a question before they've committed to a deal, and until then we were forcing them to email instead. The problem was our entire chat data model, from session creation through attachment lookups, assumed a transaction id was always present. The requirement was one line, make chat work without a transaction, and the implications were mine to work out.</p>
+  <p>Making the column nullable was the easy part and nowhere near sufficient. A nullable column doesn't stop a join or role lookup written against the old assumption from silently returning nothing. That's worse than an error, because it looks like working code returning empty results. So I worked through every consumer one at a time. Session listing, closing, reopening, attachment lookups, roughly 8 to 10 distinct paths, fixing each place that assumed a transaction existed.</p>
+  <p>I also had to build new role resolution logic, since the existing logic derived a user's role from the transaction itself, which no longer applied. For enquiry sessions I derived it from the session's own participant records instead.</p>
+  <p>Enquiry sessions shipped working across every existing chat feature with no special case checks scattered through the codebase. What I took from it is to trace every consumer of an assumption before removing it.</p>
+</div>
+
+<h2>Notifications</h2>
+
+<div class="context-block">
+  <p><strong>What are Notifications:</strong> An asynchronous messaging system handling 164+ notification types across brokers, lenders, buyers, and transaction coordinators. Built on Azure Service Bus with command-style messaging and delivery guarantees, notifications cover events like signup, document submission, and account approval. Each notification can be delivered via Email, SMS, or In-App, with templates stored in the database (not code) and loaded into Redis at startup. Templates are edited without deploys, invalidated across all instances via Redis pub-sub, and failures are captured via Service Bus dead lettering for replay and audit.</p>
+</div>
+
+<div class="story-block">
+  <h3>13. Publishing notifications synchronously blocked message sends under broker slowness</h3>
+  <p>Our notification pipeline runs on Azure Service Bus topics and handles 164 plus notification types across brokers, lenders, buyers and transaction coordinators, fanning out to Email, SMS and In-App. While building it I noticed the message send flow was calling the publish step synchronously, inline with the main request. Under load, if the broker got slow, that could add up to 30 seconds to something as simple as sending a chat message. Not everyone initially saw this as worth changing, because in normal conditions a publish returns in milliseconds and the problem is invisible.</p>
+  <p>So instead of arguing it abstractly, I laid out the failure scenario concretely. The broker doesn't have to go down for this to hurt. It just has to be briefly slow, which happens during throttling or a transient connectivity blip. In that window, the producer blocking on an ack means every chat send in the system blocks with it. So a secondary system having a routine hiccup takes down the primary feature, and a notification that would have been two seconds late instead becomes a message that appears to fail entirely.</p>
+  <p>I proposed making the publish fire and forget with Async, catching and logging failures inside the async method instead of letting them propagate to the caller.</p>
+  <p>We converted it and that coupling disappeared. Chat send latency became independent of broker health. A Service Bus hiccup now costs a slightly delayed notification instead of a 30 second hang on the core user action. The tradeoff we accepted explicitly is that a dropped publish loses that one notification, which is why the logging matters, though dead lettering covers failures once the message is actually accepted.</p>
+</div>
+
+<div class="story-block">
+  <h3>14. Fixing a bean initialization order bug affecting monitoring, not just my feature</h3>
+  <p>While working on notification delivery, I noticed our APM logs had a gap right at startup. The first few seconds of every deploy were missing entirely. That had nothing to do with what I was assigned and nobody had traced it. But startup is exactly when things fail, bad config, unreachable dependencies, a failed migration. So we were blind during the highest risk window of every deploy, on every service.</p>
+  <p>I dug in and found it was a Spring bean initialization order issue. A log clearing configuration bean was running after the APM appender had already registered, wiping out its earliest output. Spring doesn't guarantee creation order beyond the dependency edges you declare explicitly, so these two unrelated beans could initialize in either order, and we'd landed on the wrong one.</p>
+  <p>The fix was small. An explicit DependsOn so the log clearing step runs before the appender registers instead of relying on implicit ordering.</p>
+  <p>The gap closed, which means startup failures became diagnosable from logs instead of needing a local reproduction. That's the difference between reading a stack trace and spending half a day reproducing a deploy time failure. It cost me maybe two hours and it wasn't my scope, but observability gaps compound quietly, and the next person hitting a startup issue would have burned far more than that.</p>
+</div>
+
+<div class="story-block">
+  <h3>15. Keeping 164+ notification templates editable without a code deploy</h3>
+  <p>We had 164 plus notification types across brokers, lenders, buyers and transaction coordinators, covering everything from signup to financial document submission to account approval, each deliverable over Email, SMS or In-App. The key design decision was that none of that message content lives in code. It's all stored in the database and loaded into Redis at startup, so changing wording means a database update, not a code change.</p>
+  <p>The part I pushed on was invalidation. A teammate had the lookup on a hand rolled in-memory map that loaded once at startup with no eviction path at all. So any template edit was invisible until a full restart. Which means a one word copy fix on any of those 164 types required a deploy, turning a 30 second change into a release cycle.</p>
+  <p>Instead of arguing it as preference, I walked through the multi instance case, which is where it really falls apart. Even adding eviction, clearing the cache on the instance that received the request leaves every other instance behind the load balancer serving old copy indefinitely. So some users see the new message and some see the old one, which is worse than everyone consistently seeing stale text. I proposed Spring's Cacheable and CacheEvict with an authenticated reload endpoint that fans invalidation to all instances over Redis pub sub.</p>
+  <p>Template changes now propagate across every instance in seconds from a database edit, no deploy. We also deleted a chunk of hand written cache management in favour of framework code that's already tested.</p>
+</div>
+
+</div>

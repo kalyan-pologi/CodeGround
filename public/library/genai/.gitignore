@@ -1,0 +1,27 @@
+# Claude (but keep instructions)
+.claude/
+!.claude/instructions.md
+
+# Node
+node_modules/
+npm-debug.log
+package-lock.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Backups
+*.backup
+*.bak
+*~
+
+# Environment
+.env
+.env.local

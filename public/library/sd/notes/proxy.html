@@ -1,0 +1,226 @@
+<div class="section-header">
+        <div class="tag">Networking Essentials</div>
+        <h1>🌐 Proxy Servers</h1>
+        <p>Forward vs reverse proxy: caching, security, load distribution, and SSL termination.</p>
+      </div>
+
+      <div class="cs-section-label">📚 What It Is</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Forward Proxy</h3>
+          <span class="b">Sits in front of <b>clients</b>. Client to proxy to internet. The destination server sees
+            the proxy's identity, not the real client's.</span>
+          <span class="b">The client is usually configured (explicitly or by network policy) to route all outbound
+            traffic through it.</span>
+        </div>
+        <div class="card c2">
+          <h3>Reverse Proxy</h3>
+          <span class="b">Sits in front of <b>servers</b>. Client to proxy to backend. The client sees the proxy's
+            identity, not the real server's.</span>
+          <span class="b">From the client's point of view it looks like a normal server; it just happens to forward
+            the work elsewhere.</span>
+        </div>
+        <div class="card c8">
+          <h3>Core Idea</h3>
+          <span class="b">An intermediary that forwards requests on someone's behalf, adding a control point for
+            caching, security, and traffic shaping in between.</span>
+          <span class="b">The direction it faces (toward clients or toward servers) is the whole difference between
+            forward and reverse.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">❓ Why Introduced</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Forward Proxy Solves</h3>
+          <span class="b">Clients wanting anonymity, content filtering (schools, corporate networks), or a single
+            controlled egress point for all outbound traffic that IT can monitor and log.</span>
+          <span class="b">Also solves the problem of enforcing one consistent policy (blocked sites, malware
+            scanning) across every device on a network without configuring each device individually.</span>
+        </div>
+        <div class="card c2">
+          <h3>Reverse Proxy Solves</h3>
+          <span class="b">Servers not wanting to expose internal topology (real IPs, number of instances), needing
+            to distribute load, terminate SSL centrally instead of on every backend, or cache responses close to the
+            edge.</span>
+          <span class="b">Also solves the problem of running many backend services behind one public entry point,
+            so clients only ever need to know one address, not each service's location.</span>
+        </div>
+        <div class="card c8">
+          <h3>Shared Motivation</h3>
+          <span class="b">Both add a control point where you can intercept, inspect, cache, or transform traffic
+            without changing client or server application code.</span>
+          <span class="b">This separation of concerns means app developers don't have to build caching, rate
+            limiting, or SSL handling into every single service themselves.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚙️ How It Works</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Forward Proxy Flow</h3>
+          <div class="row"><span class="k">Client</span><span class="v">configured to send requests through the proxy</span></div>
+          <div class="row"><span class="k">Proxy</span><span class="v">forwards the request, may filter, log, or cache it</span></div>
+          <div class="row"><span class="k">Server</span><span class="v">sees the proxy's IP as the request origin</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Reverse Proxy Flow</h3>
+          <div class="row"><span class="k">Client</span><span class="v">requests the public domain directly</span></div>
+          <div class="row"><span class="k">Proxy</span><span class="v">terminates SSL, decides which backend handles it</span></div>
+          <div class="row"><span class="k">Backend</span><span class="v">unaware of the original client unless the proxy forwards details via headers</span></div>
+        </div>
+        <div class="card c8">
+          <h3>Common Capabilities</h3>
+          <span class="b">Caching static responses so the origin is hit less often.</span>
+          <span class="b">Compressing payloads, rewriting headers or URLs.</span>
+          <span class="b">Rate limiting abusive clients before they reach the backend.</span>
+          <span class="b">SSL/TLS termination, so backend servers can speak plain HTTP internally.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">✅ When to Use</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Forward Proxy</h3>
+          <span class="b">Corporate networks doing content filtering or egress control, anonymizing outbound
+            traffic, or working around geo-restrictions.</span>
+          <span class="b">Also common for scraping infrastructure that rotates through many outbound IPs to avoid
+            being rate limited or blocked by a target site.</span>
+        </div>
+        <div class="card c2">
+          <h3>Reverse Proxy</h3>
+          <span class="b">Load balancing across backend instances, centralized SSL/TLS termination, hiding internal
+            architecture from the outside world, and edge caching of frequently requested content.</span>
+          <span class="b">Also the natural place to add cross-cutting concerns like request logging, compression,
+            and basic authentication before a request ever reaches application code.</span>
+        </div>
+        <div class="card c8">
+          <h3>Ubiquity</h3>
+          <span class="b">Almost every production web service sits behind a reverse proxy, like Nginx, an ALB, or
+            Cloudflare, even before any load balancing logic runs.</span>
+          <span class="b">It's rare to see a modern production system where clients connect straight to an
+            application server with nothing in front of it.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚖️ Trade-offs</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Latency vs Caching</h3>
+          <span class="b">Adds an extra network hop, which costs a small amount of latency, but this is usually
+            more than offset by caching gains.</span>
+          <span class="b">The net effect depends heavily on cache hit rate: a poorly tuned cache can add latency
+            with none of the benefit.</span>
+        </div>
+        <div class="card c2">
+          <h3>Centralization vs Availability Risk</h3>
+          <span class="b">Centralizes SSL and auth logic, which simplifies operations, but that proxy layer becomes
+            a single component that must itself scale and stay available.</span>
+          <span class="b">A misconfiguration in the proxy now affects every backend behind it at once, instead of
+            being isolated to one service.</span>
+        </div>
+        <div class="card c8">
+          <h3>Privacy vs Convenience</h3>
+          <span class="b">Forward proxies can be a privacy and trust concern: whoever operates the proxy sees all
+            traffic passing through it, including URLs and possibly payloads if not end-to-end encrypted.</span>
+          <span class="b">That same visibility is exactly what makes them useful for enterprise monitoring and
+            compliance, so the trade-off is really about who you trust to hold that visibility.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚨 Failure Modes + Mitigations</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Availability</h3>
+          <span class="b"><b>Proxy is a single point of failure:</b> run multiple instances, put a load balancer
+            in front.</span>
+          <span class="b"><b>Proxy overloaded by a traffic spike:</b> autoscale the proxy tier, add rate
+            limiting.</span>
+          <span class="b"><b>Config push breaks routing:</b> canary the config change, keep a fast rollback
+            path.</span>
+        </div>
+        <div class="card c2">
+          <h3>Correctness</h3>
+          <span class="b"><b>Stale cached responses served:</b> cache-control headers, TTLs, purge on deploy.</span>
+          <span class="b"><b>Wrong backend selected:</b> test routing rules before deploy, monitor 5xx by
+            route.</span>
+          <span class="b"><b>Header rewriting drops data:</b> explicit allowlist of headers to forward.</span>
+        </div>
+        <div class="card c8">
+          <h3>Visibility</h3>
+          <span class="b"><b>Backend loses the real client IP:</b> set the X-Forwarded-For header at the
+            proxy.</span>
+          <span class="b"><b>Logs only show proxy IP, not client:</b> log X-Forwarded-For at the app layer
+            too.</span>
+          <span class="b"><b>Rate limiting keyed on the wrong IP:</b> rate limit using the forwarded client IP, not
+            the proxy's.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚫 When NOT to Use</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Skip the Reverse Proxy</h3>
+          <span class="b">Don't add a reverse proxy layer for a single tiny internal service where the extra hop
+            and operational overhead outweigh any benefit.</span>
+          <span class="b">For a small internal tool with a handful of users, the ops cost of running and monitoring
+            another component usually isn't worth it.</span>
+        </div>
+        <div class="card c2">
+          <h3>Not a Security Substitute</h3>
+          <span class="b">Don't rely on a forward proxy alone for security. It filters and logs traffic, it doesn't
+            encrypt or authenticate anything by itself.</span>
+          <span class="b">Pair it with TLS end-to-end and proper authentication; the proxy is a visibility and
+            control layer, not a replacement for those.</span>
+        </div>
+        <div class="card c8">
+          <h3>Don't Chain Proxies Needlessly</h3>
+          <span class="b">Avoid stacking multiple reverse proxies in series without a reason. Each hop adds latency
+            and another thing that can misconfigure headers or drop connections.</span>
+          <span class="b">If you find yourself debugging why a header disappeared, count how many proxy hops are
+            actually necessary before adding more logic to fix it.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🗺️ Where It Fits in a System Diagram</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Typical Path</h3>
+          <div class="row"><span class="k">Client</span><span class="v">Reverse Proxy or Load Balancer</span></div>
+          <div class="row"><span class="k">then</span><span class="v">App Servers</span></div>
+          <div class="row"><span class="k">then</span><span class="v">DB or cache tier</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Often the Same Box</h3>
+          <span class="b">A reverse proxy usually sits at the same tier as, or just in front of, the load balancer.
+            They're often the same physical box, since Nginx and similar tools do both jobs at once.</span>
+          <span class="b">In larger systems they're split apart: a dedicated CDN/edge layer, then a reverse proxy
+            tier, then the load balancer, each with a distinct job.</span>
+        </div>
+        <div class="card c8">
+          <h3>Forward Proxy Placement</h3>
+          <span class="b">A forward proxy sits inside the client's own network, between end users and the wider
+            internet, not near the servers being requested.</span>
+          <span class="b">It never appears in a typical backend system diagram at all, since it belongs to the
+            client side of the connection, not the service you're designing.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🌍 Real-World Examples</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Reverse Proxy</h3>
+          <div class="row"><span class="k">Software</span><span class="v">Nginx, HAProxy, Envoy</span></div>
+          <div class="row"><span class="k">Managed</span><span class="v">Cloudflare, AWS ALB</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Forward Proxy</h3>
+          <div class="row"><span class="k">Enterprise</span><span class="v">corporate proxies, Squid</span></div>
+          <div class="row"><span class="k">Privacy</span><span class="v">VPNs, Tor</span></div>
+        </div>
+        <div class="card c8">
+          <h3>Both in One</h3>
+          <span class="b">API gateways (like Kong or AWS API Gateway) often act as reverse proxies with extra
+            features: auth, rate limiting, and request transformation built in.</span>
+        </div>
+      </div>

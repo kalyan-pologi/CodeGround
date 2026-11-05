@@ -1,0 +1,29 @@
+{
+    "name":  "java-interview-practice",
+    "private":  true,
+    "version":  "0.1.0",
+    "type":  "module",
+    "scripts":  {
+                    "dev":  "vite",
+                    "build":  "vite build",
+                    "preview":  "vite preview",
+                    "check:data":  "node scripts/validate-data.mjs",
+                    "check:java":  "node scripts/validate-java.mjs",
+                    "check:mcqs":  "node scripts/validate-mcqs.mjs",
+                    "check:framework":  "node scripts/validate-framework.mjs",
+                    "check:browser":  "node --experimental-websocket scripts/validate-browser.mjs",
+                    "check:render":  "node scripts/validate-render.mjs",
+                    "check:compiler":  "node --test scripts/validate-compiler.test.mjs",
+                    "check:compiler:live":  "node scripts/validate-compiler-live.mjs",
+                    "check:compiler:browser":  "node --experimental-websocket scripts/validate-browser.mjs --compiler-live"
+                },
+    "dependencies":  {
+                         "react":  "^18.3.1",
+                         "react-dom":  "^18.3.1",
+                         "@monaco-editor/react":  "^4.7.0",
+                         "monaco-editor":  "^0.52.2"
+                     },
+    "devDependencies":  {
+                            "vite":  "^6.4.1"
+                        }
+}

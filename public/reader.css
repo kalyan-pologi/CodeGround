@@ -1,0 +1,21 @@
+/* A consistent reading hierarchy across all imported note libraries. */
+/* Imported layouts must let the embedded document own vertical scrolling. */
+html{height:auto!important;min-height:100%;overflow-y:auto!important}
+body{display:block!important;margin:0!important;height:auto!important;min-height:100vh;overflow:visible!important}
+#main{margin:0!important;width:100%;height:auto!important;overflow:visible!important}
+.section{display:block!important;margin:0!important;max-width:1200px;padding:32px clamp(18px,4vw,48px) 80px!important}
+.section .section{padding:0!important}
+.section-header{margin-top:0}
+a{cursor:pointer}
+pre{overflow:auto}
+table{max-width:100%}
+#main .section-header h1,#main h1{font-size:clamp(29px,3.4vw,40px);font-weight:750;line-height:1.22;letter-spacing:-.8px;color:#f2f6fc;margin:10px 0 20px}
+#main h2{font-size:24px;font-weight:700;line-height:1.35;letter-spacing:-.3px;color:#a0e7cd;margin:44px 0 22px;padding:14px 18px;border-left:4px solid #86d8bd;border-bottom:1px solid #2c4644;background:#152725;border-radius:0 7px 7px 0}
+#main h3{font-size:19px;font-weight:650;line-height:1.4;color:#c4d8ff;margin:30px 0 14px;padding:0 0 9px;border-bottom:1px solid #2c3749}
+#main h4{font-size:16px;font-weight:650;color:#e1e9f5;margin:24px 0 10px}
+#main p,#main li{line-height:1.85}
+#main .section-header{padding-bottom:22px;margin-bottom:28px;border-bottom:1px solid #2a3645}
+#main .section-header p{max-width:850px;color:#a4b1c4;font-size:15px}
+#main .section-header .tag{font-size:10px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase}
+#main .home-card h2,#main .home-card h3,#main .card h2,#main .card h3{margin:10px 0;padding:0;border:0;background:none;font-size:20px;color:#e1e9f5}
+@media(max-width:600px){#main h2{font-size:21px;margin-top:32px}#main h3{font-size:18px}}

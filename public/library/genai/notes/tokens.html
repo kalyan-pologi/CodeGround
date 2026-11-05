@@ -1,0 +1,204 @@
+<div class="section-header">
+  <div class="tag">Foundations</div>
+  <h1>🔤 Tokens & Tokenization</h1>
+  <p>How text is split into chunks and why it matters for cost, context, and behavior.</p>
+</div>
+
+<div class="cs-section-label">🧠 Core Concept</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>What Tokens Are</h3>
+    <div class="b">A <b>token</b> is the basic unit an LLM actually reads and writes, a chunk of text somewhere between a character and a word, mapped to an integer ID from a fixed vocabulary.</div>
+    <div class="b">Common words are often a <b>single token</b> ("the", "cat"), while rare words, made-up words, or non-English text get split into <b>multiple sub-word pieces</b>.</div>
+    <div class="b">Before any neural computation happens, raw text is run through a <b>tokenizer</b> that converts it to a list of integers, and the model's embedding table looks up a vector for each ID, exactly the input format the network expects.</div>
+    <div class="b">Everything the model perceives, generates, and pays for is measured in <b>tokens, not characters or words</b>, which is why token-level quirks show up everywhere in model behavior.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">rough ratio</span><span class="v">~4 chars per token (English)</span></div>
+    <div class="row"><span class="k">vocab size</span><span class="v">~100k-200k for modern models</span></div>
+  </div>
+  <div class="card c2">
+    <h3>Why Not Raw Characters/Bytes</h3>
+    <div class="b">Feeding the model raw <b>characters</b> would keep the vocabulary tiny (about 100 symbols) but make every sequence extremely long, a short paragraph could become thousands of steps, and transformer compute grows quadratically with sequence length.</div>
+    <div class="b">Feeding raw <b>bytes</b> has the same problem in a different guise: a small alphabet, but multi-byte UTF-8 characters and long sequences still blow up context usage.</div>
+    <div class="b">Sub-word tokenization is the middle ground: a <b>larger vocabulary</b> (tens of thousands of entries) buys much <b>shorter sequences</b>, so more actual content fits in a fixed context window at a fixed compute budget.</div>
+    <div class="b">This is a genuine <b>trade-off dial</b>, not a free lunch: push vocabulary size up and sequences get shorter but the embedding table and output layer get bigger and rarer tokens get less individual training signal.</div>
+  </div>
+  <div class="card c3">
+    <h3>How It's Learned: BPE</h3>
+    <div class="b"><b>Byte Pair Encoding</b> builds the vocabulary by starting from individual bytes and repeatedly merging the <b>most frequent adjacent pair</b> into one new token.</div>
+    <div class="b">Run this process over a huge training corpus for tens of thousands of iterations, and each merge adds one entry to the vocabulary, common sequences like "ing" or "the" earn their own token, while rare combinations stay split into smaller pieces.</div>
+    <div class="b">The result is a <b>learned, data-driven</b> vocabulary rather than a hand-built dictionary: frequent English morphemes get single tokens for free, while unusual strings fall back to shorter, more granular pieces.</div>
+    <div class="b">Once trained, the same merge rules are applied at inference time to split any new text <b>deterministically</b>, the vocabulary itself doesn't change per request.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">start</span><span class="v">individual bytes</span></div>
+    <div class="row"><span class="k">each step</span><span class="v">merge most frequent pair</span></div>
+    <div class="row"><span class="k">stop</span><span class="v">target vocab size reached</span></div>
+  </div>
+</div>
+
+<div style="margin:24px 0;text-align:center">
+<svg viewBox="0 0 800 260" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;height:auto" role="img" aria-label="Tokenization example splitting hello world into tokens with IDs">
+  <defs>
+    <marker id="arrow2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#4ade80"></path>
+    </marker>
+  </defs>
+  <text x="400" y="28" fill="#e5e5e5" font-size="14" text-anchor="middle">"Hello world, tokenization!"</text>
+
+  <line x1="400" y1="38" x2="400" y2="60" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow2)"></line>
+
+  <rect x="30" y="70" width="70" height="40" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="65" y="95" fill="#e5e5e5" font-size="12" text-anchor="middle">Hello</text>
+
+  <rect x="110" y="70" width="55" height="40" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="137" y="95" fill="#e5e5e5" font-size="12" text-anchor="middle">world</text>
+
+  <rect x="175" y="70" width="30" height="40" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="190" y="95" fill="#e5e5e5" font-size="12" text-anchor="middle">,</text>
+
+  <rect x="215" y="70" width="55" height="40" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="242" y="95" fill="#e5e5e5" font-size="12" text-anchor="middle">token</text>
+
+  <rect x="280" y="70" width="55" height="40" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="307" y="95" fill="#e5e5e5" font-size="12" text-anchor="middle">ization</text>
+
+  <rect x="345" y="70" width="30" height="40" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="360" y="95" fill="#e5e5e5" font-size="12" text-anchor="middle">!</text>
+
+  <text x="200" y="128" fill="#999" font-size="10" text-anchor="middle">BPE splits rare/compound words into sub-word pieces</text>
+
+  <line x1="65" y1="140" x2="65" y2="165" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow2)"></line>
+  <line x1="137" y1="140" x2="137" y2="165" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow2)"></line>
+  <line x1="190" y1="140" x2="190" y2="165" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow2)"></line>
+  <line x1="242" y1="140" x2="242" y2="165" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow2)"></line>
+  <line x1="307" y1="140" x2="307" y2="165" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow2)"></line>
+  <line x1="360" y1="140" x2="360" y2="165" stroke="#4ade80" stroke-width="1.5" marker-end="url(#arrow2)"></line>
+
+  <rect x="35" y="170" width="60" height="34" rx="5" fill="none" stroke="#4ade80"></rect>
+  <text x="65" y="192" fill="#4ade80" font-size="11" text-anchor="middle">15496</text>
+
+  <rect x="107" y="170" width="60" height="34" rx="5" fill="none" stroke="#4ade80"></rect>
+  <text x="137" y="192" fill="#4ade80" font-size="11" text-anchor="middle">1917</text>
+
+  <rect x="165" y="170" width="50" height="34" rx="5" fill="none" stroke="#4ade80"></rect>
+  <text x="190" y="192" fill="#4ade80" font-size="11" text-anchor="middle">11</text>
+
+  <rect x="217" y="170" width="50" height="34" rx="5" fill="none" stroke="#4ade80"></rect>
+  <text x="242" y="192" fill="#4ade80" font-size="11" text-anchor="middle">11241</text>
+
+  <rect x="277" y="170" width="60" height="34" rx="5" fill="none" stroke="#4ade80"></rect>
+  <text x="307" y="192" fill="#4ade80" font-size="11" text-anchor="middle">1634</text>
+
+  <rect x="337" y="170" width="46" height="34" rx="5" fill="none" stroke="#4ade80"></rect>
+  <text x="360" y="192" fill="#4ade80" font-size="11" text-anchor="middle">0</text>
+
+  <text x="200" y="230" fill="#999" font-size="10" text-anchor="middle">Each ID indexes a row in the model's embedding table (vocab lookup)</text>
+</svg>
+</div>
+
+<div class="cs-section-label">🔬 Deeper Look</div>
+<div class="grid3">
+  <div class="card c4">
+    <h3>Vocabulary in Practice</h3>
+    <div class="b">Modern production tokenizers sit around <b>100k to 200k entries</b>, GPT-4's cl100k_base is about 100k, and newer tokenizers push toward 200k to cover more languages and code efficiently.</div>
+    <div class="b">A bigger vocabulary generally makes <b>non-English and code text more efficient</b> by giving common foreign morphemes or code idioms their own tokens, instead of falling back to byte-level fragments.</div>
+    <div class="b">Special reserved slots are carved out for <b>control tokens</b> (like end-of-text or role markers), so the practical text vocabulary is slightly smaller than the raw count.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">GPT-4 (cl100k)</span><span class="v">~100k tokens</span></div>
+    <div class="row"><span class="k">GPT-4o (o200k)</span><span class="v">~200k tokens</span></div>
+  </div>
+  <div class="card c5">
+    <h3>Visible Model Weaknesses</h3>
+    <div class="b">The model cannot reliably <b>count letters</b> in a word because it never sees individual characters, "strawberry" might be 2-3 opaque token chunks, so counting R's requires indirect reasoning about sub-token content it wasn't trained to expose directly, the well-known <b>strawberry meme</b>.</div>
+    <div class="b"><b>Spelling and reversing strings</b> are similarly hard: the model has to infer character-level structure from token identity rather than reading characters directly, a bit like being asked to spell a word using only its Morse code without ever seeing the letters.</div>
+    <div class="b"><b>Multi-digit arithmetic</b> often breaks because numbers are tokenized inconsistently, "1234" might be one token in one context and split as "12"+"34" in another, so digit alignment for carrying and place value isn't guaranteed to be visible to the model.</div>
+    <div class="b">These aren't reasoning failures so much as <b>input representation failures</b>, the model is working with the wrong granularity of information for the task.</div>
+  </div>
+  <div class="card c6">
+    <h3>Non-English Cost</h3>
+    <div class="b">Tokenizers are trained on corpora <b>dominated by English</b>, so English text gets efficient, near-word-length tokens while other languages fragment into many more, smaller pieces.</div>
+    <div class="b">The same sentence in <b>Hindi, Thai, or Japanese</b> can take two to five times as many tokens as its English equivalent, purely because those scripts and morphologies were under-represented during BPE training.</div>
+    <div class="b">Since pricing and context limits are <b>per-token</b>, this means non-English users effectively pay more and fit less content per dollar and per context window for equivalent content.</div>
+    <div class="b">Newer tokenizers with larger, more multilingual-aware vocabularies (like GPT-4o's o200k) <b>narrow this gap</b> but rarely eliminate it entirely.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚙️ Practical Mechanics</div>
+<div class="grid3">
+  <div class="card c7">
+    <h3>Conversation Structure</h3>
+    <div class="b">Chat models tokenize conversations using <b>special reserved tokens</b> that don't correspond to any real text, things like <b>&lt;|im_start|&gt;</b> and <b>&lt;|im_end|&gt;</b> mark where a turn begins and ends.</div>
+    <div class="b"><b>Role markers</b> (system, user, assistant) are similarly encoded as dedicated tokens, so the model can distinguish "this is what the user said" from "this is what I should say next" purely from structure in the token stream.</div>
+    <div class="b">This turns a multi-turn chat into one long flat token sequence with <b>embedded structure</b>, the model has no separate notion of "messages," it just sees a sequence shaped by these markers.</div>
+    <div class="b">Because the format is baked in during SFT, a prompt that <b>doesn't match the expected special-token structure</b> (raw text pasted oddly) can degrade instruction-following, the model is pattern-matching to a format it was trained on.</div>
+  </div>
+  <div class="card c8">
+    <h3>Cost, Context, Latency</h3>
+    <div class="b">API <b>pricing is per-token</b>, typically quoted per million input and output tokens, so token count is the direct line item on your bill, not word count or character count.</div>
+    <div class="b"><b>Context windows are token limits</b>: a "128k context" model truncates or rejects requests based on total tokens (prompt plus completion), not on some human-friendly measure like pages or words.</div>
+    <div class="b">Generation <b>latency scales with output tokens</b>, since decoding is autoregressive and each token requires a full forward pass, longer answers are proportionally slower to produce, not just longer to read.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">billing unit</span><span class="v">tokens, input + output separately</span></div>
+    <div class="row"><span class="k">context limit</span><span class="v">total tokens, not words</span></div>
+  </div>
+  <div class="card c9">
+    <h3>Prompting & Chunking Implications</h3>
+    <div class="b">When <b>chunking documents</b> for RAG, always measure and budget in tokens, not characters, since the actual tokenizer's chunk-to-token ratio varies by content type and language.</div>
+    <div class="b">Dense, repetitive, or boilerplate text (code, tables, logs) can tokenize <b>less efficiently than prose</b>, so a "500 word chunk" of code may consume noticeably more tokens than 500 words of plain English.</div>
+    <div class="b">When precision on exact characters matters (spelling, counting, parsing IDs), it's more reliable to ask the model to <b>write and run code</b> than to reason directly over tokens.</div>
+    <div class="b">Keeping prompts and few-shot examples <b>token-efficient</b> matters doubly: it reduces cost and it leaves more of the context window for the content that actually needs to be there.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🎯 Applying It</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>Use Cases</h3>
+    <div class="b"><b>Cost estimation</b>: count tokens before sending a request to predict spend, especially important for high-volume batch pipelines.</div>
+    <div class="b"><b>Context budgeting</b>: allocate a fixed token budget across system prompt, retrieved chunks, conversation history, and expected output before hitting the model's hard limit.</div>
+    <div class="b"><b>Chunk sizing for RAG</b>: size document chunks in tokens (not characters) to match embedding model limits and keep retrieval units coherent.</div>
+    <div class="b"><b>Rate limiting and truncation logic</b>: any system that needs to fit content into a fixed window (summarization, sliding context) has to reason in token units to be correct.</div>
+  </div>
+  <div class="card c11">
+    <h3>Trade-offs</h3>
+    <div class="b"><b>Vocabulary size vs sequence length</b>: bigger vocabulary shortens sequences and saves compute per document, but grows the embedding and output layers and dilutes training signal on rare tokens.</div>
+    <div class="b"><b>Efficiency vs interpretability</b>: sub-word tokens are efficient for the model but opaque for humans debugging behavior, you can't just assume "one token equals one character or word" when reasoning about model quirks.</div>
+    <div class="b"><b>Fairness across languages</b>: a shared vocabulary optimized for overall corpus frequency structurally advantages high-resource languages, correcting this fully would require deliberate multilingual balancing during tokenizer training.</div>
+  </div>
+  <div class="card c12">
+    <h3>When It Bites You</h3>
+    <div class="b">Silently <b>truncated context</b>: exceeding the token limit doesn't always error clearly, some APIs quietly drop the oldest content, producing confusing partial answers.</div>
+    <div class="b">Underestimating <b>cost for non-English or code-heavy workloads</b>, since word-count-based estimates translate poorly to actual token counts for these content types.</div>
+    <div class="b">Expecting <b>character-level precision</b> (exact counting, spelling, string reversal) directly from the model without accounting for the tokenization bottleneck, then being surprised when it's wrong.</div>
+    <div class="b">Ignoring token overhead from <b>conversation structure</b>: special tokens, role markers, and system prompts all consume budget before any actual user content is counted.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚠️ Reliability</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>Failure Modes</h3>
+    <div class="b"><b>Inconsistent number tokenization</b>: the same digit sequence can be split differently depending on surrounding context, undermining reliable arithmetic.</div>
+    <div class="b"><b>Boundary artifacts</b>: tokens sometimes span a leading space or punctuation inconsistently (" the" vs "the" as different tokens), which can cause subtly different model behavior depending on exact whitespace.</div>
+    <div class="b"><b>Out-of-distribution strings</b> (random IDs, hashes, rare unicode) fragment into many low-signal tokens, making the model's handling of them less reliable than ordinary prose.</div>
+    <div class="b"><b>Token-vs-word mismatch surprises</b>: a request estimated at "under the limit" by word count can exceed it in tokens, especially for technical or non-English content.</div>
+    <div class="sep"></div>
+    <div class="note" style="color:#4ade80;">Mitigate by always counting with the actual tokenizer (not word count), offloading exact character/number work to a code interpreter tool, and padding context budgets with margin for token-inefficient content.</div>
+  </div>
+  <div class="card c2">
+    <h3>Where It Fits</h3>
+    <div class="b">Raw Text, then <b>Tokenization</b>, then Embedding Lookup, then Transformer Layers, then Output Distribution, then Sampling.</div>
+    <div class="sep"></div>
+    <div class="b">Tokenization is the very <b>first step</b> in the pipeline, and every downstream limitation, from context windows to arithmetic mistakes, traces back to the granularity decided here.</div>
+    <div class="b">It also directly underlies practical concerns elsewhere in the stack: <b>embedding model input limits</b> and <b>LLM context windows</b> are both expressed and enforced in tokens.</div>
+    <div class="note">Nearly every "why did the model do that weird thing" question in practice resolves faster once you look at how the input actually got tokenized.</div>
+  </div>
+  <div class="card c3">
+    <h3>Real World Example</h3>
+    <div class="b"><b>OpenAI's tiktoken</b> library implements cl100k_base (GPT-4) and o200k_base (GPT-4o) BPE tokenizers, widely used to count tokens before sending API requests.</div>
+    <div class="b"><b>SentencePiece</b> (used by Llama and others) is a similar sub-word tokenizer that also supports byte-fallback, so it can represent any input even for characters not seen during training.</div>
+    <div class="b">The public <b>OpenAI Tokenizer</b> playground tool lets you paste text and see the exact token split and IDs, a quick way to sanity-check odd model behavior against actual tokenization.</div>
+    <div class="sep"></div>
+    <div class="note">A typical production habit: count tokens with the provider's real tokenizer library before every request, never estimate from word count, since the gap compounds at scale across cost, latency, and context limits.</div>
+  </div>
+</div>

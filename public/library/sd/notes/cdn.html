@@ -1,0 +1,211 @@
+<div class="section-header">
+        <div class="tag">Networking Essentials</div>
+        <h1>🌍 CDN - Content Delivery Network</h1>
+        <p>Edge caching, push vs pull CDN, reducing latency for global users.</p>
+      </div>
+
+      <div class="cs-section-label">📚 What It Is</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Definition</h3>
+          <span class="b">A geographically distributed network of edge servers that caches and serves content
+            close to the user, instead of every single request hitting the origin server.</span>
+          <span class="b">From the origin's point of view, the CDN acts as a giant shared cache sitting in front
+            of it, absorbing the vast majority of read traffic.</span>
+        </div>
+        <div class="card c2">
+          <h3>Push vs Pull</h3>
+          <span class="b"><b>Push:</b> You upload content to the CDN ahead of time.</span>
+          <span class="b"><b>Pull:</b> CDN fetches from origin on the first request, then caches it.</span>
+          <span class="b"><b>Push fits:</b> Small, stable content sets you control fully.</span>
+          <span class="b"><b>Pull fits:</b> Large or frequently changing content sets.</span>
+        </div>
+        <div class="card c8">
+          <h3>Edge Location</h3>
+          <span class="b">A PoP (point of presence) physically near a cluster of users, holding cached copies of
+            content so those users get short round-trip times.</span>
+          <span class="b">Large CDNs run hundreds of PoPs worldwide, so most users are only a few milliseconds away
+            from one, rather than hundreds of milliseconds from a single origin.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">❓ Why Introduced</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Distance Costs Latency</h3>
+          <span class="b">Physical distance directly costs latency. A user in Tokyo hitting an origin server in
+            Virginia pays real round-trip time on every single request.</span>
+          <span class="b">The speed of light itself is the hard floor here. No amount of server optimization
+            removes the physics of a signal crossing an ocean and back.</span>
+        </div>
+        <div class="card c2">
+          <h3>Concentrated Load</h3>
+          <span class="b">Serving every request from one origin also concentrates all the load there. A CDN offloads
+            static, cacheable traffic so origin only handles requests that actually need it.</span>
+          <span class="b">This also means a traffic spike, like a viral post, gets absorbed by edge caches instead
+            of directly threatening to take the origin down.</span>
+        </div>
+        <div class="card c8">
+          <h3>Two Problems, One Fix</h3>
+          <span class="b">CDNs solve both problems at once: move content physically closer to users, and absorb
+            traffic before it ever reaches the origin server.</span>
+          <span class="b">This combination is why CDNs became standard infrastructure rather than a niche
+            optimization: the cost savings and latency wins compound together.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚙️ How It Works</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Pull CDN Flow</h3>
+          <div class="row"><span class="k">1.</span><span class="v">Request arrives at nearest edge node</span></div>
+          <div class="row"><span class="k">2.</span><span class="v">Cache miss, edge fetches from origin</span></div>
+          <div class="row"><span class="k">3.</span><span class="v">Edge caches the response, serves it</span></div>
+          <div class="row"><span class="k">4.</span><span class="v">Later requests served from edge, fast</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Routing to Nearest Edge</h3>
+          <span class="b">Typically done via <b>GeoDNS</b> or <b>anycast</b>. The same domain resolves to a
+            different, nearest IP address depending on where the request is coming from.</span>
+          <span class="b">Anycast is especially powerful: many PoPs announce the exact same IP, and internet
+            routing itself sends each user to the topologically nearest one.</span>
+        </div>
+        <div class="card c8">
+          <h3>Cache Invalidation</h3>
+          <span class="b">Cached content expires by TTL, or is explicitly purged and invalidated when new content
+            is deployed. Cache invalidation is famously one of the two hard problems in computer science.</span>
+          <span class="b">Some CDNs support tag-based purging, so you can invalidate every cached object related to
+            one product or page without knowing every individual URL.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">✅ When to Use</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Static Assets</h3>
+          <span class="b">Static assets: images, JS and CSS bundles, videos, and downloadable files that don't
+            change per request.</span>
+          <span class="b">These are the easiest win: identical bytes served to every user, so cache hit rates
+            approach 100% once warmed.</span>
+        </div>
+        <div class="card c2">
+          <h3>Global Audiences</h3>
+          <span class="b">Globally distributed audiences. The further apart and more spread out your users are, the
+            bigger the latency win from edge caching.</span>
+          <span class="b">Even a single-region origin can serve a global audience reasonably well once a CDN is in
+            front of it, without standing up infrastructure in every region.</span>
+        </div>
+        <div class="card c8">
+          <h3>DDoS Absorption</h3>
+          <span class="b">Also useful for DDoS absorption. CDN edge nodes soak up volumetric attacks before they
+            can ever reach the origin.</span>
+          <span class="b">A CDN operator's total edge capacity across hundreds of PoPs vastly exceeds what any
+            single origin server could ever absorb on its own.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚖️ Trade-offs</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Push CDN</h3>
+          <span class="b">Predictable, since content is ready ahead of time, but you have to manage uploads
+            yourself and pay to store content even if it's rarely accessed.</span>
+          <span class="b">Works well for a known, bounded content set, like a game's asset bundle, but becomes
+            unwieldy for a large, constantly growing catalog.</span>
+        </div>
+        <div class="card c2">
+          <h3>Pull CDN</h3>
+          <span class="b">Simple to operate, since the CDN handles fetching automatically, but the first request per
+            region is slow on a cache miss and origin still absorbs some load.</span>
+          <span class="b">This is the more common choice for most web applications, since it needs almost no
+            extra operational work beyond setting cache headers correctly.</span>
+        </div>
+        <div class="card c8">
+          <h3>Freshness vs Performance</h3>
+          <span class="b">Freshness vs performance is the central tension. A long TTL is fast and cheap but risks
+            serving stale content. A short TTL keeps content fresher but drives more origin hits.</span>
+          <span class="b">Cache-busting filenames (hashing content into the URL) sidestep this entirely for
+            versioned assets: a long TTL is safe because a changed file simply gets a new URL.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚨 Failure Modes + Mitigations</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Freshness Failures</h3>
+          <span class="b"><b>Stale content served after deploy:</b> Cache-busting filenames or explicit purge.</span>
+          <span class="b"><b>Purge doesn't reach every PoP fast:</b> Short TTL as a safety net alongside explicit purge.</span>
+          <span class="b"><b>Wrong content cached and served to everyone:</b> Cache key includes all relevant request variance (headers, query params).</span>
+        </div>
+        <div class="card c2">
+          <h3>Availability Failures</h3>
+          <span class="b"><b>Edge node goes down:</b> Anycast automatically reroutes to next-nearest edge.</span>
+          <span class="b"><b>Whole CDN provider outage:</b> Multi-CDN setup with automatic failover.</span>
+          <span class="b"><b>Origin unreachable on a miss:</b> Serve stale cached content as a fallback.</span>
+        </div>
+        <div class="card c8">
+          <h3>Load Spike Failures</h3>
+          <span class="b"><b>Cache stampede when a popular item expires:</b> Stale-while-revalidate, request coalescing.</span>
+          <span class="b"><b>Sudden viral traffic overwhelms one PoP:</b> Anycast spreads load across nearby PoPs automatically.</span>
+          <span class="b"><b>Cold cache after a config change:</b> Pre-warm the cache before flipping traffic over.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚫 When NOT to Use</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Skip for Personalized Data</h3>
+          <span class="b">Don't put a CDN in front of highly personalized or frequently changing per-user data. Low
+            cache hit rate makes the extra hop not worth it.</span>
+        </div>
+        <div class="card c2">
+          <h3>Skip for Small, Local Apps</h3>
+          <span class="b">Skip it for a small, single-region app with a local user base. The origin alone is
+            already fast enough for those users.</span>
+        </div>
+        <div class="card c8">
+          <h3>Not a Substitute for Origin Scaling</h3>
+          <span class="b">A CDN reduces origin load, it doesn't eliminate the need to scale origin. Cache misses,
+            dynamic endpoints, and API calls still hit it directly.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🗺️ Where It Fits in a System Diagram</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Request Path</h3>
+          <span class="b"><b>Client:</b> CDN edge, cache hit means done here.</span>
+          <span class="b"><b>cache miss:</b> Falls through to Origin, behind LB and app servers.</span>
+        </div>
+        <div class="card c2">
+          <h3>Outermost Layer</h3>
+          <span class="b">Sits as the outermost layer, in front of your own DNS resolution and load balancer. Most
+            traffic in a well-cached system never reaches origin at all.</span>
+        </div>
+        <div class="card c8">
+          <h3>Origin Shield</h3>
+          <span class="b">Some CDNs add a mid-tier "origin shield" cache, so even a spike of cache misses across
+            many edge nodes collapses into one request to origin instead of many.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🌍 Real-World Examples</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Major CDNs</h3>
+          <span class="b"><b>Cloudflare:</b> General purpose, DDoS protection.</span>
+          <span class="b"><b>Akamai:</b> Enterprise scale, longest-running.</span>
+          <span class="b"><b>Fastly:</b> Fast cache purge, edge compute.</span>
+          <span class="b"><b>CloudFront:</b> Tight AWS integration.</span>
+        </div>
+        <div class="card c2">
+          <h3>Video Streaming</h3>
+          <span class="b">Netflix and YouTube push video segments out to edge caches close to viewers to keep
+            streaming latency and buffering low.</span>
+        </div>
+        <div class="card c8">
+          <h3>Netflix Open Connect</h3>
+          <span class="b">Netflix even runs its own custom CDN hardware placed directly inside ISP networks,
+            skipping public internet transit for most of its traffic entirely.</span>
+        </div>
+      </div>

@@ -1,0 +1,69 @@
+<div class="section-header">
+  <div class="tag">DevOps</div>
+  <h1>🛠️ Useful DevOps Commands</h1>
+  <p>Docker + Kubernetes + Minikube useful commands.</p>
+</div>
+
+<div class="note-body">
+  <h2>Docker, core daily commands</h2>
+  <pre><code>docker ps                      # List running containers
+docker ps -a                   # List all containers (including stopped)
+docker images                  # List downloaded images
+docker build -t app:latest .   # Build image from Dockerfile
+docker run -d -p 8080:8080 app # Run container in background
+docker stop &lt;id&gt;               # Stop running container
+docker rm &lt;id&gt;                 # Remove stopped container
+docker logs -f &lt;id&gt;            # View live logs
+docker exec -it &lt;id&gt; bash      # Enter container shell
+docker-compose up -d           # Start all services from docker-compose.yml
+docker-compose down            # Stop and remove all containers
+docker system prune -a --volumes  # Full cleanup (use carefully)</code></pre>
+
+  <h2>Kubernetes, most used daily</h2>
+  <pre><code>kubectl get pods -n microservices        # List pods
+kubectl get svc -n microservices         # List services
+kubectl logs -f &lt;pod&gt; -n microservices   # Stream logs
+kubectl exec -it &lt;pod&gt; -n microservices -- bash   # Shell into pod
+kubectl apply -f k8s/                    # Deploy all YAML files
+kubectl delete -f k8s/                   # Remove all resources
+kubectl get ingress -n microservices     # Check ingress routes
+kubectl describe pod &lt;pod&gt; -n microservices  # Debug pod issues
+kubectl get events --sort-by=.metadata.creationTimestamp  # Recent events
+kubectl scale deployment &lt;name&gt; --replicas=3 -n microservices # Scale up/down
+kubectl rollout restart deployment/&lt;name&gt; -n microservices   # Restart deployment
+kubectl top pods -n microservices          # Resource usage (CPU/mem)
+kubectl get all -n microservices           # Quick overview of everything</code></pre>
+
+  <h2>Minikube, local cluster essentials</h2>
+  <pre><code>minikube start --driver=docker        # Start local Kubernetes
+minikube stop                         # Stop cluster
+minikube delete                       # Delete cluster completely
+minikube addons enable ingress        # Enable Ingress controller
+minikube tunnel                       # Expose ingress (keep this running)
+minikube ip                           # Show cluster IP
+minikube dashboard                    # Open K8s dashboard
+minikube service api-gateway -n microservices --url  # Get service URL
+minikube image build -t user-service:latest .        # Build image inside cluster</code></pre>
+
+  <h2>Daily workflow summary</h2>
+  <pre><code># 1. Start environment
+minikube start --driver=docker
+minikube addons enable ingress
+
+# 2. Deploy project
+kubectl apply -f k8s/
+
+# 3. Check resources
+kubectl get pods -n microservices
+kubectl get svc -n microservices
+kubectl get ingress -n microservices
+
+# 4. Debug & monitor
+kubectl logs -f &lt;pod&gt; -n microservices
+kubectl exec -it &lt;pod&gt; -n microservices -- bash
+minikube dashboard
+
+# 5. Stop or reset
+kubectl delete -f k8s/
+minikube stop</code></pre>
+</div>

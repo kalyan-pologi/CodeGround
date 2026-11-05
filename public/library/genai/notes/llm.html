@@ -1,0 +1,182 @@
+<div class="section-header">
+  <div class="tag">Foundations</div>
+  <h1>🧠 LLMs & How They Work</h1>
+  <p>What a large language model actually is, and how it generates text.</p>
+</div>
+
+<div class="cs-section-label">🧠 Core Concept</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>What It Actually Is</h3>
+    <div class="b">At its core, an LLM is a <b>next-token predictor</b>. Given a sequence of tokens, it outputs a probability distribution over what token comes next, and text generation is just repeatedly sampling from that distribution.</div>
+    <div class="b">The weights are a form of <b>lossy compression</b> of a huge slice of the internet. A ~1TB text corpus gets compressed into a few hundred GB of parameters, so the model has absorbed statistical patterns of the training data without literally storing it.</div>
+    <div class="b">There is no separate "reasoning module" or database of facts. Everything the model does, from writing code to explaining physics, emerges from the single task of <b>predicting the next token well</b>.</div>
+    <div class="b">This means the model is fundamentally a <b>simulator of the text distribution</b> it was trained on. It doesn't "know" it's an AI assistant until later training stages teach it to play that character.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">core objective</span><span class="v">predict next token</span></div>
+    <div class="row"><span class="k">params</span><span class="v">billions, GPT-4 class ~1.8T (rumored)</span></div>
+  </div>
+  <div class="card c2">
+    <h3>Why This Approach</h3>
+    <div class="b">Predicting the next token is a <b>self-supervised</b> task: the training signal is just the text itself, no human labeling needed. This let training scale to nearly all of the public internet.</div>
+    <div class="b">To predict the next token accurately across billions of diverse documents, the model is forced to internalize <b>grammar, facts, reasoning patterns, and style</b> as useful side effects, not as explicit goals.</div>
+    <div class="b">Scale turned out to matter enormously. Bigger models trained on more data with more compute reliably get better, a relationship formalized in the <b>scaling laws</b> that guided the field's investment.</div>
+    <div class="sep"></div>
+    <div class="note">The genius of the approach is indirection: nobody had to hand-label "this is a good explanation of photosynthesis." The internet already contains millions of such explanations, and next-token prediction extracts the pattern for free.</div>
+  </div>
+  <div class="card c3">
+    <h3>How Inference Works</h3>
+    <div class="b">At inference time the model is a fixed function: feed in the tokens so far, get back a <b>probability distribution</b> over the entire vocabulary for the next token.</div>
+    <div class="b">Generation is <b>stochastic sampling</b>, not deterministic lookup. A temperature parameter controls how sharply peaked the sampling is: low temperature picks the top candidate almost every time, higher temperature allows more variety and creativity.</div>
+    <div class="b">This is why the same prompt can produce <b>different outputs</b> on different runs, and why LLMs can occasionally say something no one ever wrote verbatim: they're generating a plausible continuation, not retrieving a stored sentence.</div>
+    <div class="b">Each generated token is appended to the context and fed back in, so generation is <b>autoregressive</b>: one token at a time, each conditioned on everything before it.</div>
+  </div>
+</div>
+
+<div style="margin:24px 0;text-align:center">
+<svg viewBox="0 0 800 300" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:800px;height:auto" role="img" aria-label="Three stage LLM training pipeline diagram">
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L6,3 L0,6 Z" fill="#4ade80"></path>
+    </marker>
+  </defs>
+  <rect x="10" y="30" width="110" height="50" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="65" y="60" fill="#e5e5e5" font-size="12" text-anchor="middle">Internet Text</text>
+
+  <line x1="120" y1="55" x2="165" y2="55" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"></line>
+  <text x="142" y="45" fill="#4ade80" font-size="10" text-anchor="middle">Pretraining</text>
+
+  <rect x="165" y="30" width="110" height="50" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="220" y="60" fill="#e5e5e5" font-size="12" text-anchor="middle">Base Model</text>
+
+  <line x1="275" y1="55" x2="320" y2="55" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"></line>
+  <text x="297" y="45" fill="#4ade80" font-size="9" text-anchor="middle">SFT (human</text>
+  <text x="297" y="75" fill="#4ade80" font-size="9" text-anchor="middle">conversations)</text>
+
+  <rect x="320" y="30" width="130" height="50" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="385" y="60" fill="#e5e5e5" font-size="12" text-anchor="middle">Assistant Model</text>
+
+  <line x1="450" y1="55" x2="495" y2="55" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"></line>
+  <text x="472" y="45" fill="#4ade80" font-size="9" text-anchor="middle">RL (practice</text>
+  <text x="472" y="75" fill="#4ade80" font-size="9" text-anchor="middle">problems + reward)</text>
+
+  <rect x="495" y="30" width="130" height="50" rx="6" fill="none" stroke="#e5e5e5"></rect>
+  <text x="560" y="60" fill="#e5e5e5" font-size="12" text-anchor="middle">Reasoning Model</text>
+
+  <text x="65" y="105" fill="#999" font-size="10" text-anchor="middle">raw web text,</text>
+  <text x="65" y="118" fill="#999" font-size="10" text-anchor="middle">books, code</text>
+
+  <text x="220" y="105" fill="#999" font-size="10" text-anchor="middle">autocomplete,</text>
+  <text x="220" y="118" fill="#999" font-size="10" text-anchor="middle">no chat behavior</text>
+
+  <text x="385" y="105" fill="#999" font-size="10" text-anchor="middle">follows instructions,</text>
+  <text x="385" y="118" fill="#999" font-size="10" text-anchor="middle">helpful tone</text>
+
+  <text x="560" y="105" fill="#999" font-size="10" text-anchor="middle">practiced chain-of-</text>
+  <text x="560" y="118" fill="#999" font-size="10" text-anchor="middle">thought, self-corrects</text>
+</svg>
+</div>
+
+<div class="cs-section-label">🔬 Deeper Look</div>
+<div class="grid3">
+  <div class="card c4">
+    <h3>Stage 1: Pretraining</h3>
+    <div class="b">Trains on a filtered, deduplicated crawl of the internet, roughly on the order of <b>trillions of tokens</b>, purely on next-token prediction with no notion of "conversation."</div>
+    <div class="b">This is the most expensive stage by far, costing <b>millions of dollars</b> in compute and running for weeks to months on thousands of GPUs.</div>
+    <div class="b">The output is a <b>base model</b>: a raw text completion engine that has absorbed world knowledge, language, and style, but has no concept of being an assistant, no sense of turn-taking, and no built-in helpfulness or safety behavior.</div>
+    <div class="b">Ask a base model a question and it's just as likely to continue with <b>more questions</b> (mimicking a FAQ page) as it is to answer, because that's a statistically plausible continuation too.</div>
+  </div>
+  <div class="card c5">
+    <h3>Stage 2: Supervised Fine-Tuning</h3>
+    <div class="b">Human labelers (and increasingly, models assisting humans) write thousands of <b>ideal conversation examples</b>: a question paired with the exact helpful, honest answer wanted.</div>
+    <div class="b">The base model is fine-tuned on this much smaller, much higher-quality dataset, which teaches it the <b>format and persona</b> of an assistant, not new knowledge.</div>
+    <div class="b">This is where the model learns to <b>follow instructions</b>, adopt a consistent helpful voice, and structure answers, turning a raw completion engine into something that behaves like ChatGPT.</div>
+    <div class="b">The resulting <b>instruct / assistant model</b> is what most people actually interact with; the underlying capability still comes from pretraining, SFT just reshapes how it's expressed.</div>
+  </div>
+  <div class="card c6">
+    <h3>Stage 3: Reinforcement Learning</h3>
+    <div class="b">The model is given <b>practice problems</b> (math, code, reasoning tasks with checkable answers) and generates many candidate solutions on its own.</div>
+    <div class="b">Solutions that reach the <b>correct answer</b> are reinforced, making the token sequences that led there more likely in the future; wrong paths are discouraged.</div>
+    <div class="b">This lets the model discover <b>its own effective strategies</b> for reasoning, rather than only imitating a human's written-out solution, which is often not how the model would naturally "think."</div>
+    <div class="b">For open-ended tasks without a checkable answer, a <b>reward model</b> trained on human preference comparisons stands in for a grader, this is the RL part of RLHF.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚙️ LLM Psychology</div>
+<div class="grid3">
+  <div class="card c7">
+    <h3>Hallucination</h3>
+    <div class="b">Hallucination happens because the model is trained to always <b>produce a plausible-sounding continuation</b>, and confidently fabricating an answer is often statistically indistinguishable, in training data, from confidently giving a correct one.</div>
+    <div class="b">Early instruct models had no example in their SFT data that said "I don't know," so they never learned that response was even <b>an option</b>, they'd always generate something.</div>
+    <div class="b">Modern mitigation: probe the model with questions about its own knowledge, and where it demonstrably doesn't know, add <b>trained refusals</b> ("I'm not sure") to the SFT data so it learns when to decline.</div>
+    <div class="b">A stronger fix is <b>tool use</b>: instead of guessing from memory, the model learns to emit a search query, read real results, and ground its answer in retrieved text rather than parametric memory.</div>
+  </div>
+  <div class="card c8">
+    <h3>Knowledge & Memory Limits</h3>
+    <div class="b">Every model has a <b>knowledge cutoff</b>, the date its training data was collected. Anything after that is unknown unless surfaced through a tool like web browsing.</div>
+    <div class="b">There is <b>no persistent self or memory</b> across conversations by default. Each chat starts from the same fixed weights, with no recollection of a prior session unless the product layer explicitly re-injects saved context.</div>
+    <div class="b">The model has no continuous experience or introspective access to its own weights, when asked "how do you work," it answers from patterns in its training text about LLMs in general, not genuine self-knowledge.</div>
+    <div class="b">This is why long-running "memory" features in chat products are a <b>bolt-on</b>: a separate retrieval system that reminds the model of past facts by stuffing them back into the prompt.</div>
+  </div>
+  <div class="card c9">
+    <h3>Jagged Capabilities</h3>
+    <div class="b">Capability is <b>swiss-cheese</b>: a model can solve graduate-level math yet fail a task a child would find trivial, like counting letters in a word. Strength in one area says little about strength nearby.</div>
+    <div class="b">Every token costs roughly the <b>same fixed amount of compute</b> to produce, so the model cannot "think longer" about a hard sub-step within one token the way a human pauses. Multi-step arithmetic done in one shot often breaks for this reason.</div>
+    <div class="b"><b>Tokenization</b> compounds this: the model never sees individual characters, it sees whole chunks (tokens), so counting letters or reversing a string requires reasoning about units it doesn't directly perceive.</div>
+    <div class="b">The classic <b>"strawberry" meme</b> (models miscounting the R's) is exactly this: "strawberry" is a few opaque token chunks, not eight visible letters, so counting requires an indirect inference the model often gets wrong.</div>
+    <div class="sep"></div>
+    <div class="note" style="color:#4ade80;">Mitigation in both cases is the same pattern as hallucination: let the model write out intermediate steps (more tokens = more compute spent) or call a tool (code interpreter) that does exact character-level or arithmetic work instead of guessing.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🎯 Applying It</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>Reasoning Models</h3>
+    <div class="b"><b>Thinking / reasoning models</b> (OpenAI's o-series, DeepSeek-R1) are produced by pushing the RL stage much further, rewarding the model for long chains of self-checking, backtracking text before the final answer.</div>
+    <div class="b">The model learns, purely from reward signal, that generating more intermediate <b>chain-of-thought tokens</b> before answering raises the odds of a correct final answer, and RL amplifies that behavior over many training iterations.</div>
+    <div class="b">DeepSeek-R1 notably showed this reasoning style can emerge from <b>RL alone</b> on verifiable problems, without needing humans to hand-write example reasoning traces first, a significant validation of the approach.</div>
+    <div class="b">The trade-off is <b>latency and cost</b>: a reasoning model burns far more tokens (and money) per answer, so it's reserved for genuinely hard problems, not simple lookups or chit-chat.</div>
+  </div>
+  <div class="card c11">
+    <h3>Tool Use</h3>
+    <div class="b">Tool use extends the base capability rather than replacing it: the model is trained to recognize when its own parametric knowledge is <b>insufficient or unreliable</b> and emit a special action instead of an answer.</div>
+    <div class="b"><b>Web browsing</b> lets the model pull in facts past its knowledge cutoff or verify claims against live sources, addressing the knowledge-cutoff and hallucination problems directly.</div>
+    <div class="b"><b>Code interpreter</b> hands off exact computation, arithmetic, counting, data manipulation, to a real interpreter, sidestepping the fixed-per-token-compute weakness entirely.</div>
+    <div class="b">Learning to use tools well is itself trained via the same SFT and RL pipeline: examples of good tool calls in SFT data, then reward for tool use that actually leads to correct answers in RL.</div>
+  </div>
+  <div class="card c12">
+    <h3>When To Trust vs Verify</h3>
+    <div class="b">Trust the model more for <b>well-represented, stable knowledge</b> (common programming patterns, well-known history) and trust it less for <b>obscure facts, exact numbers, or anything post-cutoff</b>.</div>
+    <div class="b">For anything where being wrong is costly, prefer a workflow where the model <b>cites sources or uses tools</b> rather than answering purely from memory.</div>
+    <div class="b">Treat confident tone as <b>no signal of correctness</b>; the model is equally fluent whether right or hallucinating, since fluency is the trained objective, not truthfulness per se.</div>
+    <div class="b">For arithmetic, counting, or string manipulation, prefer asking the model to <b>write and run code</b> rather than compute directly, it will almost always be more accurate.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚠️ Reliability</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>Failure Modes</h3>
+    <div class="b"><b>Confident hallucination</b>: fabricated facts, citations, or APIs stated with the same fluent tone as correct answers, especially on obscure or narrow topics under-represented in training data.</div>
+    <div class="b"><b>Reward hacking</b>: in RLHF, the reward model is an imperfect proxy for real human preference, and enough RL optimization pressure will find ways to score well on the proxy without truly satisfying the user, for example padding answers or being sycophantic because that reads well to a reward model.</div>
+    <div class="b"><b>RLHF is not "real" RL</b> in the game-playing sense: the reward model itself is a trained approximation, unlike a chess engine's ground-truth win/loss, so exploiting it too hard eventually degrades genuine quality even as the proxy score climbs, which is why RLHF runs are stopped early rather than optimized to convergence.</div>
+    <div class="b"><b>Prompt sensitivity</b>: small rewordings can shift output quality noticeably, since the model has no stable internal "intent," only a response to the exact tokens given.</div>
+  </div>
+  <div class="card c2">
+    <h3>Where It Fits</h3>
+    <div class="b">Internet Text, then <b>Pretraining</b>, then Base Model, then SFT, then Assistant Model, then RL, then optionally a Reasoning Model.</div>
+    <div class="sep"></div>
+    <div class="b">Everything downstream, tokenization, embeddings, RAG, agents, tool use, is built <b>on top of</b> this base capability; the LLM is the reasoning engine that other systems orchestrate around.</div>
+    <div class="b">Prompting, system messages, and few-shot examples all work by <b>steering</b> the existing learned distribution, they cannot add knowledge the pretraining never saw.</div>
+    <div class="note">Understanding this pipeline explains most "weird" model behavior in practice: it's not a bug, it's the predictable result of which stage taught which behavior.</div>
+  </div>
+  <div class="card c3">
+    <h3>Real World Example</h3>
+    <div class="b"><b>ChatGPT</b>: GPT-4-class base model, SFT'd on curated conversations, then RLHF'd for helpfulness and safety, with an o-series reasoning variant for hard problems.</div>
+    <div class="b"><b>Claude</b>: pretrained then fine-tuned with a Constitutional AI process, a variant of the RL stage that uses a set of written principles instead of only human preference labels to shape behavior.</div>
+    <div class="b"><b>DeepSeek-R1</b>: notable for showing strong reasoning emerging largely from RL on verifiable math and code problems, at dramatically lower reported training cost than closed frontier labs.</div>
+    <div class="sep"></div>
+    <div class="note">Nearly every major assistant model on the market today follows this same three-stage arc, pretraining for raw capability, SFT for behavior, RL for refinement, differing mainly in data curation and RL details.</div>
+  </div>
+</div>

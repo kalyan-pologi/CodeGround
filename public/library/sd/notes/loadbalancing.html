@@ -1,0 +1,217 @@
+<div class="section-header">
+        <div class="tag">Networking Essentials</div>
+        <h1>⚖️ Load Balancing</h1>
+        <p>Distributing traffic across servers: algorithms, L4 vs L7, active-passive vs active-active.</p>
+      </div>
+
+      <div class="cs-section-label">📚 What It Is</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Definition</h3>
+          <span class="b">A component that distributes incoming traffic across multiple backend servers so no
+            single server gets overwhelmed while others sit idle.</span>
+          <span class="b">From the outside, the whole backend pool looks like a single service. Clients only ever
+            talk to the load balancer's address, never to individual servers directly.</span>
+        </div>
+        <div class="card c2">
+          <h3>L4 vs L7</h3>
+          <div class="row"><span class="k">L4</span><span class="v">routes by IP/port, transport layer only</span></div>
+          <div class="row"><span class="k">L7</span><span class="v">routes by URL, header, or cookie, application layer</span></div>
+          <div class="row"><span class="k">L4 speed</span><span class="v">faster, less CPU, no payload inspection</span></div>
+          <div class="row"><span class="k">L7 flexibility</span><span class="v">smarter routing, more CPU per request</span></div>
+        </div>
+        <div class="card c8">
+          <h3>Placement</h3>
+          <span class="b">Sits between clients and a pool of identical, or near-identical, backend instances,
+            acting as the single entry point to that pool.</span>
+          <span class="b">Can exist at multiple points in a system at once: in front of app servers, in front of a
+            cache cluster, or in front of database read replicas.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">❓ Why Introduced</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Single Server's Ceiling</h3>
+          <span class="b">A single server has a hard ceiling on throughput and open connections. Vertical scaling
+            alone eventually runs out of headroom, and a single box has no failover.</span>
+          <span class="b">Even the biggest single machine you can buy eventually can't keep up with a growing user
+            base, and it costs disproportionately more as you go up in size.</span>
+        </div>
+        <div class="card c2">
+          <h3>Enables Horizontal Scaling</h3>
+          <span class="b">Load balancing enables horizontal scaling: add more identical servers and spread traffic
+            across them, instead of buying a bigger and bigger single machine.</span>
+          <span class="b">Commodity servers are cheaper per unit of throughput than one giant machine, so this
+            also tends to be the more cost-effective way to scale.</span>
+        </div>
+        <div class="card c8">
+          <h3>Provides Failover</h3>
+          <span class="b">It also provides failover. If a server dies, the load balancer stops sending it traffic
+            and the remaining healthy servers absorb the load automatically.</span>
+          <span class="b">This turns what would be a full outage on a single-server setup into a smaller capacity
+            dip that users may not even notice.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚙️ How It Works - Algorithms</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Static</h3>
+          <div class="row"><span class="k">Round robin</span><span class="v">cycle through servers evenly, one after another</span></div>
+          <div class="row"><span class="k">Weighted round robin</span><span class="v">bias traffic toward stronger servers</span></div>
+          <div class="row"><span class="k">IP hash</span><span class="v">same client always lands on the same server (sticky)</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Dynamic</h3>
+          <div class="row"><span class="k">Least connections</span><span class="v">send to the server with the fewest active connections right now</span></div>
+          <div class="row"><span class="k">Least response time</span><span class="v">send to whichever server is currently responding fastest</span></div>
+          <div class="row"><span class="k">Resource-based</span><span class="v">factor in real CPU/memory usage reported by each server</span></div>
+        </div>
+        <div class="card c8">
+          <h3>Health Checks</h3>
+          <span class="b">The load balancer pings each backend on a regular interval. Unhealthy servers are pulled
+            out of rotation until they pass a check again and recover.</span>
+          <span class="b">Checks can be shallow (does the port respond) or deep (does a real endpoint return a
+            healthy status), and deep checks catch more failure modes but cost more to run frequently.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">✅ When to Use / Which Layer</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>L4 (TCP-level)</h3>
+          <span class="b">Fast and protocol-agnostic. Good for WebSocket or other long-lived connections, since one
+            client stays pinned to one server for the connection's whole lifetime.</span>
+          <span class="b">Also the right choice for non-HTTP protocols entirely, like raw TCP database connections
+            or custom binary protocols, where there's no HTTP layer to inspect anyway.</span>
+        </div>
+        <div class="card c2">
+          <h3>L7 (HTTP-level)</h3>
+          <span class="b">Route by path or header, like sending <code>/api</code> to one pool and
+            <code>/static</code> to another, plus SSL termination, A/B testing, and canary routing.</span>
+          <span class="b">Also the layer where you'd implement blue-green deployments, shifting a percentage of
+            traffic to a new version based on request attributes.</span>
+        </div>
+        <div class="card c8">
+          <h3>Active-Passive vs Active-Active</h3>
+          <span class="b"><b>Active-passive</b>: a standby node only takes over on failure. Simple, but wastes idle
+            capacity.</span>
+          <span class="b"><b>Active-active</b>: all nodes serve traffic simultaneously. Better use of capacity, more
+            operationally complex to keep them in sync.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">⚖️ Trade-offs</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Round Robin</h3>
+          <span class="b">Round robin is simple but ignores actual server load, so one slow request can pile up
+            unfair share of traffic on a single already-busy instance.</span>
+          <span class="b">It works well when all servers are truly identical in capacity and requests are roughly
+            uniform in cost, which is often true but not guaranteed.</span>
+        </div>
+        <div class="card c2">
+          <h3>Least Connections</h3>
+          <span class="b">Least connections is smarter about real load, but costs more to compute and track
+            accurately at very high request rates.</span>
+          <span class="b">It also assumes connection count correlates with actual load, which can be wrong if some
+            connections are cheap and others are expensive to serve.</span>
+        </div>
+        <div class="card c8">
+          <h3>Sticky Sessions</h3>
+          <span class="b">Sticky sessions via IP hash simplify stateful apps that keep session data in memory, but
+            create hot spots and complicate both scaling and failover, since you can't just move a client to
+            another server freely.</span>
+          <span class="b">They also break down behind NAT or shared corporate IPs, where many different users can
+            appear to come from the same source IP and get routed unevenly.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚨 Failure Modes + Mitigations</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Load Balancer Availability</h3>
+          <span class="b"><b>LB itself is a single point of failure:</b> run redundant LBs behind DNS or
+            anycast.</span>
+          <span class="b"><b>LB overwhelmed by traffic:</b> autoscale the LB tier if using a software LB.</span>
+          <span class="b"><b>Bad health check config:</b> alert on rapid flapping between healthy and
+            unhealthy.</span>
+        </div>
+        <div class="card c2">
+          <h3>Load Distribution Issues</h3>
+          <span class="b"><b>Uneven load, one "hot" server:</b> switch to least-connections or
+            least-response-time.</span>
+          <span class="b"><b>One slow server drags down p99:</b> outlier detection, ejecting consistently slow
+            nodes.</span>
+          <span class="b"><b>Cold new instance gets full traffic share:</b> slow start, ramping traffic
+            gradually.</span>
+        </div>
+        <div class="card c8">
+          <h3>Failover Behavior</h3>
+          <span class="b"><b>Thundering herd during failover:</b> gradual traffic shift, client backoff with
+            jitter.</span>
+          <span class="b"><b>Failover flip-flopping:</b> require sustained failure before marking unhealthy.</span>
+          <span class="b"><b>Retry storm hitting remaining healthy nodes:</b> circuit breakers, bounded retry
+            budgets.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🚫 When NOT to Use</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Skip It Early</h3>
+          <span class="b">Skip a dedicated load balancer for a single-instance service or local development. It
+            adds complexity with no real benefit until you actually need to scale out.</span>
+        </div>
+        <div class="card c2">
+          <h3>Wrong Layer for the Job</h3>
+          <span class="b">Don't use L7 routing for raw high-throughput TCP or WebSocket workloads where the extra
+            HTTP parsing overhead isn't worth it. Prefer L4 there instead.</span>
+        </div>
+        <div class="card c8">
+          <h3>Don't Over-Engineer Stickiness</h3>
+          <span class="b">Avoid sticky sessions if you can make the app stateless instead. Session affinity solves a
+            symptom; storing session state externally (Redis) solves the actual problem.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🗺️ Where It Fits in a System Diagram</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Typical Path</h3>
+          <div class="row"><span class="k">Client</span><span class="v">DNS, then Load Balancer</span></div>
+          <div class="row"><span class="k">then</span><span class="v">App server pool</span></div>
+          <div class="row"><span class="k">then</span><span class="v">DB or cache tier</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Also Used Internally</h3>
+          <span class="b">Load balancing can also exist internally, between app servers and a downstream service
+            tier, or in front of a database's read replicas.</span>
+        </div>
+        <div class="card c8">
+          <h3>Multi-Tier Setups</h3>
+          <span class="b">Large systems often chain load balancers: a global L4/anycast tier for region selection,
+            then a regional L7 tier for fine-grained routing within that region.</span>
+        </div>
+      </div>
+
+      <div class="cs-section-label">🌍 Real-World Examples</div>
+      <div class="grid3">
+        <div class="card c1">
+          <h3>Software</h3>
+          <div class="row"><span class="k">Nginx</span><span class="v">reverse proxy plus LB</span></div>
+          <div class="row"><span class="k">HAProxy</span><span class="v">high-performance L4/L7 LB</span></div>
+          <div class="row"><span class="k">Envoy</span><span class="v">service mesh proxy/LB</span></div>
+        </div>
+        <div class="card c2">
+          <h3>Managed</h3>
+          <div class="row"><span class="k">AWS</span><span class="v">ALB (L7), NLB (L4)</span></div>
+          <div class="row"><span class="k">GCP</span><span class="v">Cloud Load Balancer</span></div>
+        </div>
+        <div class="card c8">
+          <h3>DNS-Level</h3>
+          <span class="b">Route 53 and similar services also do coarse, DNS-based load balancing across regions,
+            complementing the L4/L7 balancers within each region.</span>
+        </div>
+      </div>
