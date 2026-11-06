@@ -114,6 +114,11 @@ async function showNote(repo, id, version) {
     // Keep imported CSS isolated so all three note formats retain their original styling.
     frame.onload = () => {
       const doc = frame.contentDocument;
+      if (repo === 'interview' && id === 'java-snippets') {
+        import('./stream-runner.js').then(({ mountStreamRunners }) => {
+          if (version === routeVersion && frame.contentDocument === doc) mountStreamRunners(doc);
+        });
+      }
       doc.addEventListener('click', event => {
         const link = event.target.closest('a');
         if (!link) return;

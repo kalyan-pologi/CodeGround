@@ -1,5 +1,5 @@
-import { spawn } from 'node:child_process';
-import { mkdtempSync, existsSync, readFileSync } from 'node:fs';
+import { spawn, spawnSync } from 'node:child_process';
+import { mkdtempSync, existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import assert from 'node:assert/strict';
@@ -145,6 +145,42 @@ try {
   assert.equal(await evaluate(`Array.from(document.querySelector('iframe').contentDocument.querySelectorAll('p > b')).filter(element => element.textContent.startsWith('Q:')).length`), originalQuestions + 12);
   assert.deepEqual(await evaluate(`Array.from(document.querySelector('iframe').contentDocument.querySelectorAll('h2')).map(element => element.textContent.trim())`), ['Imports & Model', 'Filtering & Sorting', 'Matching & Finding', 'Grouping', 'Partitioning', 'Counting Frequencies', 'Aggregation & Statistics', 'Mapping & Collecting to Map', 'String Operations', 'CompletableFuture']);
   assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.stream-alternative h3,.stream-alternative h4').length`), 0);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.stream-workspace').length > 0`);
+  const streamPrograms = await evaluate(`(() => {
+    const doc = document.querySelector('iframe').contentDocument;
+    const workspaces = [...doc.querySelectorAll('.stream-workspace')];
+    const programs = [];
+    for (const workspace of workspaces) {
+      if (!workspace.querySelector('.stream-solution').hidden) throw new Error('Solution must start hidden');
+      const editor = workspace.querySelector('textarea');
+      if (!editor.value.includes('TODO:')) throw new Error('Starter should not reveal the answer');
+      programs.push(editor.value);
+      const reveal = workspace.querySelector('.stream-reveal'); reveal.click();
+      if (workspace.querySelector('.stream-solution').hidden) throw new Error('Reveal failed');
+      for (const button of workspace.querySelectorAll('.stream-solution > button')) {
+        button.click(); programs.push(editor.value);
+      }
+      reveal.click();
+    }
+    return programs;
+  })()`);
+  assert.ok(streamPrograms.length > 100, 'Every Stream question and important alternative needs runnable code');
+  if (process.env.CODEGROUND_RUN_STREAM === '1') {
+    await evaluate(`(() => { const workspace = document.querySelector('iframe').contentDocument.querySelector('.stream-workspace'); workspace.querySelector('.stream-solution > button').click(); workspace.querySelector('[data-run]').click(); })()`);
+    await until(`!document.querySelector('iframe').contentDocument.querySelector('.stream-workspace [data-run]').disabled`, 60000);
+    const output = await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-output').textContent`);
+    assert.match(output, /Accepted/);
+    assert.match(output, /Ada Lovelace/);
+    console.log('Online Java Stream execution passed in the browser.');
+  }
+  if (process.env.CODEGROUND_CHECK_STREAM_JAVA === '1') {
+    const sources = streamPrograms.map((source, index) => source.replace(/^import .*;\n/gm, '').replace('public class Main', `class StreamExample${index}`));
+    const driver = `import java.time.*;\nimport java.util.*;\nimport java.util.function.*;\nimport java.util.stream.*;\npublic class Main { public static void main(String[] args) {\n${sources.map((_, index) => `StreamExample${index}.main(args);`).join('\n')}\n} }\n${sources.join('\n')}`;
+    const file = path.join(profile, 'Main.java'); writeFileSync(file, driver);
+    const result = spawnSync('java', ['--source', '17', file], { encoding: 'utf8', timeout: 60000, windowsHide: true });
+    assert.equal(result.status, 0, result.stderr || result.error?.message);
+    console.log(`Compiled and executed ${streamPrograms.length} Stream starters, solutions and alternatives.`);
+  }
   await evaluate(`location.hash = 'home/interview/proj-accenture'`);
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('a[href="#aws"]')) && document.querySelector('.reader-bar')?.textContent.includes('Accenture')`);
   assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('img[src$="aws-services-for-spring-boot-table.png"]').length`), 0);
