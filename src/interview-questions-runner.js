@@ -74,19 +74,98 @@ function questionEntries(doc) {
   return interviewQuestions.map((title, index) => ({ id: `interview-question-${index + 1}`, title }));
 }
 
+function mountQuestionAccordion(doc) {
+  const body = doc.querySelector('.note-body');
+  if (!body || body.dataset.questionAccordion) return;
+  const headings = [...body.querySelectorAll('h2, h3')]
+    .filter(heading => heading.textContent.trim().startsWith('Question:'));
+  if (!headings.length) return;
+
+  let nextBoundary = null;
+  [...headings].reverse().forEach((heading, reverseIndex) => {
+    const details = doc.createElement('details');
+    details.className = 'interview-question-card';
+    const questionNumber = headings.length - reverseIndex;
+    details.id = `interview-question-${questionNumber}`;
+    details.open = questionNumber === 1;
+
+    const summary = doc.createElement('summary');
+    summary.append(...heading.childNodes);
+    details.append(summary);
+
+    let node = heading.nextSibling;
+    while (node && node !== nextBoundary) {
+      const next = node.nextSibling;
+      details.append(node);
+      node = next;
+    }
+
+    heading.replaceWith(details);
+    nextBoundary = details;
+  });
+
+  [...body.querySelectorAll('.interview-question-card')].forEach((card, index) => {
+    card.open = index === 0;
+  });
+  body.dataset.questionAccordion = 'true';
+}
+
+function mountSingleQuestionReader(doc) {
+  const body = doc.querySelector('.note-body');
+  const cards = body ? [...body.querySelectorAll('.interview-question-card')] : [];
+  if (!body || !cards.length) return null;
+
+  const questions = cards.map(card => ({
+    title: card.querySelector('summary')?.textContent.replace(/\s+/g, ' ').trim() || '',
+    answerNodes: [...card.children]
+      .filter(child => child.tagName !== 'SUMMARY')
+      .map(child => child.cloneNode(true))
+  }));
+  const reader = doc.createElement('main');
+  reader.className = 'interview-question-reader';
+  body.replaceChildren(reader);
+
+  const select = (index, shouldScroll = true) => {
+    const question = questions[index];
+    if (!question) return false;
+    const scrollTop = doc.defaultView?.scrollY || doc.documentElement.scrollTop || 0;
+    reader.replaceChildren();
+    const panel = doc.createElement('article');
+    panel.className = 'interview-question-answer';
+    panel.id = `interview-question-${index + 1}`;
+    const title = doc.createElement('h1');
+    title.textContent = question.title;
+    panel.append(title, ...question.answerNodes.map(node => node.cloneNode(true)));
+    reader.append(panel);
+    if (shouldScroll) doc.defaultView?.scrollTo(0, scrollTop);
+    return true;
+  };
+
+  select(0, false);
+  return { select, count: questions.length };
+}
+
 export function mountInterviewQuestionDrawer(doc) {
   if (doc.body.dataset.interviewQuestionDrawer) return;
   const entries = questionEntries(doc);
   if (!entries.length) return;
   doc.body.dataset.interviewQuestionDrawer = 'true';
   addStyle(doc);
+  mountQuestionAccordion(doc);
+  const questionReader = mountSingleQuestionReader(doc);
 
   const toolbar = doc.createElement('div');
   toolbar.className = 'interview-question-toolbar';
   toolbar.innerHTML = '<button type="button" aria-haspopup="dialog" aria-controls="interview-question-drawer"><span aria-hidden="true">☰</span> Interview Questions</button>';
   toolbar.style.left = '18px';
   toolbar.style.right = 'auto';
-  doc.body.append(toolbar);
+  toolbar.replaceChildren();
+  toolbar.innerHTML = `<button class="interview-question-menu" type="button" aria-label="Open interview questions" aria-haspopup="dialog" aria-controls="interview-question-drawer"><span aria-hidden="true">☰</span></button>
+    <strong>Java Interview Questions</strong>
+    <button class="interview-question-nav" type="button" data-direction="previous" aria-label="Previous question">‹</button>
+    <button class="interview-question-nav" type="button" data-direction="next" aria-label="Next question">›</button>
+    <span class="interview-question-count" aria-live="polite">1 / ${questionReader?.count || 6}</span>`;
+  doc.body.prepend(toolbar);
 
   const drawer = doc.createElement('dialog');
   drawer.className = 'interview-question-drawer';
@@ -108,15 +187,27 @@ export function mountInterviewQuestionDrawer(doc) {
     list.innerHTML = filtered.map(entry => `<button type="button" data-target="${entry.id}"><span class="interview-question-dot" aria-hidden="true"></span><span>${entry.id.replace('interview-question-', '')}. ${entry.title}</span><small>Java</small></button>`).join('') || '<p class="interview-question-empty">No questions match your search.</p>';
   };
 
-  toolbar.querySelector('button').addEventListener('click', () => { drawer.showModal(); search.focus(); });
+  const count = toolbar.querySelector('.interview-question-count');
+  let activeIndex = 0;
+  const selectQuestion = index => {
+    if (!questionReader?.select(index)) return false;
+    activeIndex = index;
+    count.textContent = `${index + 1} / ${questionReader.count}`;
+    return true;
+  };
+
+  toolbar.querySelector('.interview-question-menu').addEventListener('click', () => { drawer.showModal(); search.focus(); });
+  toolbar.querySelector('[data-direction="previous"]').addEventListener('click', () => selectQuestion(Math.max(0, activeIndex - 1)));
+  toolbar.querySelector('[data-direction="next"]').addEventListener('click', () => selectQuestion(Math.min(questionReader.count - 1, activeIndex + 1)));
   close.addEventListener('click', () => drawer.close());
   drawer.addEventListener('click', event => { if (event.target === drawer) drawer.close(); });
   search.addEventListener('input', render);
   list.addEventListener('click', event => {
     const button = event.target.closest('[data-target]');
     if (!button) return;
+    const index = Number(button.dataset.target.replace('interview-question-', '')) - 1;
+    if (!selectQuestion(index)) return;
     drawer.close();
-    doc.getElementById(button.dataset.target)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   render();
 }

@@ -7,6 +7,7 @@ body {
   width: min(100% - 32px, 1120px);
   max-width: 100%;
   margin-inline: auto;
+  padding-top: 82px;
   padding-bottom: 48px;
 }
 
@@ -21,6 +22,117 @@ body {
 .note-body pre {
   max-width: 100%;
   overflow-x: auto;
+}
+
+.interview-question-reader {
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+}
+
+.interview-question-answer {
+  padding: 8px 0 48px;
+}
+
+.interview-question-answer > h1 {
+  margin: 0 0 30px;
+  padding: 18px 24px;
+  border: 1px solid #355361;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #172b38, #12212b);
+  color: #edf6fb;
+  font: 700 22px/1.4 var(--cg-font, system-ui, sans-serif) !important;
+  font-size: 22px !important;
+  line-height: 1.4 !important;
+  box-shadow: 0 8px 24px #0003;
+}
+
+.interview-question-answer > h2 {
+  margin-top: 30px;
+}
+
+.interview-question-answer > h3 {
+  margin-top: 24px;
+}
+
+.interview-question-answer > pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.interview-question-answer > hr {
+  display: none;
+}
+
+.interview-question-card {
+  margin: 28px 0;
+  border: 1px solid #2b414d;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #172733, #121e28);
+  box-shadow: 0 8px 24px #0002;
+  overflow: hidden;
+}
+
+.interview-question-card > summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  list-style: none;
+  padding: 20px 22px;
+  color: #e4eef5;
+  cursor: pointer;
+  font: 700 19px/1.45 var(--cg-font, system-ui, sans-serif);
+}
+
+.interview-question-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.interview-question-card > summary::before {
+  content: '+';
+  display: grid;
+  place-items: center;
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+  border: 1px solid #5d897f;
+  border-radius: 50%;
+  color: #9cdbc0;
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.interview-question-card[open] > summary {
+  border-bottom: 1px solid #2b414d;
+  background: #1b303d;
+}
+
+.interview-question-card[open] > summary::before {
+  content: '−';
+  background: #2c5a4e;
+  color: #e3fff0;
+}
+
+.interview-question-card > :not(summary) {
+  margin-inline: 22px;
+}
+
+.interview-question-card > h2 {
+  margin-top: 24px;
+}
+
+.interview-question-card > h3 {
+  margin-top: 22px;
+}
+
+.interview-question-card > pre {
+  margin-inline: 22px;
+}
+
+.interview-question-card > hr {
+  display: none;
 }
 
 .interview-question-toolbar {
@@ -236,5 +348,81 @@ body {
   .interview-question-drawer {
     width: min(410px, calc(100vw - 10px));
     border-radius: 0 14px 14px 0;
+  }
+}
+
+/* Stream/SQL-style question navigation bar */
+.interview-question-toolbar {
+  position: fixed !important;
+  top: 0 !important;
+  right: 0 !important;
+  bottom: auto !important;
+  left: 0 !important;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  width: 100%;
+  min-height: 64px;
+  box-sizing: border-box;
+  padding: 0 14px;
+  border-top: 1px solid #2b414d;
+  border-bottom: 1px solid #2b414d;
+  background: #101b25;
+}
+
+.interview-question-toolbar > strong {
+  margin-right: auto;
+  color: #e5edf3;
+  font: 700 18px/1.2 var(--cg-font, system-ui, sans-serif);
+}
+
+.interview-question-toolbar .interview-question-menu,
+.interview-question-toolbar .interview-question-nav {
+  display: grid;
+  place-items: center;
+  border: 0 !important;
+  background: transparent !important;
+  color: #c5d5df !important;
+  padding: 5px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.interview-question-toolbar .interview-question-menu {
+  width: 28px;
+  height: 28px;
+  font-size: 18px !important;
+}
+
+.interview-question-toolbar .interview-question-nav {
+  width: 26px;
+  height: 34px;
+  font-size: 28px !important;
+  font-weight: 300 !important;
+  line-height: 1 !important;
+}
+
+.interview-question-toolbar .interview-question-menu:hover,
+.interview-question-toolbar .interview-question-nav:hover {
+  color: #9dd7c0 !important;
+}
+
+.interview-question-toolbar .interview-question-count {
+  min-width: 46px;
+  color: #89a6b7;
+  font: 500 13px/1.2 var(--cg-font, system-ui, sans-serif);
+  text-align: center;
+}
+
+@media (max-width: 700px) {
+  .interview-question-toolbar {
+    gap: 12px;
+    min-height: 56px;
+    padding: 0 8px;
+  }
+
+  .interview-question-toolbar > strong {
+    font-size: 14px;
   }
 }

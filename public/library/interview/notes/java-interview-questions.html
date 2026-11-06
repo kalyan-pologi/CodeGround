@@ -329,4 +329,383 @@ false</code></pre>
   <li>Know alternatives: LinkedHashMap, TreeMap, ConcurrentHashMap, synchronizedMap, and immutable maps.</li>
 </ul>
 
+<hr>
+
+<h2>Question: How do equals(), hashCode(), ==, and compareTo() differ, and what happens when they are implemented incorrectly?</h2>
+
+<h2>Short answer</h2>
+<p><code>==</code> compares primitive values or object references. <code>equals</code> compares logical equality when a class overrides it. <code>hashCode</code> supplies a hash used by hash-based collections and must agree with <code>equals</code>. <code>compareTo</code> defines ordering for <code>Comparable</code>. Breaking these contracts causes duplicate set entries, failed map lookups, incorrect sorting, or inconsistent tree-based collections.</p>
+
+<h3>How the operations differ</h3>
+<table>
+  <thead><tr><th>Operation</th><th>Purpose</th><th>Typical use</th></tr></thead>
+  <tbody>
+    <tr><td><code>==</code></td><td>Primitive value or reference identity</td><td>Check whether two references point to the same object</td></tr>
+    <tr><td><code>equals</code></td><td>Logical equality</td><td>Compare business values such as two account IDs</td></tr>
+    <tr><td><code>hashCode</code></td><td>Hash bucket selection</td><td><code>HashMap</code>, <code>HashSet</code>, and related collections</td></tr>
+    <tr><td><code>compareTo</code></td><td>Relative ordering: negative, zero, or positive</td><td><code>TreeMap</code>, <code>TreeSet</code>, and sorting</td></tr>
+  </tbody>
+</table>
+
+<h3>Runnable example</h3>
+<pre><code>import java.util.*;
+
+record EmployeeId(String value) implements Comparable&lt;EmployeeId&gt; {
+    @Override
+    public int compareTo(EmployeeId other) {
+        return value.compareTo(other.value);
+    }
+}
+
+public class EqualityDemo {
+    public static void main(String[] args) {
+        String first = new String("java");
+        String second = new String("java");
+
+        System.out.println(first == second);
+        System.out.println(first.equals(second));
+        System.out.println(first.hashCode() == second.hashCode());
+        System.out.println(new EmployeeId("E2").compareTo(new EmployeeId("E10")) &gt; 0);
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>false
+true
+true
+true</code></pre>
+<p>The last result is <code>true</code> because lexicographical string ordering compares the first character that differs; it is not numeric ordering. If numeric ordering is needed, compare parsed numbers or use a numeric field.</p>
+
+<h3>Internal working</h3>
+<ol>
+  <li><code>HashMap</code> first uses <code>hashCode</code> to select a bucket.</li>
+  <li>It then uses <code>equals</code> to identify the exact key inside that bucket.</li>
+  <li><code>HashSet</code> uses the same rules because it is backed by a map.</li>
+  <li><code>TreeMap</code> and <code>TreeSet</code> use ordering, usually <code>compareTo</code> or a supplied <code>Comparator</code>, instead of hash lookup.</li>
+</ol>
+
+<h3>What goes wrong when contracts are broken?</h3>
+<ul>
+  <li>Override <code>equals</code> without <code>hashCode</code>: equal objects can enter different hash buckets, so <code>contains</code> or <code>get</code> may fail.</li>
+  <li>Use mutable fields in equality: changing a key after insertion can make the entry unreachable.</li>
+  <li>Make <code>compareTo</code> inconsistent with equality: a <code>TreeSet</code> can treat two unequal objects as duplicates when comparison returns zero.</li>
+  <li>Use subtraction such as <code>this.age - other.age</code>: integer overflow can produce the wrong ordering. Use <code>Integer.compare</code>.</li>
+</ul>
+
+<h3>Real-world example</h3>
+<p>A payment service may identify a request with <code>PaymentId</code>. Its equality should use the stable payment ID, not mutable status or display fields. That makes idempotency maps, database entity lookups, and deduplication predictable.</p>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Should equal objects always have the same hash code?</strong> Yes. The reverse is not required; collisions are allowed.</li>
+  <li><strong>Can compareTo return any negative or positive number?</strong> Yes. Only the sign matters, although zero must mean equivalent ordering.</li>
+  <li><strong>Why is BigDecimal a common interview edge case?</strong> Its <code>equals</code> considers scale while <code>compareTo</code> does not, so <code>new BigDecimal("1.0")</code> and <code>new BigDecimal("1.00")</code> compare as equal by ordering but not by <code>equals</code>.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote><code>==</code> checks primitive values or reference identity, while <code>equals</code> checks logical equality. Hash-based collections use <code>hashCode</code> to find a bucket and <code>equals</code> to find the exact key, so equal objects must have equal hashes. <code>compareTo</code> defines ordering for sorted collections. Breaking these contracts causes failed lookups, duplicate set entries, or incorrect tree ordering.</blockquote>
+
+<hr>
+
+<h2>Question: How do you design an immutable Java class, and why does immutability help with thread safety?</h2>
+
+<h2>Short answer</h2>
+<p>An immutable object cannot change after construction. Make the class difficult or impossible to extend, keep fields private and final, initialize them in the constructor, provide no setters, validate inputs, and make defensive copies of mutable objects. Immutability removes shared state changes, so multiple threads can safely read the same object without locks.</p>
+
+<h3>Rules for an immutable class</h3>
+<ol>
+  <li>Declare the class <code>final</code>, or carefully control subclassing.</li>
+  <li>Make state <code>private final</code>.</li>
+  <li>Set every field during construction.</li>
+  <li>Do not expose setters or mutable internal state.</li>
+  <li>Defensively copy mutable input and output such as <code>Date</code>, arrays, and collections.</li>
+  <li>Validate invariants before publishing the object.</li>
+</ol>
+
+<h3>Runnable example</h3>
+<pre><code>import java.util.*;
+
+public final class UserProfile {
+    private final String name;
+    private final List&lt;String&gt; roles;
+
+    public UserProfile(String name, List&lt;String&gt; roles) {
+        this.name = Objects.requireNonNull(name);
+        this.roles = List.copyOf(roles);
+    }
+
+    public String name() { return name; }
+    public List&lt;String&gt; roles() { return roles; }
+}
+
+class ImmutableDemo {
+    public static void main(String[] args) {
+        List&lt;String&gt; input = new ArrayList&lt;&gt;(List.of("USER"));
+        UserProfile profile = new UserProfile("Maya", input);
+        input.add("ADMIN");
+
+        System.out.println(profile.name());
+        System.out.println(profile.roles());
+        try {
+            profile.roles().add("ADMIN");
+        } catch (UnsupportedOperationException ex) {
+            System.out.println("roles cannot be changed");
+        }
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>Maya
+[USER]
+roles cannot be changed</code></pre>
+
+<h3>Internal working and thread safety</h3>
+<p>Threads can safely share an immutable object because its fields never change after construction. A properly constructed object also benefits from the Java Memory Model's final-field guarantees: other threads can reliably observe final fields after safe publication. Immutability does not automatically make referenced objects safe; the whole object graph must be immutable or safely wrapped.</p>
+
+<h3>Edge cases</h3>
+<ul>
+  <li><code>Collections.unmodifiableList</code> prevents mutation through that view but does not copy the original list. Changes to the original list may still be visible.</li>
+  <li>A final reference cannot be reassigned, but the referenced object can still be mutable.</li>
+  <li>Returning an internal array directly breaks immutability. Return a copy.</li>
+  <li>Lazy caching inside an immutable object needs safe publication or synchronization.</li>
+  <li>Serialization, reflection, and deserialization can bypass normal constructors, so sensitive classes may need extra protection.</li>
+</ul>
+
+<h3>Real-world examples</h3>
+<p>Value objects such as money, coordinates, configuration snapshots, request objects, cache keys, and Java records are good candidates. Immutable configuration can be shared by request threads without defensive locking.</p>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Are records always immutable?</strong> No. A record's fields are final, but a field may refer to a mutable list or object. Use defensive copies.</li>
+  <li><strong>Why use a builder?</strong> A builder helps create complex immutable objects while keeping the final object itself unchangeable.</li>
+  <li><strong>Is immutability faster?</strong> It can reduce locking and simplify caching, but defensive copying may add allocation cost.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>An immutable class is fully initialized in its constructor and never changes afterward. I use private final fields, no setters, validation, defensive copies, and controlled inheritance. Since threads only read stable state, immutable objects can be shared without locks, are safe as map keys, and are easier to reason about.</blockquote>
+
+<hr>
+
+<h2>Question: How does Java memory management work, including heap, stack, references, pass-by-value, and object allocation?</h2>
+
+<h2>Short answer</h2>
+<p>Objects and arrays are normally allocated on the heap and managed by the garbage collector. Each thread has its own stack containing method frames, local variables, and references. A reference is a value that points to an object; it is not the object itself. Java is always pass-by-value: for objects, the value passed is a copy of the reference.</p>
+
+<h3>Heap, stack, and references</h3>
+<ul>
+  <li><strong>Heap:</strong> shared memory for objects, arrays, and most application data.</li>
+  <li><strong>Stack:</strong> per-thread call frames containing parameters, locals, and return information.</li>
+  <li><strong>Reference:</strong> a variable value used to reach an object; multiple references can point to one object.</li>
+  <li><strong>Metaspace:</strong> native memory used for class metadata in modern HotSpot JVMs.</li>
+</ul>
+
+<h3>Runnable pass-by-value example</h3>
+<pre><code>class Box { int value; Box(int value) { this.value = value; } }
+
+public class MemoryDemo {
+    static void change(Box box) {
+        box.value = 20;
+        box = new Box(30);
+    }
+
+    static void reassign(int value) {
+        value = 99;
+    }
+
+    public static void main(String[] args) {
+        Box box = new Box(10);
+        int number = 1;
+        change(box);
+        reassign(number);
+        System.out.println(box.value);
+        System.out.println(number);
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>20
+1</code></pre>
+<p>The method receives a copy of the reference. It can mutate the shared object through that copy, but assigning the parameter to a new object does not change the caller's reference.</p>
+
+<h3>Object allocation and garbage collection</h3>
+<ol>
+  <li>The JVM loads class metadata and checks the requested type.</li>
+  <li>It allocates space for the object and initializes fields to default values.</li>
+  <li>The constructor runs and establishes the object's state.</li>
+  <li>When no GC-root path can reach the object, it becomes eligible for collection.</li>
+</ol>
+<p>GC roots include active stack references, static fields, JNI references, and running threads. An object being eligible for collection does not mean it is collected immediately.</p>
+
+<h3>Performance details</h3>
+<p>HotSpot may optimize allocation with thread-local allocation buffers, escape analysis, scalar replacement, and stack allocation-like optimizations. These are implementation optimizations; Java code should not depend on a particular object location.</p>
+
+<h3>Edge cases</h3>
+<ul>
+  <li><code>StackOverflowError</code> usually indicates excessive recursion or very large stack frames.</li>
+  <li><code>OutOfMemoryError: Java heap space</code> can mean too many live objects or a leak.</li>
+  <li>Native buffers, thread stacks, metaspace, and direct memory can exhaust a container even when heap usage looks normal.</li>
+  <li>Calling <code>System.gc()</code> is only a request and is not a reliable memory-management strategy.</li>
+</ul>
+
+<h3>Real-world example</h3>
+<p>In a web service, each request creates temporary DTOs and parsing objects. Those objects become collectible after the request finishes unless a cache, static collection, thread local, listener, or long-lived task retains them.</p>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Does Java pass objects by reference?</strong> No. It passes a copy of the reference by value.</li>
+  <li><strong>When is an object garbage collected?</strong> When it is unreachable from GC roots and a collector decides to reclaim it.</li>
+  <li><strong>Can local variables live on the heap?</strong> The language does not guarantee physical placement; the JVM may optimize representation.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>Java normally stores objects on the shared heap and method frames on each thread's stack. References are values pointing to heap objects, and garbage collection reclaims objects that are unreachable from GC roots. Java is always pass-by-value: an object parameter is a copied reference, so a method can mutate the object but cannot replace the caller's reference.</blockquote>
+
+<hr>
+
+<h2>Question: How do Java generics, type erasure, reflection, and annotations work internally?</h2>
+
+<h2>Short answer</h2>
+<p>Generics provide compile-time type safety and are mostly implemented through type erasure, so ordinary generic type arguments are removed from runtime bytecode. The compiler inserts casts where needed. Reflection inspects classes, methods, fields, and annotations at runtime. Annotations are metadata whose retention determines whether they exist only in source, in class files, or at runtime.</p>
+
+<h3>Generics and type erasure</h3>
+<pre><code>import java.util.*;
+
+public class GenericsDemo {
+    public static void main(String[] args) {
+        List&lt;String&gt; names = new ArrayList&lt;&gt;();
+        names.add("Maya");
+        String name = names.get(0); // compiler inserts a cast to String
+        System.out.println(name);
+
+        System.out.println(names instanceof List&lt;?&gt;);
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>Maya
+true</code></pre>
+<p>At runtime, the JVM generally sees an <code>ArrayList</code>, not an <code>ArrayList&lt;String&gt;</code>. This is why <code>List&lt;String&gt;.class</code> is illegal and why <code>instanceof List&lt;String&gt;</code> is not allowed.</p>
+
+<h3>Reflection and annotations</h3>
+<pre><code>import java.lang.annotation.*;
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.TYPE)
+@interface Endpoint { String value(); }
+
+@Endpoint("/orders")
+class OrderController { }
+
+public class ReflectionDemo {
+    public static void main(String[] args) {
+        Class&lt;OrderController&gt; type = OrderController.class;
+        Endpoint endpoint = type.getAnnotation(Endpoint.class);
+        System.out.println(type.getSimpleName());
+        System.out.println(endpoint.value());
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>OrderController
+/orders</code></pre>
+<p>Frameworks such as Spring use reflection and runtime annotations to discover controllers, services, configuration, validation rules, and dependency injection metadata.</p>
+
+<h3>Important limitations and edge cases</h3>
+<ul>
+  <li>Generic type arguments are normally unavailable at runtime, although frameworks can preserve them using a type token or subclass metadata.</li>
+  <li>Static fields cannot use a class's type parameter.</li>
+  <li>Primitive types cannot be generic arguments; use wrappers such as <code>Integer</code>.</li>
+  <li>Heap pollution can occur through raw types, unchecked casts, arrays, or unsafe varargs.</li>
+  <li>Reflection can bypass normal access checks and has performance and security implications.</li>
+  <li><code>SOURCE</code>, <code>CLASS</code>, and <code>RUNTIME</code> retention control annotation visibility.</li>
+</ul>
+
+<h3>Real-world examples</h3>
+<p>Spring's <code>@RestController</code>, Jackson's serialization annotations, JUnit's <code>@Test</code>, and Bean Validation annotations are all examples of metadata-driven behavior. Generic repositories such as <code>Repository&lt;Order, Long&gt;</code> communicate type information to the compiler and sometimes to frameworks through reflection metadata.</p>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Why can you not create <code>new T()</code>?</strong> Erasure removes the runtime type, so the compiler cannot know which constructor to call.</li>
+  <li><strong>What is a bounded type parameter?</strong> A declaration such as <code>&lt;T extends Number&gt;</code> restricts accepted types and exposes the bound's operations.</li>
+  <li><strong>What is the difference between reflection and annotation processing?</strong> Reflection runs at runtime; annotation processors inspect source during compilation and can generate code.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>Generics give compile-time type safety, but Java usually implements them through type erasure and inserts casts into bytecode. Reflection inspects runtime classes and members. Annotations provide metadata, and runtime-retained annotations can be read by frameworks such as Spring. The trade-off is that generic type arguments are usually unavailable at runtime and raw or unchecked operations can create heap pollution.</blockquote>
+
+<hr>
+
+<h2>Question: How would you choose between HashMap, ConcurrentHashMap, Hashtable, CopyOnWriteArrayList, and TreeMap for different real-world applications?</h2>
+
+<h2>Short answer</h2>
+<p>Choose based on ordering, concurrency, read/write ratio, null policy, and required operations. Use <code>HashMap</code> for ordinary single-threaded or externally synchronized key-value access, <code>ConcurrentHashMap</code> for concurrent map operations, <code>TreeMap</code> for sorted keys and range queries, and <code>CopyOnWriteArrayList</code> for many reads with very rare writes. Avoid new uses of legacy <code>Hashtable</code> unless compatibility requires it.</p>
+
+<h3>Comparison table</h3>
+<table>
+  <thead><tr><th>Collection</th><th>Best fit</th><th>Important trade-off</th></tr></thead>
+  <tbody>
+    <tr><td><code>HashMap</code></td><td>Fast general lookup, no ordering</td><td>Not safe for concurrent mutation; allows null</td></tr>
+    <tr><td><code>ConcurrentHashMap</code></td><td>Shared mutable map with concurrent reads and updates</td><td>No null keys or values; compound actions need atomic methods</td></tr>
+    <tr><td><code>Hashtable</code></td><td>Legacy synchronized API compatibility</td><td>Coarse synchronization and legacy design</td></tr>
+    <tr><td><code>CopyOnWriteArrayList</code></td><td>Small list with many reads and very rare writes</td><td>Every write copies the array; poor for large or write-heavy lists</td></tr>
+    <tr><td><code>TreeMap</code></td><td>Sorted keys, first/last/range queries</td><td>O(log n), ordering rules must be consistent</td></tr>
+  </tbody>
+</table>
+
+<h3>Runnable selection example</h3>
+<pre><code>import java.util.*;
+import java.util.concurrent.*;
+
+public class CollectionChoiceDemo {
+    public static void main(String[] args) {
+        Map&lt;String, Integer&gt; fastLookup = new HashMap&lt;&gt;();
+        Map&lt;String, Integer&gt; sharedCounts = new ConcurrentHashMap&lt;&gt;();
+        Map&lt;Integer, String&gt; sorted = new TreeMap&lt;&gt;();
+        List&lt;String&gt; listeners = new CopyOnWriteArrayList&lt;&gt;();
+
+        fastLookup.put("order-1", 100);
+        sharedCounts.merge("success", 1, Integer::sum);
+        sorted.put(2, "medium");
+        sorted.put(1, "low");
+        listeners.add("audit-listener");
+
+        System.out.println(fastLookup.get("order-1"));
+        System.out.println(sharedCounts.get("success"));
+        System.out.println(sorted.firstKey());
+        System.out.println(listeners);
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>100
+1
+1
+[audit-listener]</code></pre>
+
+<h3>Concurrency details</h3>
+<p><code>ConcurrentHashMap</code> makes individual operations and methods such as <code>putIfAbsent</code>, <code>compute</code>, and <code>merge</code> safe for concurrent use. A sequence such as “check then put” is not automatically atomic; use one of those compound operations. Its iterators are weakly consistent rather than fail-fast.</p>
+<p><code>Hashtable</code> synchronizes individual methods, but a sequence of calls still needs external coordination. <code>CopyOnWriteArrayList</code> gives readers a stable snapshot-like array and is useful for listener registries, configuration observers, or routing tables with rare changes.</p>
+
+<h3>Real-world decision examples</h3>
+<ul>
+  <li>Per-request local lookup: <code>HashMap</code>.</li>
+  <li>Application-wide counters or a token registry: <code>ConcurrentHashMap</code> with <code>merge</code> or <code>compute</code>.</li>
+  <li>Time windows, sorted IDs, or range queries: <code>TreeMap</code>.</li>
+  <li>Event listeners read on every request but changed only during startup: <code>CopyOnWriteArrayList</code>.</li>
+  <li>Old library contract requiring a synchronized map: <code>Hashtable</code>, preferably behind a compatibility boundary.</li>
+</ul>
+
+<h3>Edge cases and common mistakes</h3>
+<ul>
+  <li>Do not use <code>CopyOnWriteArrayList</code> for a high-volume queue or frequently updated collection.</li>
+  <li>Do not assume <code>ConcurrentHashMap</code> makes the values themselves thread-safe.</li>
+  <li>Do not use <code>TreeMap</code> when you only need lookup and do not need ordering.</li>
+  <li>Do not use a synchronized wrapper as a replacement for understanding iteration and compound-operation locking.</li>
+  <li>Do not select a collection only by benchmark numbers; measure the actual workload, memory pressure, and contention.</li>
+</ul>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Why does ConcurrentHashMap reject null?</strong> A null result can clearly mean “no mapping” during concurrent operations, so allowing null would make APIs such as <code>get</code> ambiguous.</li>
+  <li><strong>When is LinkedHashMap a better choice?</strong> When insertion or access order matters, such as a simple LRU-style structure.</li>
+  <li><strong>What if I need a thread-safe sorted map?</strong> Consider <code>ConcurrentSkipListMap</code>, external synchronization, or a design that avoids shared mutation.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I choose <code>HashMap</code> for ordinary unsynchronized lookup, <code>ConcurrentHashMap</code> for shared concurrent map updates, <code>TreeMap</code> for sorted keys and ranges, and <code>CopyOnWriteArrayList</code> for read-heavy lists with very rare writes. <code>Hashtable</code> is mainly a legacy compatibility choice. I also check whether compound operations need atomic methods such as <code>compute</code> or <code>merge</code>.</blockquote>
+
 </div>
