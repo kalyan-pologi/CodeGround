@@ -114,6 +114,11 @@ async function showNote(repo, id, version) {
     // Keep imported CSS isolated so all three note formats retain their original styling.
     frame.onload = () => {
       const doc = frame.contentDocument;
+      if (repo === 'interview' && id === 'sql-snippets') {
+        import('./sql-runner.js').then(({ mountSqlRunners }) => {
+          if (version === routeVersion && frame.contentDocument === doc) mountSqlRunners(doc);
+        });
+      }
       if (repo === 'interview' && id === 'java-snippets') {
         import('./stream-runner.js').then(({ mountStreamRunners }) => {
           if (version === routeVersion && frame.contentDocument === doc) mountStreamRunners(doc);

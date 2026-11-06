@@ -205,6 +205,19 @@ try {
     assert.equal(result.status, 0, result.stderr || result.error?.message);
     console.log(`Compiled and executed ${streamPrograms.length} Stream starters, solutions and alternatives.`);
   }
+  await evaluate(`location.hash = 'practice/interview/sql-snippets'`);
+  const sqlCount = (readFileSync(new URL('../public/library/interview/notes/sql-snippets.html', import.meta.url), 'utf8').match(/<p><b>Q:/g) || []).length;
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.sql-workspace').length === ${sqlCount}`);
+  assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.sql-workspace [data-run]:disabled').length`), 1);
+  assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.sql-workspace .stream-solution:not([hidden])').length`), 0);
+  for (let index = 0; index < sqlCount - 1; index++) {
+    await evaluate(`(() => { const workspace = document.querySelector('iframe').contentDocument.querySelectorAll('.sql-workspace')[${index}]; workspace.querySelector('[data-load]').click(); workspace.querySelector('[data-run]').click(); })()`);
+    await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.sql-workspace')[${index}]?.querySelector('[data-run]')?.disabled === false`);
+    const output = await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.sql-workspace')[${index}].querySelector('.sql-results').textContent`);
+    assert.match(output, /^Completed\./, `SQL example ${index + 1}: ${output}`);
+  }
+  await evaluate(`(() => { const workspace = document.querySelector('iframe').contentDocument.querySelector('.sql-workspace'); workspace.querySelector('textarea').value = 'SELECT * FROM missing_table;'; workspace.querySelector('[data-run]').click(); })()`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.sql-results')?.textContent.includes('SQL error:')`);
   await evaluate(`location.hash = 'home/interview/proj-accenture'`);
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('a[href="#aws"]')) && document.querySelector('.reader-bar')?.textContent.includes('Accenture')`);
   assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('img[src$="aws-services-for-spring-boot-table.png"]').length`), 0);
@@ -224,6 +237,11 @@ try {
   await evaluate(`document.querySelector('iframe').contentDocument.querySelector('button[data-task-id="1"]').click()`);
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.monaco-editor'))`);
   assert.ok(await evaluate(`document.querySelector('iframe').contentDocument.documentElement.scrollWidth <= document.querySelector('iframe').contentWindow.innerWidth`), 'Mobile Java challenge overflows');
+  await evaluate(`location.hash = 'practice/interview/sql-snippets'`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.sql-workspace').length === ${sqlCount}`);
+  await evaluate(`(() => { const workspace = document.querySelector('iframe').contentDocument.querySelector('.sql-workspace'); workspace.querySelector('[data-load]').click(); workspace.querySelector('[data-run]').click(); })()`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.sql-results')?.textContent.includes('Completed.')`);
+  assert.ok(await evaluate(`document.querySelector('iframe').contentDocument.documentElement.scrollWidth <= document.querySelector('iframe').contentWindow.innerWidth`), 'Mobile SQL workspace overflows');
   await evaluate(`location.hash = 'home'`);
   await until(`document.querySelectorAll('.card').length === 6`);
   assert.ok(await evaluate(`document.documentElement.scrollWidth <= innerWidth`), 'Mobile page overflows');

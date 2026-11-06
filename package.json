@@ -10,13 +10,17 @@
     "check": "node scripts/verify.mjs",
     "check:browser": "node --experimental-websocket scripts/browser-smoke.mjs",
     "check:project": "node scripts/check-project-tasks.mjs",
-    "check:streams": "node scripts/check-stream-approaches.mjs"
+    "check:streams": "node scripts/check-stream-approaches.mjs",
+    "check:sql": "node scripts/check-sql.mjs"
   },
   "dependencies": {
+    "@monaco-editor/react": "^4.7.0",
+    "monaco-editor": "^0.52.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "@monaco-editor/react": "^4.7.0",
-    "monaco-editor": "^0.52.2"
+    "sql.js": "^1.15.2"
   },
-  "devDependencies": { "vite": "^6.4.1" }
+  "devDependencies": {
+    "vite": "^6.4.1"
+  }
 }

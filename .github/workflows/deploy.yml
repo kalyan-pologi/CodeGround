@@ -26,6 +26,7 @@ jobs:
       - uses: actions/configure-pages@v5
       - run: npm ci
       - run: npm run check
+      - run: npm run check:sql
       - run: npm run build -- --base=/CodeGround/
       - uses: actions/upload-pages-artifact@v3
         with:
