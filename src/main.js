@@ -66,8 +66,7 @@ const noteRoute = note => `#${tabFor(note)}/${note.repo}/${note.id}`;
 const defaultRoute = tab => tab === 'home' ? '#home' : tab === 'practice' ? '#practice/tasks' : (tab === 'sd' || tab === 'genai') ? `#${tab}/${tab}/home` : `#${tab}/interview/${groups[tab][0][1][0]}`;
 let routeVersion = 0;
 document.querySelector('#app').innerHTML = `
-  <header class="topbar"><a class="brand" href="#home"><span class="brand-icon">&lt;/&gt;</span><span>CodeGround<small>LEARN. BUILD. EXPLAIN.</small></span></a><div class="toplinks"><input class="search" type="search" aria-label="Search all notes" placeholder="Search all notes…"><button class="mobile-menu" aria-label="Toggle topic menu" aria-expanded="false">☰</button></div></header>
-  <nav class="tabs" aria-label="Main navigation">${tabs.map((tab, i) => `<a data-tab="${slugs[i]}" href="${defaultRoute(slugs[i])}">${tab}</a>`).join('')}</nav>
+  <header class="topbar"><a class="brand" href="#home"><span class="brand-icon">&lt;/&gt;</span><span>CodeGround<small>LEARN. BUILD. EXPLAIN.</small></span></a><nav class="tabs" aria-label="Main navigation">${tabs.map((tab, i) => `<a data-tab="${slugs[i]}" href="${defaultRoute(slugs[i])}">${tab}</a>`).join('')}</nav><div class="toplinks"><input class="search" type="search" aria-label="Search all notes" placeholder="Search all notes…"><button class="mobile-menu" aria-label="Toggle topic menu" aria-expanded="false">☰</button></div></header>
   <div class="workspace"><aside class="sidebar" aria-label="Topic navigation"></aside><main class="main" id="main"></main></div>`;
 const main = document.querySelector('#main');
 const sidebar = document.querySelector('.sidebar');
@@ -133,9 +132,6 @@ async function showNote(repo, id, version) {
     if (version === routeVersion) main.innerHTML = `<div class="error">${escape(error.message)} <a href="#home">Return home</a></div>`;
   }
 }
-function practiceTabs(project = true) {
-  return `<nav class="practice-subtabs" aria-label="Backend practice sections"><a href="#practice/tasks" ${project ? 'aria-current="page"' : ''}>ReidyAI Project Tasks</a><a href="#practice/workspace" ${!project ? 'aria-current="page"' : ''}>Java Practice Exercises</a></nav>`;
-}
 function showWorkspace(project = false, topicTasks = false, scenarioId = '', taskId = '') {
   const params = new URLSearchParams();
   if (topicTasks) params.set('bank', 'topics');
@@ -143,7 +139,7 @@ function showWorkspace(project = false, topicTasks = false, scenarioId = '', tas
   if (project && scenarioId) params.set('scenario', scenarioId);
   if (project && taskId) params.set('task', taskId);
   const query = params.toString();
-  main.innerHTML = `<div class="reader">${practiceTabs(project)}<div class="reader-bar"><span>Backend Practice / ${project ? 'ReidyAI coding exercises' : 'Java Practice Exercises'}</span></div><iframe class="note-frame" title="${project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
+  main.innerHTML = `<div class="reader"><iframe class="note-frame" title="${project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
 }
 function showSearch(query) {
   const normalizedQuery = query.toLowerCase();
