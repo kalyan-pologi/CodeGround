@@ -8,7 +8,7 @@ const tabs = ['Home', 'Backend', 'Backend Practice', 'DevOps', 'Web', 'SD', 'Gen
 const slugs = ['home', 'backend', 'practice', 'devops', 'web', 'sd', 'genai'];
 const groups = {
   backend: [['Java & Spring', ['java-topics', 'spring-topics', 'solid-patterns']], ['Tooling', ['git-commands', 'junit-concepts', 'mongodb']]],
-  practice: [['Practice', ['@tasks', '@workspace', '@debugging', 'java-snippets', 'sql-snippets']]],
+  practice: [['Practice', ['@tasks', '@workspace', '@debugging', 'java-interview-questions', 'java-snippets', 'sql-snippets']]],
   devops: [['Commands', ['devops-daily', 'devops-useful']], ['Infrastructure', ['docker', 'kubernetes', 'minikube']], ['Cloud', ['aws', 'azure']]],
   web: [['Fundamentals', ['html', 'css', 'javascript', 'typescript', 'frontend-quickref']], ['Frameworks', ['react', 'redux', 'angular']]],
   home: [['Getting started', ['@overview', 'intro']], ['Project write-ups', ['proj-reidyai', 'proj-citibank', 'proj-accenture']], ['Project stories & questions', ['behavioral-stories', 'behavioral-questions']]]
@@ -180,6 +180,11 @@ async function showNote(repo, id, version) {
       if (repo === 'interview' && id === 'java-snippets') {
         import('./stream-runner.js').then(({ mountStreamRunners }) => {
           if (version === routeVersion && frame.contentDocument === doc) mountStreamRunners(doc);
+        });
+      }
+      if (repo === 'interview' && id === 'java-interview-questions') {
+        import('./interview-questions-runner.js').then(({ mountInterviewQuestionDrawer }) => {
+          if (version === routeVersion && frame.contentDocument === doc) mountInterviewQuestionDrawer(doc);
         });
       }
       doc.addEventListener('click', event => {

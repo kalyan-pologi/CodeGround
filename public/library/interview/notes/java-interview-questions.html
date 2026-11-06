@@ -1,0 +1,332 @@
+<!--
+  <div class="tag">Java Interview Questions</div>
+  <h1>☕ Java Interview Questions</h1>
+  <p>Step-by-step interview explanations with internal working, runnable examples, expected output, edge cases, and follow-up questions.</p>
+-->
+<div class="note-body">
+
+<h3>Question: How does HashMap work internally, and what happens during hash collisions, resizing, and concurrent modification?</h3>
+
+<h2>Short answer</h2>
+<p><code>HashMap</code> stores key-value pairs in an array of buckets. It hashes the key, converts the hash into a bucket index, and then searches that bucket using <code>equals</code>. If two keys map to the same bucket, a collision is handled by storing multiple entries in that bucket. In modern Java, a crowded bucket can change from a linked list into a balanced red-black tree. When the map grows past its threshold, it resizes and redistributes entries. Its iterators are fail-fast: structural modification during iteration usually throws <code>ConcurrentModificationException</code>, but this is a best-effort bug detector rather than a thread-safety guarantee.</p>
+
+<h2>Start with the basics</h2>
+
+<h3>What is a map?</h3>
+<p>A map associates a unique key with a value. For example, an employee ID can identify an employee record:</p>
+<pre><code>Map&lt;Integer, String&gt; employees = new HashMap&lt;&gt;();
+employees.put(101, "Maya");
+employees.put(102, "Luis");
+
+System.out.println(employees.get(101)); // Maya</code></pre>
+
+<ul>
+  <li>Keys are unique. Adding the same key replaces its old value.</li>
+  <li>Values may repeat.</li>
+  <li><code>HashMap</code> permits one <code>null</code> key and multiple <code>null</code> values.</li>
+  <li>It does not guarantee insertion order. Use <code>LinkedHashMap</code> for insertion/access order or <code>TreeMap</code> for sorted keys.</li>
+  <li>It is not synchronized and should not be shared for concurrent writes without coordination.</li>
+</ul>
+
+<h2>Internal structure</h2>
+<p>A simplified map looks like this:</p>
+<pre><code>table
+  [0] - empty
+  [1] - Entry(keyA, valueA) -&gt; Entry(keyB, valueB)
+  [2] - empty
+  [3] - TreeNode(keyC, valueC)
+  ...</code></pre>
+
+<p>Each entry contains a key, value, hash, and a link to the next entry when the bucket uses a linked list. The implementation uses internal node classes, but this is the useful mental model:</p>
+<pre><code>class Entry&lt;K, V&gt; {
+    final int hash;
+    final K key;
+    V value;
+    Entry&lt;K, V&gt; next;
+}</code></pre>
+
+<h3>Step 1: Hash the key</h3>
+<p>When you call <code>put(key, value)</code> or <code>get(key)</code>, Java obtains the key's hash code and spreads high bits into low bits so more of the hash participates in bucket selection. The conceptual Java 8+ operation is:</p>
+<pre><code>int h = key.hashCode();
+int spreadHash = h ^ (h &gt;&gt;&gt; 16);</code></pre>
+
+<p>This matters because bucket selection uses the low bits. A key whose <code>hashCode()</code> differs mostly in high bits can still be distributed more evenly after spreading.</p>
+
+<h3>Step 2: Calculate the bucket index</h3>
+<p>For a table length <code>n</code>, HashMap conceptually calculates:</p>
+<pre><code>int index = (n - 1) &amp; spreadHash;</code></pre>
+
+<p>The table length is kept as a power of two, such as 16, 32, or 64. That lets a bitwise AND replace a slower remainder operation. This is an implementation detail; application code should never depend on a specific bucket number.</p>
+
+<h3>Step 3: Search the bucket</h3>
+<p>HashMap first compares the stored hash. If the hash matches, it compares keys using identity or <code>equals</code>:</p>
+<pre><code>if (storedHash == requestedHash
+        &amp;&amp; (storedKey == requestedKey
+            || requestedKey.equals(storedKey))) {
+    return storedValue;
+}</code></pre>
+
+<ul>
+  <li><code>hashCode</code> narrows the search to a bucket.</li>
+  <li><code>equals</code> identifies the exact key inside that bucket.</li>
+</ul>
+
+<h2>Hash collisions</h2>
+<p>A collision occurs when different keys select the same bucket. A collision is not automatically an error. HashMap stores both entries in that bucket and uses <code>equals</code> to distinguish them.</p>
+
+<h3>Runnable collision example</h3>
+<pre><code>import java.util.HashMap;
+import java.util.Map;
+
+public class HashCollisionDemo {
+    static final class Key {
+        private final String name;
+
+        Key(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public int hashCode() {
+            return 42; // Deliberately force a collision.
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof Key key &amp;&amp; name.equals(key.name);
+        }
+
+        @Override
+        public String toString() {
+            return name;
+        }
+    }
+
+    public static void main(String[] args) {
+        Map&lt;Key, Integer&gt; scores = new HashMap&lt;&gt;();
+        scores.put(new Key("A"), 10);
+        scores.put(new Key("B"), 20);
+
+        System.out.println(scores.get(new Key("A")));
+        System.out.println(scores.get(new Key("B")));
+        System.out.println(scores.size());
+    }
+}</code></pre>
+
+<p>Expected output:</p>
+<pre><code>10
+20
+2</code></pre>
+
+<p>All keys return the same hash, but <code>equals</code> still separates <code>A</code> from <code>B</code>. With a small number of collisions, the bucket is commonly a linked list. In Java 8 and later, a sufficiently crowded bucket can be treeified into a red-black tree, improving a long collision search from approximately O(n) to O(log n).</p>
+
+<h3>Treeification details</h3>
+<p>OpenJDK implementations commonly use these thresholds:</p>
+<ul>
+  <li><code>TREEIFY_THRESHOLD = 8</code>: a bucket may be converted to a tree when it becomes crowded.</li>
+  <li><code>UNTREEIFY_THRESHOLD = 6</code>: a tree can become a list again after removals.</li>
+  <li><code>MIN_TREEIFY_CAPACITY = 64</code>: before treeifying, HashMap prefers resizing if the table is still small.</li>
+</ul>
+<p>These are implementation details, not API contracts. The practical interview point is that good hash distribution matters, and modern Java has a tree fallback for unusually long collision chains.</p>
+
+<h2>Resizing and load factor</h2>
+<p>HashMap starts with a table capacity and a load factor. The default load factor is <code>0.75</code>. The resize threshold is approximately:</p>
+<pre><code>threshold = capacity * loadFactor</code></pre>
+
+<p>With capacity 16 and load factor 0.75, the map resizes when it grows beyond roughly 12 entries. Resizing normally doubles the table capacity. Entries are redistributed because the new index can change when the table length changes.</p>
+
+<h3>Why does resizing cost time?</h3>
+<p>Adding one entry is usually O(1), but resizing requires visiting existing entries. That individual operation is expensive, so HashMap has amortized O(1) insertion rather than a strict O(1) guarantee for every call. If you know the expected size, choose an appropriate initial capacity:</p>
+<pre><code>Map&lt;String, Integer&gt; counts = new HashMap&lt;&gt;(1_000);</code></pre>
+
+<p>Do not blindly use a huge capacity. It consumes memory and can make iteration more expensive. Capacity, load factor, key distribution, and actual workload should guide tuning.</p>
+
+<h2>Duplicate keys and nulls</h2>
+<pre><code>Map&lt;String, String&gt; users = new HashMap&lt;&gt;();
+users.put("u1", "old email");
+String previous = users.put("u1", "new email");
+
+System.out.println(previous);
+System.out.println(users.get("u1"));</code></pre>
+
+<p>Expected output:</p>
+<pre><code>old email
+new email</code></pre>
+
+<p>The key remains one entry. The new value replaces the old value, and <code>put</code> returns the previous value. A plain HashMap also permits one null key, while <code>ConcurrentHashMap</code> rejects null keys and values.</p>
+
+<h2>Concurrent modification</h2>
+
+<h3>What does fail-fast mean?</h3>
+<p>HashMap iterators track a modification count. A structural change such as adding or removing a mapping changes that count. The iterator remembers the count from its creation and usually throws <code>ConcurrentModificationException</code> if it detects a mismatch.</p>
+
+<pre><code>import java.util.HashMap;
+import java.util.Map;
+
+public class ConcurrentModificationDemo {
+    public static void main(String[] args) {
+        Map&lt;String, Integer&gt; values = new HashMap&lt;&gt;();
+        values.put("keep", 1);
+        values.put("remove", 2);
+
+        for (String key : values.keySet()) {
+            if (key.equals("remove")) {
+                values.remove(key); // Usually throws ConcurrentModificationException.
+            }
+        }
+    }
+}</code></pre>
+
+<p>Typical result:</p>
+<pre><code>Exception in thread "main" java.util.ConcurrentModificationException</code></pre>
+
+<p>The exception is not a guarantee that every unsafe modification will be detected. It is a best-effort fail-fast check. It does not make HashMap thread-safe.</p>
+
+<h3>Safe removal during iteration</h3>
+<pre><code>values.entrySet().removeIf(entry -&gt; entry.getKey().equals("remove"));</code></pre>
+
+<p>Or use the iterator's own removal operation:</p>
+<pre><code>var iterator = values.entrySet().iterator();
+while (iterator.hasNext()) {
+    if (iterator.next().getKey().equals("remove")) {
+        iterator.remove();
+    }
+}</code></pre>
+
+<h3>What if multiple threads access the map?</h3>
+<p>Concurrent reads are not a substitute for safe publication and coordinated writes. Concurrent writes can race, lose updates, and interact badly with resizing. Use the collection that matches the requirement:</p>
+<ul>
+  <li><code>ConcurrentHashMap</code> for a general-purpose concurrent map.</li>
+  <li><code>Collections.synchronizedMap</code> for a synchronized wrapper; iteration still requires external synchronization.</li>
+  <li>An immutable map such as <code>Map.of</code> when data never changes.</li>
+  <li>A database or distributed cache when state must be shared across application instances.</li>
+</ul>
+
+<h3>HashMap versus ConcurrentHashMap</h3>
+<pre><code>import java.util.concurrent.ConcurrentHashMap;
+
+var counts = new ConcurrentHashMap&lt;String, Integer&gt;();
+counts.merge("orders", 1, Integer::sum);
+counts.merge("orders", 1, Integer::sum);
+
+System.out.println(counts.get("orders"));</code></pre>
+
+<p>Expected output:</p>
+<pre><code>2</code></pre>
+
+<p><code>merge</code> makes the read-update-write operation atomic for that key. <code>ConcurrentHashMap</code> also provides weakly consistent iterators: they do not normally throw <code>ConcurrentModificationException</code>, and they may reflect some updates that happen during iteration.</p>
+
+<h2>Key correctness rules</h2>
+
+<h3>Why must keys be immutable?</h3>
+<p>If a key changes in a way that affects <code>equals</code> or <code>hashCode</code> after insertion, the map may no longer find the entry in the bucket where it was placed.</p>
+
+<pre><code>import java.util.HashMap;
+import java.util.Map;
+
+public class MutableKeyDemo {
+    static final class UserKey {
+        String id;
+        UserKey(String id) { this.id = id; }
+        @Override public int hashCode() { return id.hashCode(); }
+        @Override public boolean equals(Object o) {
+            return o instanceof UserKey k &amp;&amp; id.equals(k.id);
+        }
+    }
+
+    public static void main(String[] args) {
+        UserKey key = new UserKey("A");
+        Map&lt;UserKey, String&gt; map = new HashMap&lt;&gt;();
+        map.put(key, "Alice");
+        key.id = "B";
+
+        System.out.println(map.get(key));
+        System.out.println(map.containsKey(key));
+    }
+}</code></pre>
+
+<p>Typical output:</p>
+<pre><code>null
+false</code></pre>
+
+<p>The entry may still physically exist, but the changed key now hashes to a different location. Prefer immutable key types such as <code>String</code>, enums, records with immutable components, or carefully designed value objects.</p>
+
+<h3>equals and hashCode contract</h3>
+<ul>
+  <li>If two objects are equal, they must have the same hash code.</li>
+  <li>Unequal objects may share a hash code; that is a collision, not a contract violation.</li>
+  <li>If a key's equality-relevant state changes while it is in the map, lookup behavior becomes unsafe.</li>
+</ul>
+
+<h2>Real-world examples</h2>
+<ul>
+  <li><strong>Request deduplication:</strong> map an idempotency key to a completed response, but use a database uniqueness constraint when multiple application instances can receive the same request.</li>
+  <li><strong>Configuration lookup:</strong> map a property name or enum to a typed setting. Make the map immutable after startup if request threads read it.</li>
+  <li><strong>Local cache:</strong> map a product ID to a cached value with explicit expiration and a concurrency strategy. A plain HashMap is not a production cache.</li>
+  <li><strong>Counting:</strong> use <code>merge</code> in a single-threaded map, or <code>ConcurrentHashMap.merge</code> for concurrent counters.</li>
+  <li><strong>Database identity map:</strong> use an entity ID as a stable key, not a mutable field such as a display name.</li>
+</ul>
+
+<h2>Complexity and trade-offs</h2>
+<table>
+  <thead><tr><th>Operation</th><th>Typical</th><th>Worst case / note</th></tr></thead>
+  <tbody>
+    <tr><td><code>get</code></td><td>O(1)</td><td>O(n) for a long list; approximately O(log n) for a tree bucket</td></tr>
+    <tr><td><code>put</code></td><td>O(1) amortized</td><td>Resize and redistribution can be expensive</td></tr>
+    <tr><td><code>remove</code></td><td>O(1) typical</td><td>Depends on collisions and tree/list shape</td></tr>
+    <tr><td>Iteration</td><td>Depends on table capacity and entries</td><td>Capacity matters, not only <code>size()</code></td></tr>
+  </tbody>
+</table>
+
+<h2>Common follow-up interview questions and answers</h2>
+
+<h3>1. Why are HashMap capacities powers of two?</h3>
+<p>Power-of-two capacity allows the efficient index calculation <code>(n - 1) &amp; hash</code>. Resizing also lets entries stay in the old index or move by the old capacity based on one additional hash bit.</p>
+
+<h3>2. What happens if two keys have the same hash code?</h3>
+<p>They go to the same bucket. HashMap then uses <code>equals</code> to decide whether the key is the same or whether this is a separate entry. Different keys with the same hash are valid.</p>
+
+<h3>3. What happens if equals is overridden but hashCode is not?</h3>
+<p>Equal objects may produce different hashes and land in different buckets. A lookup using an equal object can fail. Always override both consistently.</p>
+
+<h3>4. What happens if hashCode is overridden but equals is not?</h3>
+<p>Different objects can collide more often, and logically equivalent keys may not replace one another. The map may still function, but it will not represent the intended key identity.</p>
+
+<h3>5. Is HashMap synchronized?</h3>
+<p>No. Use <code>ConcurrentHashMap</code>, a synchronized wrapper, external locking, immutable data, or a distributed store depending on scope and consistency requirements.</p>
+
+<h3>6. Can HashMap have a null key?</h3>
+<p>Yes, one null key and multiple null values. <code>ConcurrentHashMap</code> does not allow null keys or values because null would be ambiguous with “no mapping” during concurrent operations.</p>
+
+<h3>7. Why does ConcurrentModificationException happen?</h3>
+<p>An iterator detected a structural modification not performed through that iterator. It is a fail-fast diagnostic, not proof that every concurrent modification was detected.</p>
+
+<h3>8. Does changing a value count as structural modification?</h3>
+<p>Replacing the value for an existing key usually does not change the map's structure. Adding or removing a mapping does. Do not rely on implementation-specific details when designing concurrent code.</p>
+
+<h3>9. HashMap versus Hashtable?</h3>
+<p><code>Hashtable</code> is a legacy synchronized map that disallows null keys and values. Prefer <code>HashMap</code> for single-threaded use and <code>ConcurrentHashMap</code> for concurrent use.</p>
+
+<h3>10. HashMap versus LinkedHashMap versus TreeMap?</h3>
+<p><code>HashMap</code> optimizes general lookup without order, <code>LinkedHashMap</code> preserves insertion or access order, and <code>TreeMap</code> keeps keys sorted using natural ordering or a comparator.</p>
+
+<h3>11. Why should initial capacity be chosen carefully?</h3>
+<p>Too little capacity causes repeated resizing; too much wastes memory and can make iteration scan many empty buckets. Estimate expected entries and account for the load factor.</p>
+
+<h3>12. Does HashMap protect against malicious collisions?</h3>
+<p>Modern Java's tree bins reduce the impact of very long collision chains, but application code should still use good key types and avoid attacker-controlled pathological hashing where possible. Hashing is not a substitute for input validation or rate limiting.</p>
+
+<h2>Interview-ready answer</h2>
+<blockquote>HashMap stores entries in an array of buckets. It spreads the key's hash, selects a bucket with a bitwise index calculation, and uses hash plus equals to find the exact key. Different keys can collide in one bucket; the bucket is normally a linked list and can become a red-black tree when it is crowded. HashMap resizes when size exceeds capacity times load factor, usually doubling capacity and redistributing entries, so puts are O(1) amortized rather than guaranteed O(1) individually. HashMap is not thread-safe. Its iterators are fail-fast and may throw ConcurrentModificationException when the map is structurally changed during iteration, but that is only a best-effort diagnostic. For concurrent access I would use ConcurrentHashMap and atomic operations such as merge or compute.</blockquote>
+
+<h2>Quick checklist</h2>
+<ul>
+  <li>Know the path: <code>hashCode -&gt; spread -&gt; bucket index -&gt; hash/equality check</code>.</li>
+  <li>Know collisions: list first, tree fallback in modern Java.</li>
+  <li>Know resizing: threshold is approximately capacity times load factor.</li>
+  <li>Know the contract: equal keys must have equal hashes; keys should be effectively immutable.</li>
+  <li>Know concurrency: HashMap is unsafe for concurrent writes; fail-fast is not synchronization.</li>
+  <li>Know alternatives: LinkedHashMap, TreeMap, ConcurrentHashMap, synchronizedMap, and immutable maps.</li>
+</ul>
+
+</div>

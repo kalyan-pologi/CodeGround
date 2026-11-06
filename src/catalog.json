@@ -211,6 +211,12 @@
   },
   {
     "repo": "interview",
+    "id": "java-interview-questions",
+    "title": "Java Interview Questions",
+    "file": "library/interview/notes/java-interview-questions.html"
+  },
+  {
+    "repo": "interview",
     "id": "javascript",
     "title": "JavaScript",
     "file": "library/interview/notes/javascript.html"
