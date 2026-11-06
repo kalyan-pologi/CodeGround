@@ -64,10 +64,6 @@ function tabFor(note) {
 }
 const noteRoute = note => `#${tabFor(note)}/${note.repo}/${note.id}`;
 const defaultRoute = tab => tab === 'home' ? '#home' : tab === 'practice' ? '#practice/tasks' : (tab === 'sd' || tab === 'genai') ? `#${tab}/${tab}/home` : `#${tab}/interview/${groups[tab][0][1][0]}`;
-const storage = {
-  get(key, fallback = '') { try { return localStorage.getItem(`codeground:${key}`) ?? fallback; } catch { return fallback; } },
-  set(key, value) { try { localStorage.setItem(`codeground:${key}`, value); } catch { /* Browser storage may be disabled. */ } }
-};
 let routeVersion = 0;
 document.querySelector('#app').innerHTML = `
   <header class="topbar"><a class="brand" href="#home"><span class="brand-icon">&lt;/&gt;</span><span>CodeGround<small>LEARN. BUILD. EXPLAIN.</small></span></a><div class="toplinks"><input class="search" type="search" aria-label="Search all notes" placeholder="Search all notes…"><button class="mobile-menu" aria-label="Toggle topic menu" aria-expanded="false">☰</button></div></header>
@@ -137,20 +133,8 @@ async function showNote(repo, id, version) {
     if (version === routeVersion) main.innerHTML = `<div class="error">${escape(error.message)} <a href="#home">Return home</a></div>`;
   }
 }
-const tasks = [
-  { id: 'property-search', title: 'Implement property search & pagination', area: 'Property service · Spring Data', details: 'Extend property search with a city filter and stable pagination. Implement the request contract, query, and validation in property-service.', checks: ['Define the filter and pagination request contract.', 'Use a deterministic sort and validate invalid page sizes.', 'Test empty results, multiple pages, and invalid parameters.'], explain: 'Why must pagination have a deterministic order? When would you move from offset to cursor pagination?', links: ['spring-topics', 'sql-snippets', 'junit-concepts'] },
-  { id: 'idempotent-appraisal', title: 'Prevent duplicate appraisal charges', area: 'Appraisal service · Transactions', details: 'Study the existing paid-appraisal flow, then implement a small idempotency exercise using request keys. Repeated requests must return the same result without deducting another credit.', checks: ['Define how request keys map to an appraisal result.', 'Handle the same key arriving concurrently.', 'Test replay, insufficient credits, and failed property lookups.'], explain: 'Why is a Map insufficient across multiple service instances? Which database constraint protects correctness?', links: ['java-topics', 'spring-topics', 'sql-snippets'] },
-  { id: 'outbox', title: 'Trace reliable notifications with an outbox', area: 'Communication service · Event processing', details: 'Trace ReidyAI’s business transaction, outbox publisher, Kafka consumer, and notification inbox. Build an isolated duplicate-event handler and document how failed publication is retried.', checks: ['Draw the transaction and asynchronous boundaries.', 'Record processed event IDs to handle duplicate deliveries.', 'Describe retry and dead-letter behavior during broker downtime.'], explain: 'What does eventual consistency mean for the user? Why can an event arrive more than once?', links: ['java-topics', 'spring-topics', 'docker'] },
-  { id: 'immutable-snapshot', title: 'Create an immutable property snapshot', area: 'Java · Collections & records', details: 'Build a standalone Java record representing a property snapshot, including a list of amenities. Changes to the source collection must not change the snapshot.', checks: ['Copy mutable input collections defensively.', 'Define null and invalid-property handling.', 'Test source mutation and attempted snapshot mutation.'], explain: 'Does using a record automatically make nested collections immutable?', links: ['java-topics', 'java-snippets', 'junit-concepts'] }
-];
 function practiceTabs(project = true) {
   return `<nav class="practice-subtabs" aria-label="Backend practice sections"><a href="#practice/tasks" ${project ? 'aria-current="page"' : ''}>ReidyAI Project Tasks</a><a href="#practice/workspace" ${!project ? 'aria-current="page"' : ''}>Java Practice Exercises</a></nav>`;
-}
-function showTasks() {
-  main.innerHTML = `<div class="page"><div class="eyebrow">Learn → Build → Explain</div><h1>Practice through ReidyAI.</h1><p class="muted">Build features across property, appraisal, and communication services. Follow the acceptance criteria, test your implementation, and explain your decisions.</p><p><a class="cta" href="#practice/tasks">Open ReidyAI coding exercises ↗</a></p><div class="task-grid">${tasks.map(task => `<article class="task"><div class="eyebrow">${task.area}</div><h2>${task.title}</h2><p>${task.details}</p><h3>Acceptance criteria</h3><ul>${task.checks.map(check => `<li>${check}</li>`).join('')}</ul><details><summary>Explain your decisions</summary><p>${task.explain}</p></details><p>Related notes: ${task.links.map(id => `<a href="${noteRoute(getNote('interview', id))}" style="color:#a0e7cd">${escape(getNote('interview', id).title)}</a>`).join(' · ')}</p><label><input type="checkbox" data-complete="${task.id}" ${storage.get(`complete:${task.id}`) === 'yes' ? 'checked' : ''}> Completed</label><label for="notes-${task.id}">Implementation notes / commit link</label><textarea id="notes-${task.id}" data-notes="${task.id}" placeholder="What did you build? What did you learn?">${escape(storage.get(`notes:${task.id}`))}</textarea></article>`).join('')}</div></div>`;
-  main.querySelectorAll('[data-complete]').forEach(input => input.onchange = () => storage.set(`complete:${input.dataset.complete}`, input.checked ? 'yes' : 'no'));
-  main.querySelectorAll('[data-notes]').forEach(input => input.oninput = () => storage.set(`notes:${input.dataset.notes}`, input.value));
-  main.insertAdjacentHTML('afterbegin', practiceTabs(true));
 }
 function showWorkspace(project = false, topicTasks = false, scenarioId = '', taskId = '') {
   const params = new URLSearchParams();
@@ -159,7 +143,7 @@ function showWorkspace(project = false, topicTasks = false, scenarioId = '', tas
   if (project && scenarioId) params.set('scenario', scenarioId);
   if (project && taskId) params.set('task', taskId);
   const query = params.toString();
-  main.innerHTML = `<div class="reader">${practiceTabs(project)}<div class="reader-bar"><span>Backend Practice / ${project ? 'ReidyAI coding exercises' : 'Java Practice Exercises'}</span><a href="#practice/task-board">Implementation task board ↗</a></div><iframe class="note-frame" title="${project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
+  main.innerHTML = `<div class="reader">${practiceTabs(project)}<div class="reader-bar"><span>Backend Practice / ${project ? 'ReidyAI coding exercises' : 'Java Practice Exercises'}</span></div><iframe class="note-frame" title="${project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
 }
 function showSearch(query) {
   const normalizedQuery = query.toLowerCase();
@@ -193,7 +177,7 @@ function router() {
   else if (tab === 'practice' && repo === 'incidents') location.replace(`#practice/tasks?scenario=${encodeURIComponent(id || 'n-plus-one')}`);
   else if (tab === 'practice' && repo === 'project-coding') showWorkspace(true);
   else if (tab === 'practice' && (!repo || repo === 'tasks')) showWorkspace(true, true, new URLSearchParams(queryString).get('scenario') || (id === 'production' ? 'n-plus-one' : ''), new URLSearchParams(queryString).get('task') || '');
-  else if (tab === 'practice' && repo === 'task-board') showTasks();
+  else if (tab === 'practice' && repo === 'task-board') location.replace('#practice/tasks');
   else if (repo && id) showNote(repo, id, version);
   else { location.replace(defaultRoute(tab)); }
 }

@@ -115,7 +115,8 @@ try {
     await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 34`);
   }
   await evaluate(`location.hash = 'practice/task-board'`);
-  await until(`document.querySelectorAll('.task').length === 4`);
+  await until(`location.hash === '#practice/tasks' && document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 34`);
+  assert.equal(await evaluate(`Boolean(document.querySelector('a[href="#practice/task-board"]'))`), false);
   await evaluate(`location.hash = 'practice/workspace'`);
   await until(`document.querySelector('iframe')?.contentDocument?.body?.textContent?.includes('Calculate invoice totals without floating-point drift')`);
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.monaco-editor'))`);
