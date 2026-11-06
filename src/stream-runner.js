@@ -37,6 +37,11 @@ export function mountStreamRunners(doc) {
   const start = modelSource.indexOf('public class Employee');
   const end = modelSource.indexOf('// example data');
   if (start < 0 || end < 0) return;
+  doc.querySelectorAll('.section-header > p').forEach(paragraph => paragraph.remove());
+  for (const child of [...body.children]) {
+    if (child.tagName === 'H2') break;
+    if (child.tagName === 'P') child.remove();
+  }
   const modelHeading = [...body.querySelectorAll(':scope > h2')].find(heading => heading.textContent.trim() === 'Imports & Model');
   if (modelHeading) {
     let next = modelHeading.nextElementSibling;
