@@ -1,4 +1,6 @@
-import { executeJava } from '../practice/src/services/compiler.js';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import StreamLab from './StreamLab';
 
 export function streamProgram(model, snippet = '// TODO: Write your solution here.\n// Print the result with System.out.println(...).') {
   let body = snippet.trim();
@@ -29,89 +31,33 @@ ${body.split('\n').map(line => '        ' + line).join('\n')}
 }`;
 }
 
+
 export function mountStreamRunners(doc) {
   const body = doc.querySelector('.note-body');
   if (!body || body.dataset.runners) return;
   body.dataset.runners = 'true';
   const modelSource = body.querySelector('pre code')?.textContent || '';
-  const start = modelSource.indexOf('public class Employee');
-  const end = modelSource.indexOf('// example data');
+  const start = modelSource.indexOf('public class Employee'), end = modelSource.indexOf('// example data');
   if (start < 0 || end < 0) return;
-  doc.querySelectorAll('.section-header > p').forEach(paragraph => paragraph.remove());
-  for (const child of [...body.children]) {
-    if (child.tagName === 'H2') break;
-    if (child.tagName === 'P') child.remove();
+  const model = modelSource.slice(start,end).trim().replace(/\n}$/, '\n    @Override public String toString() { return getFullName() + " [" + department + ", " + salary + "]"; }\n}');
+  const questions = []; let category = '';
+  for (const node of body.children) {
+    if (node.tagName === 'H2') category = node.textContent.trim();
+    if (node.tagName !== 'P' || !node.querySelector('b')?.textContent.trim().startsWith('Q:')) continue;
+    const nodes = []; let next = node.nextElementSibling;
+    while (next && next.tagName !== 'H2' && !next.querySelector(':scope > b')?.textContent.trim().startsWith('Q:')) { nodes.push(next); next = next.nextElementSibling; }
+    const primary = nodes.find(element => element.tagName === 'PRE'); if (!primary) continue;
+    const runnable = category !== 'CompletableFuture';
+    const solutions = [{ title:'Main solution', code:primary.textContent, program:runnable ? streamProgram(model,primary.textContent) : primary.textContent }];
+    for (const alternative of nodes.filter(element => element.classList.contains('stream-alternative'))) {
+      const code = alternative.querySelector('code').textContent;
+      solutions.push({ title:alternative.querySelector('.stream-alternative-label').textContent, code, program:streamProgram(model,code), choose:alternative.querySelector('p:last-child').textContent });
+    }
+    questions.push({ id:questions.length+1, title:node.textContent.replace(/^Q:\s*/,'').replace(/\s+/g,' ').trim(), category, runnable, solutions,
+      description:nodes.filter(element => element.tagName === 'P').map(element => element.textContent).join(' '),
+      starter:runnable ? streamProgram(model) : primary.textContent });
   }
-  const modelHeading = [...body.querySelectorAll(':scope > h2')].find(heading => heading.textContent.trim() === 'Imports & Model');
-  if (modelHeading) {
-    let next = modelHeading.nextElementSibling;
-    while (next && next.tagName !== 'H2') {
-      const following = next.nextElementSibling;
-      next.remove(); next = following;
-    }
-    modelHeading.remove();
-  }
-  const model = modelSource.slice(start, end).trim().replace(/\n}$/, '\n    @Override public String toString() { return getFullName() + " [" + department + ", " + salary + "]"; }\n}');
-  const style = doc.createElement('link');
-  style.rel = 'stylesheet'; style.href = new URL('stream-runner.css', new URL(import.meta.env.BASE_URL, location.href)).href;
-  doc.head.append(style);
-  let inStreams = true;
-  for (const question of [...body.querySelectorAll(':scope > p')].filter(node => node.querySelector('b')?.textContent.trim().startsWith('Q:'))) {
-    const heading = (() => { let node = question.previousElementSibling; while (node && node.tagName !== 'H2') node = node.previousElementSibling; return node; })();
-    inStreams = heading?.textContent.trim() !== 'CompletableFuture';
-    if (!inStreams) continue;
-    const nodes = [];
-    let node = question.nextElementSibling;
-    while (node && node.tagName !== 'H2' && !node.querySelector(':scope > b')?.textContent.trim().startsWith('Q:')) {
-      nodes.push(node); node = node.nextElementSibling;
-    }
-    const primary = nodes.find(element => element.tagName === 'PRE');
-    if (!primary) continue;
-    const title = question.textContent.replace(/^Q:\s*/, '').replace(/\s+/g, ' ').trim();
-    const starter = streamProgram(model);
-    const workspace = doc.createElement('section'); workspace.className = 'stream-workspace'; workspace.setAttribute('aria-label', `Code workspace: ${title}`);
-    workspace.innerHTML = '<div class="stream-toolbar"><span>Java 17</span><button type="button" data-reset>Reset</button><button type="button" data-run>Run code</button></div><textarea class="stream-code" spellcheck="false" wrap="off"></textarea><p class="stream-service">Runs through Judge0. Print your result to see output.</p><pre class="stream-output" role="status" hidden></pre><button type="button" class="stream-reveal" aria-expanded="false">Reveal solution</button><div class="stream-solution" hidden></div>';
-    const editor = workspace.querySelector('textarea'); editor.value = starter; editor.setAttribute('aria-label', `Java code: ${title}`);
-    // Start at the editable task, while keeping imports, model and data available above it.
-    editor.scrollTop = editor.scrollHeight;
-    editor.addEventListener('keydown', event => {
-      if (event.key !== 'Tab') return;
-      event.preventDefault(); const from = editor.selectionStart, to = editor.selectionEnd;
-      editor.setRangeText('    ', from, to, 'end');
-    });
-    const solutions = workspace.querySelector('.stream-solution');
-    const load = (snippet, label, before) => {
-      const button = doc.createElement('button'); button.type = 'button'; button.textContent = label;
-      button.addEventListener('click', () => { editor.value = streamProgram(model, snippet); editor.focus(); editor.scrollTop = editor.scrollHeight; });
-      solutions.insertBefore(button, before);
-    };
-    question.after(workspace);
-    doc.defaultView.requestAnimationFrame(() => { editor.scrollTop = editor.scrollHeight; });
-    // Keep descriptions visible; move only answers and their alternatives beneath Reveal solution.
-    for (const element of nodes) {
-      if (element === primary || element.classList.contains('stream-alternative')) solutions.append(element);
-    }
-    load(primary.textContent, 'Load solution into editor', primary);
-    for (const alternative of solutions.querySelectorAll('.stream-alternative')) {
-      load(alternative.querySelector('code').textContent, 'Load alternative into editor', alternative);
-    }
-    const reveal = workspace.querySelector('.stream-reveal');
-    reveal.addEventListener('click', () => { solutions.hidden = !solutions.hidden; reveal.setAttribute('aria-expanded', String(!solutions.hidden)); reveal.textContent = solutions.hidden ? 'Reveal solution' : 'Hide solution'; });
-    workspace.querySelector('[data-reset]').addEventListener('click', () => {
-      if (editor.value !== starter && !doc.defaultView.confirm('Reset your code to the starter?')) return;
-      editor.value = starter; output.hidden = true;
-    });
-    const output = workspace.querySelector('.stream-output'), run = workspace.querySelector('[data-run]');
-    run.addEventListener('click', async () => {
-      const controller = new AbortController();
-      const cancel = () => controller.abort();
-      doc.defaultView.addEventListener('pagehide', cancel, { once: true });
-      run.disabled = true; output.hidden = false; output.textContent = 'Submitting…';
-      try {
-        const result = await executeJava(editor.value, '', { signal: controller.signal, onStatus: status => { output.textContent = status.description; } });
-        output.textContent = [result.status?.description, result.stdout, result.compile_output, result.stderr, result.message].filter(Boolean).join('\n') + (!result.stdout && result.status?.id === 3 ? '\nNo output. Add System.out.println(...) to print your result.' : '');
-      } catch (error) { output.textContent = error.message; }
-      finally { run.disabled = false; doc.defaultView?.removeEventListener('pagehide', cancel); }
-    });
-  }
+  for (const file of ['sql-lab.css','stream-lab.css']) { const link=doc.createElement('link'); link.rel='stylesheet'; link.href=new URL(file,new URL(import.meta.env.BASE_URL,location.href)).href; doc.head.append(link); }
+  const root = doc.createElement('div'); root.id='stream-lab-root'; doc.body.className='sql-lab-page'; doc.body.replaceChildren(root);
+  createRoot(root).render(React.createElement(StreamLab,{questions}));
 }

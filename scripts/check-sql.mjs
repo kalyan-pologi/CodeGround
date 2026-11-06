@@ -1,8 +1,16 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import initSqlJs from 'sql.js';
+import { compareSqlResults } from '../src/sql-result-checks.js';
 import { sqlExercise } from '../src/sql-exercises.js';
 
+const sampleResult = [{ columns: ['name'], values: [['Ada'], ['Bob']] }];
+assert.ok(compareSqlResults([{ columns: ['name'], values: [['Bob'], ['Ada']] }], sampleResult).passed);
+assert.ok(!compareSqlResults([{ columns: ['name'], values: [['Bob'], ['Ada']] }], sampleResult, true).passed);
+assert.ok(!compareSqlResults([{ columns: ['wrong'], values: [['Ada'], ['Bob']] }], sampleResult).passed);
+assert.ok(!compareSqlResults([{ columns: ['name'], values: [['Ada'], ['Ada'], ['Bob']] }], sampleResult).passed);
+assert.ok(!compareSqlResults([], sampleResult).passed);
+assert.ok(!compareSqlResults([{ columns: ['name'], values: [['Ada'], ['Bob']], truncated: true }], sampleResult).passed);
 const SQL = await initSqlJs();
 const html = readFileSync(new URL('../public/library/interview/notes/sql-snippets.html', import.meta.url), 'utf8');
 const snippets = [...html.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)].map(match => match[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"'));
@@ -26,4 +34,4 @@ for (const snippet of snippets) {
   finally { db.close(); }
 }
 assert.equal(ran, snippets.length - 1);
-console.log(`Executed ${ran} SQL solutions; MySQL stored procedure retained as a reference.`);
+console.log(`Executed ${ran} SQLite solutions and verified sample-result comparison.`);

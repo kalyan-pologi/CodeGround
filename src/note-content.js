@@ -1,17 +1,24 @@
 const pending = new Map();
+const MAX_CACHED_NOTES = 40;
 
 // Share in-flight requests and successful responses; let failed requests retry.
 export function fetchText(file) {
   if (!pending.has(file)) {
-    pending.set(file, fetch(`${import.meta.env.BASE_URL}${file}`).then(response => {
+    const request = fetch(`${import.meta.env.BASE_URL}${file}`).then(response => {
       if (!response.ok) throw new Error(`Could not load content (${response.status}).`);
       return response.text();
     }).catch(error => {
-      pending.delete(file);
+      if (pending.get(file) === request) pending.delete(file);
       throw error;
-    }));
+    });
+    pending.set(file, request);
   }
-  return pending.get(file);
+  const response = pending.get(file);
+  // Refresh access order, keeping recently viewed notes without retaining the whole library.
+  pending.delete(file);
+  pending.set(file, response);
+  if (pending.size > MAX_CACHED_NOTES) pending.delete(pending.keys().next().value);
+  return response;
 }
 
 export async function loadNoteContent(note) {
