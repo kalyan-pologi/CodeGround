@@ -23,12 +23,39 @@ export function fetchText(file) {
 
 export async function loadNoteContent(note) {
   const isStreams = note.repo === 'interview' && note.id === 'java-snippets';
-  const [original, supplement, approaches] = await Promise.all([
+  let [original, supplement, approaches] = await Promise.all([
     fetchText(note.file),
     isStreams ? fetchText('java-streams.html') : '',
     isStreams ? import('./stream-approaches.js') : null
   ]);
+  if (note.repo === 'interview' && ['java-topics', 'spring-topics', 'solid-patterns'].includes(note.id)) {
+    const doc = new DOMParser().parseFromString(original, 'text/html');
+    const heading = [...doc.querySelectorAll('h2')].find(element => element.textContent.trim() === 'From My Own Work');
+    if (heading) {
+      if (heading.previousElementSibling?.tagName === 'HR') heading.previousElementSibling.remove();
+      let current = heading;
+      while (current) {
+        const next = current.nextElementSibling;
+        current.remove();
+        if (next?.tagName === 'H2') break;
+        current = next;
+      }
+    }
+    original = doc.body.innerHTML;
+  }
   if (isStreams) return approaches.addStreamApproaches(original + supplement);
+  if (note.repo === 'interview' && note.id === 'java-topics') {
+    const doc = new DOMParser().parseFromString(original, 'text/html');
+    const heading = [...doc.querySelectorAll('h3')].find(element => element.textContent.trim() === 'Multithreading');
+    if (heading) {
+      const imageUrl = new URL(`${import.meta.env.BASE_URL}images/concurrency-concepts.png`, location.href).href;
+      const figure = doc.createElement('figure');
+      figure.className = 'concurrency-reference';
+      figure.innerHTML = `<a href="${imageUrl}" target="_blank" rel="noopener noreferrer" aria-label="Open concurrency concepts image at full size"><img src="${imageUrl}" alt="20 concurrency concepts: threads, synchronization, locks, deadlocks, thread pools, and concurrent data structures." loading="lazy" decoding="async" width="768" height="959" style="display:block;width:100%;max-width:768px;height:auto;margin:auto;border-radius:8px"></a>`;
+      (heading.nextElementSibling?.tagName === 'P' ? heading.nextElementSibling : heading).after(figure);
+    }
+    return doc.body.innerHTML;
+  }
   if (note.repo !== 'interview' || note.id !== 'proj-accenture') return original;
 
   // Keep the imported source intact while showing the shared AWS reference in DevOps.
