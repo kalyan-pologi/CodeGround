@@ -166,7 +166,8 @@ try {
   await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.stream-alternative').length === ${streamApproaches.length}`);
   const originalQuestions = (readFileSync(new URL('../public/library/interview/notes/java-snippets.html', import.meta.url), 'utf8').match(/<p><b>Q:/g) || []).length;
   assert.equal(await evaluate(`Array.from(document.querySelector('iframe').contentDocument.querySelectorAll('p > b')).filter(element => element.textContent.startsWith('Q:')).length`), originalQuestions + 12);
-  assert.deepEqual(await evaluate(`Array.from(document.querySelector('iframe').contentDocument.querySelectorAll('h2')).map(element => element.textContent.trim())`), ['Imports & Model', 'Filtering & Sorting', 'Matching & Finding', 'Grouping', 'Partitioning', 'Counting Frequencies', 'Aggregation & Statistics', 'Mapping & Collecting to Map', 'String Operations', 'CompletableFuture']);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.stream-workspace').length === 60`);
+  assert.deepEqual(await evaluate(`Array.from(document.querySelector('iframe').contentDocument.querySelectorAll('h2')).map(element => element.textContent.trim())`), ['Filtering & Sorting', 'Matching & Finding', 'Grouping', 'Partitioning', 'Counting Frequencies', 'Aggregation & Statistics', 'Mapping & Collecting to Map', 'String Operations', 'CompletableFuture']);
   assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.stream-alternative h3,.stream-alternative h4').length`), 0);
   await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.stream-workspace').length > 0`);
   const streamPrograms = await evaluate(`(() => {

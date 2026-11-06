@@ -37,6 +37,15 @@ export function mountStreamRunners(doc) {
   const start = modelSource.indexOf('public class Employee');
   const end = modelSource.indexOf('// example data');
   if (start < 0 || end < 0) return;
+  const modelHeading = [...body.querySelectorAll(':scope > h2')].find(heading => heading.textContent.trim() === 'Imports & Model');
+  if (modelHeading) {
+    let next = modelHeading.nextElementSibling;
+    while (next && next.tagName !== 'H2') {
+      const following = next.nextElementSibling;
+      next.remove(); next = following;
+    }
+    modelHeading.remove();
+  }
   const model = modelSource.slice(start, end).trim().replace(/\n}$/, '\n    @Override public String toString() { return getFullName() + " [" + department + ", " + salary + "]"; }\n}');
   const style = doc.createElement('link');
   style.rel = 'stylesheet'; style.href = new URL('stream-runner.css', new URL(import.meta.env.BASE_URL, location.href)).href;
