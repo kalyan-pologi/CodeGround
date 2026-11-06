@@ -152,11 +152,12 @@ function showTasks() {
   main.querySelectorAll('[data-notes]').forEach(input => input.oninput = () => storage.set(`notes:${input.dataset.notes}`, input.value));
   main.insertAdjacentHTML('afterbegin', practiceTabs(true));
 }
-function showWorkspace(project = false, topicTasks = false, scenarioId = '') {
+function showWorkspace(project = false, topicTasks = false, scenarioId = '', taskId = '') {
   const params = new URLSearchParams();
   if (topicTasks) params.set('bank', 'topics');
   else if (project) params.set('bank', 'project');
   if (project && scenarioId) params.set('scenario', scenarioId);
+  if (project && taskId) params.set('task', taskId);
   const query = params.toString();
   main.innerHTML = `<div class="reader">${practiceTabs(project)}<div class="reader-bar"><span>Backend Practice / ${project ? 'ReidyAI coding exercises' : 'Java Practice Exercises'}</span><a href="#practice/task-board">Implementation task board ↗</a></div><iframe class="note-frame" title="${project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
 }
@@ -191,7 +192,7 @@ function router() {
   else if (tab === 'practice' && repo === 'workspace') showWorkspace();
   else if (tab === 'practice' && repo === 'incidents') location.replace(`#practice/tasks?scenario=${encodeURIComponent(id || 'n-plus-one')}`);
   else if (tab === 'practice' && repo === 'project-coding') showWorkspace(true);
-  else if (tab === 'practice' && (!repo || repo === 'tasks')) showWorkspace(true, true, new URLSearchParams(queryString).get('scenario') || (id === 'production' ? 'n-plus-one' : ''));
+  else if (tab === 'practice' && (!repo || repo === 'tasks')) showWorkspace(true, true, new URLSearchParams(queryString).get('scenario') || (id === 'production' ? 'n-plus-one' : ''), new URLSearchParams(queryString).get('task') || '');
   else if (tab === 'practice' && repo === 'task-board') showTasks();
   else if (repo && id) showNote(repo, id, version);
   else { location.replace(defaultRoute(tab)); }
