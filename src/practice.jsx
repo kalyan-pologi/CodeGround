@@ -16,6 +16,11 @@ function Practice({ project, codingQuestions, debuggingQuestions, taskList }) {
     setMode(next);
   }
   if (taskList) return <Suspense fallback={<p role="status">Loading tasks…</p>}><TaskWorkbench tasks={codingQuestions} initialSelectedId={initialSelectedId} /></Suspense>;
+  if (!project) return <div className="practice-workbench">
+    <nav className="practice-mode-bar" aria-label="Practice mode"><button aria-pressed={mode === 'coding'} onClick={() => selectMode('coding')}>Coding challenges | {codingQuestions.length}</button><button aria-pressed={mode === 'mcq'} onClick={() => selectMode('mcq')}>Debugging MCQs | {debuggingQuestions.length}</button></nav>
+    <div className="practice-coding" hidden={mode !== 'coding'}><Suspense fallback={<p role="status">Loading challenges…</p>}><TaskWorkbench tasks={codingQuestions} kind="challenge" /></Suspense></div>
+    {visited.mcq && <div className="practice-mcqs" hidden={mode !== 'mcq'}><Suspense fallback={<p role="status">Loading questions…</p>}><McqPractice questions={debuggingQuestions} /></Suspense></div>}
+  </div>;
   return <main><header><div><p className="eyebrow">CodeGround / {project ? 'ReidyAI Project Tasks' : 'Java Practice Exercises'}</p><h1>{project ? 'Build it. Debug it. Explain it.' : 'Prepare across Java & Spring.'}</h1><p>{project ? 'Practice Java through property management, appraisals, and event processing.' : 'Strengthen your Java and Spring skills with coding challenges, debugging questions, and explained solutions.'}</p></div></header>
     <nav className="tabs" aria-label="Practice mode"><button aria-pressed={mode === 'coding'} onClick={() => selectMode('coding')}>{project ? 'Project coding tasks' : 'Coding challenges'} | {codingQuestions.length}</button>{debuggingQuestions.length > 0 && <button aria-pressed={mode === 'mcq'} onClick={() => selectMode('mcq')}>{project ? 'Project questions' : 'Debugging MCQs'} | {debuggingQuestions.length}</button>}</nav>
     <div hidden={mode !== 'coding'}><Suspense fallback={<p role="status">Loading coding workspace…</p>}><CodingPractice challenges={codingQuestions} active={mode === 'coding'} initialSelectedId={initialSelectedId} /></Suspense></div>
@@ -41,7 +46,8 @@ async function start() {
       import('../practice/src/data/challenges'),
       import('../practice/src/data/mcqs')
     ]);
-    codingQuestions = coding.challenges;
+    const { javaPracticeTasks } = await import('./java-practice-tasks');
+    codingQuestions = javaPracticeTasks(coding.challenges);
     debuggingQuestions = debugging.mcqs;
   }
   root.render(<React.StrictMode><Practice project={project} codingQuestions={codingQuestions} debuggingQuestions={debuggingQuestions} taskList={bankName === 'topics' || bankName === 'sample'} /></React.StrictMode>);

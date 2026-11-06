@@ -1,4 +1,9 @@
 .task-app{max-width:none;margin:0;color:#dce5f1;font-family:Inter,system-ui,sans-serif}
+.practice-workbench{height:100dvh;display:flex;flex-direction:column;overflow:hidden}
+.practice-mode-bar{display:flex;gap:12px;padding:8px 16px;border-bottom:1px solid #344454;background:#131d28;flex-shrink:0}
+.practice-mode-bar button{font-size:12px;padding:7px 12px}.practice-coding,.practice-mcqs{flex:1;min-height:0;overflow:auto}
+.practice-coding .task-detail{height:100%}.practice-mcqs{padding:24px;max-width:1200px;width:100%;margin:auto}
+@media(max-width:900px){.practice-coding .task-detail{height:auto;min-height:100%}.practice-mode-bar{gap:8px}.practice-mode-bar button{font-size:11px;padding:7px 8px}.practice-mcqs{padding:16px}}
 .task-app button,.task-app input,.task-app select,.task-app textarea{font:inherit}
 .task-app button:focus-visible,.task-app input:focus-visible,.task-app select:focus-visible,.task-app summary:focus-visible{outline:2px solid #a0e7cd;outline-offset:3px}
 .task-catalog{padding:32px 34px;max-width:1450px;margin:auto}

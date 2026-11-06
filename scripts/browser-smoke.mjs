@@ -5,6 +5,8 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import { streamApproaches } from '../src/stream-approaches.js';
 import { projectTopicTasks } from '../src/project-topic-tasks.js';
+import { challenges } from '../practice/src/data/challenges.js';
+import { javaPracticeTasks } from '../src/java-practice-tasks.js';
 const executable = ['C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(existsSync);
 assert.ok(executable, 'A local Chromium browser is required for this smoke check.');
 const url = process.env.CODEGROUND_URL || 'http://127.0.0.1:5173/';
@@ -118,17 +120,38 @@ try {
   await until(`location.hash === '#practice/tasks' && document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 34`);
   assert.equal(await evaluate(`Boolean(document.querySelector('a[href="#practice/task-board"]'))`), false);
   await evaluate(`location.hash = 'practice/workspace'`);
-  await until(`document.querySelector('iframe')?.contentDocument?.body?.textContent?.includes('Calculate invoice totals without floating-point drift')`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 50`);
+  assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.task-list-header h1').textContent`), 'Challenges');
+  for (const challenge of javaPracticeTasks(challenges)) {
+    await evaluate(`document.querySelector('iframe').contentDocument.querySelector('button[data-task-id="${challenge.id}"]').click()`);
+    await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.task-detail')?.dataset.taskId === '${challenge.id}'`);
+    assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.task-run').disabled`), challenge.runtime === 'project');
+    await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.back-to-tasks').click()`);
+    await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 50`);
+  }
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelector('button[data-task-id="1"]').click()`);
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.monaco-editor'))`);
-  await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('nav button')[1].click()`);
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.task-question-tabs button')[2].click()`);
+  await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.load-solution'))`);
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.load-solution').click()`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.task-console')?.textContent.includes('Solution loaded')`);
+  if (process.env.CODEGROUND_RUN_JAVA === '1') {
+    await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.task-run').click()`);
+    await until(`document.querySelector('iframe')?.contentDocument?.querySelector('[aria-label="Execution result"]')?.textContent.includes('Accepted')`, 60000);
+    assert.ok(await evaluate(`document.querySelector('iframe').contentDocument.querySelector('[aria-label="Execution result"]').textContent.includes('20.00')`));
+  }
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('nav[aria-label="Practice mode"] button')[1].click()`);
   await until(`document.querySelector('iframe')?.contentDocument?.body?.textContent?.includes('Overflow before assignment')`);
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('nav[aria-label="Practice mode"] button')[0].click()`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.task-detail')?.dataset.taskId === '1'`);
+  assert.ok(await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.task-console').textContent.includes('Solution loaded')`));
   await evaluate(`location.hash = 'practice/project-coding'`);
   await until(`document.querySelector('iframe')?.contentDocument?.body?.textContent?.includes('Protect an immutable property snapshot')`);
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.monaco-editor'))`);
   await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('nav button')[1].click()`);
   await until(`document.querySelector('iframe')?.contentDocument?.body?.textContent?.includes('A paid appraisal is retried')`);
   await evaluate(`location.hash = 'practice/workspace'`);
-  await until(`document.querySelector('iframe')?.contentDocument?.body?.textContent.includes('Prepare across Java & Spring.')`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 50`);
   assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('nav[aria-label="Practice mode"] button').length`), 2);
   assert.ok(await evaluate(`!document.querySelector('iframe').contentDocument.body.textContent.includes('Production scenarios')`));
   await evaluate(`location.hash = 'practice/tasks?task=23'`);
@@ -195,6 +218,11 @@ try {
   await until(`location.hash.includes('#practice/tasks?scenario=failed-deployment') && document.querySelector('iframe')?.contentDocument?.querySelector('.task-detail')?.dataset.taskId === '34'`);
   assert.ok(await evaluate(`document.querySelector('iframe').contentDocument.documentElement.scrollWidth <= document.querySelector('iframe').contentWindow.innerWidth`), 'Mobile task workspace overflows');
   assert.ok(await evaluate(`document.documentElement.scrollWidth <= innerWidth`), 'Mobile incident page overflows');
+  await evaluate(`location.hash = 'practice/workspace'`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 50`);
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelector('button[data-task-id="1"]').click()`);
+  await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.monaco-editor'))`);
+  assert.ok(await evaluate(`document.querySelector('iframe').contentDocument.documentElement.scrollWidth <= document.querySelector('iframe').contentWindow.innerWidth`), 'Mobile Java challenge overflows');
   await evaluate(`location.hash = 'home'`);
   await until(`document.querySelectorAll('.card').length === 6`);
   assert.ok(await evaluate(`document.documentElement.scrollWidth <= innerWidth`), 'Mobile page overflows');
