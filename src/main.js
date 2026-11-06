@@ -99,6 +99,7 @@ function openDropdown(tab) {
   document.querySelectorAll('[data-tab]').forEach(button => button.setAttribute('aria-expanded', String(button.dataset.tab === tab)));
   topicMenu.setAttribute('aria-label', tabs[slugs.indexOf(tab)] + ' topics');
   topicContent.classList.toggle('practice-links', tab === 'practice');
+  topicMenu.classList.toggle('library-menu', tab === 'sd' || tab === 'genai');
   renderDropdown(tab, currentActive(tab)); topicMenu.hidden = false;
   if ((tab === 'sd' || tab === 'genai') && !libraryNavigation[tab]) {
     if (!navigationRequests.has(tab)) navigationRequests.set(tab, loadLibraryNavigation(tab).finally(() => navigationRequests.delete(tab)));
@@ -140,7 +141,7 @@ function renderDropdown(tab, activeId) {
   const link = id => sidebarLink(tab, repo, id, activeId);
   const subgroup = (title, ids, key) => `<details class="topic-group" data-group="${escape(key)}" ${ids.includes(activeId) || openGroups.has(key) ? 'open' : ''}><summary><span class="group-chevron" aria-hidden="true">›</span><span>${escape(title)}</span><span class="topic-count">${ids.length}</span></summary><div class="topic-list">${ids.map(link).join('')}</div></details>`;
   if (libraryNavigation[tab]) {
-    topicContent.innerHTML = libraryNavigation[tab].map((section, index) => `<section class="side-section"><h2 class="side-section-title">${escape(section.title)}</h2>${section.items.map((item, itemIndex) => item.id ? link(item.id) : subgroup(item.title, item.ids, `${tab}:${index}:${itemIndex}`)).join('')}</section>`).join('');
+    topicContent.innerHTML = libraryNavigation[tab].map((section, index) => `<section class="side-section"><h2 class="side-section-title">${escape(section.title)}</h2><div class="topic-list">${section.items.map((item, itemIndex) => item.id ? link(item.id) : subgroup(item.title, item.ids, `${tab}:${index}:${itemIndex}`)).join('')}</div></section>`).join('');
     topicContent.querySelectorAll('[data-group]').forEach(detail => detail.addEventListener('toggle', () => { detail.open ? openGroups.add(detail.dataset.group) : openGroups.delete(detail.dataset.group); }));
     return;
   }
