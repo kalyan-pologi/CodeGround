@@ -115,12 +115,21 @@ function mountSingleQuestionReader(doc) {
   const cards = body ? [...body.querySelectorAll('.interview-question-card')] : [];
   if (!body || !cards.length) return null;
 
-  const questions = cards.map(card => ({
-    title: card.querySelector('summary')?.textContent.replace(/\s+/g, ' ').trim() || '',
-    answerNodes: [...card.children]
-      .filter(child => child.tagName !== 'SUMMARY')
-      .map(child => child.cloneNode(true))
-  }));
+  const isSectionHeading = (node) =>
+    node.tagName === 'H2' && /^\d+\.\s/.test(node.textContent.trim());
+  const questions = cards.map((card, index) => {
+    const previousSection = index > 0
+      ? [...cards[index - 1].children].find(isSectionHeading)
+      : null;
+    const answerNodes = [...card.children]
+      .filter(child => child.tagName !== 'SUMMARY' && !isSectionHeading(child))
+      .map(child => child.cloneNode(true));
+    if (previousSection) answerNodes.unshift(previousSection.cloneNode(true));
+    return {
+      title: card.querySelector('summary')?.textContent.replace(/\s+/g, ' ').trim() || '',
+      answerNodes
+    };
+  });
   const reader = doc.createElement('main');
   reader.className = 'interview-question-reader';
   body.replaceChildren(reader);
