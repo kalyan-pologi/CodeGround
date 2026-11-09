@@ -75,9 +75,8 @@ export default function SqlLab({ questions }) {
       <button className="sql-lab-menu" onClick={showQuestions} ref={menu} aria-haspopup="dialog" aria-controls="sql-question-drawer"><span aria-hidden="true">☰</span> SQL Lab</button>
       <button aria-label="Previous SQL question" disabled={index === 0} onClick={() => select(questions[index - 1].id)}>‹</button>
       <button aria-label="Next SQL question" disabled={index === questions.length - 1} onClick={() => select(questions[index + 1].id)}>›</button>
-      <span className="sql-question-count">{current.id} / {questions.length}</span><div className="sql-header-actions"><button className="sql-run-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={submitCurrent} /></div>
+      <span className="sql-question-count">{current.id} / {questions.length}</span><div className="sql-header-actions">{current.canCheck && <button className="sql-check-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => checkAction.current()}>Check sample</button>}<button className="sql-run-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={submitCurrent} /></div>
     </header>
-    {current.canCheck && <button className="sql-check-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => checkAction.current()}>Check sample</button>}
     <SqlQuestion key={current.id} question={current} draft={draft} runAction={runAction} checkAction={checkAction} />
     <dialog id="sql-question-drawer" className="sql-question-drawer" ref={drawer} aria-label="SQL Lab questions" onClose={() => menu.current?.focus()} onClick={event => { if (event.target === event.currentTarget) drawer.current.close(); }}>
       <div className="sql-drawer-inner"><div className="sql-drawer-header"><h2>SQL Lab</h2><button aria-label="Close SQL questions" onClick={() => drawer.current.close()}>×</button></div>
