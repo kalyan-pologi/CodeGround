@@ -5,6 +5,16 @@ import CloudSaveControls from './CloudSaveControls';
 
 const expectedCache = new Map();
 function normalizeOutput(value) { return String(value || '').replace(/\r\n?/g, '\n').trim(); }
+function sampleInputFor(question) {
+  const code = question.solutions?.[0]?.code || '';
+  const lines = code.split('\n');
+  const streamLine = lines.findIndex(line => line.includes('.stream()'));
+  if (streamLine < 1) return '';
+  return lines.slice(0, streamLine).filter(line => {
+    const trimmed = line.trim();
+    return trimmed && !trimmed.startsWith('//') && /^(?:List|Set|Map|String|int|long|double|Optional|Future|CompletableFuture)\b/.test(trimmed);
+  }).join('\n');
+}
 async function loadExpected(question, signal) {
   const cached = expectedCache.get(question.id);
   if (cached !== undefined) return cached;
@@ -70,6 +80,7 @@ function StreamQuestion({ question, draft, runAction, onValidationChange }) {
   const [result,setResult]=useState(null), [status,setStatus]=useState(''), [busy,setBusy]=useState(false), [notice,setNotice]=useState('');
   const [snapshot,setSnapshot]=useState(null), [width,setWidth]=useState(45), [height,setHeight]=useState(65);
   const grid=useRef(null), right=useRef(null), gutter=useRef(null), editor=useRef(null), request=useRef(null);
+  const sampleInput = sampleInputFor(question);
   useEffect(() => { const area=editor.current; if(area && question.runnable) { area.scrollTop=area.scrollHeight; gutter.current.scrollTop=area.scrollTop; } return () => request.current?.abort(); },[question]);
   useEffect(() => {
     let active = true;
@@ -114,7 +125,7 @@ function StreamQuestion({ question, draft, runAction, onValidationChange }) {
   return <section className="sql-lab-grid stream-lab-grid" ref={grid} data-question-id={question.id} data-runnable={question.runnable} style={{'--description-width':width+'%','--code-height':height+'%'}}>
     <section className="sql-description-panel" aria-label="Stream question"><nav className="sql-panel-tabs stream-question-tabs" aria-label="Stream question views"><button aria-pressed={tab === 'description'} onClick={() => setTab('description')}>Description</button><button aria-pressed={tab === 'solution'} onClick={() => setTab('solution')}>Solution</button></nav><div className="sql-description-scroll">
       {tab === 'description' && <><h1>{question.id}. {question.title}</h1><div className="sql-tags"><span>{question.category}</span><span>{question.runnable ? 'Java 17' : 'Reference example'}</span></div>{question.description && <p>{question.description}</p>}<p>{question.runnable ? 'Implement the requested Stream operation and print your result. The editor includes the Employee model, imports, and sample data.' : 'This CompletableFuture example is kept as a reference. Its dependencies may come from preceding examples, so it is not submitted as a standalone program.'}</p>
-        {question.runnable && <><h2>Sample input</h2><div className="sql-table-wrap"><table><caption>Employees used by the starter</caption><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th></tr></thead><tbody>{[[1,'John Doe','IT',6000],[2,'Jane Smith','HR',7500],[3,'Ada Lovelace','IT',9500],[4,'John Lee','HR',5000],[5,'Bob Jones','IT',9500]].map(row => <tr key={row[0]}>{row.map((value,index) => <td key={index}>{value}</td>)}</tr>)}</tbody></table></div><p>Numbers: <code>[1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 7, 10]</code></p><p>Names: <code>["alice", "apple", "bob", "bat", "apple", "cat"]</code></p><p className="sql-muted">Some questions define their own input within the solution. You can change the sample data in Main.java to test more cases.</p></>}
+        {question.runnable && <><h2>Sample input</h2>{sampleInput ? <pre>{sampleInput}</pre> : <><div className="sql-table-wrap"><table><caption>Employees used by the starter</caption><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th></tr></thead><tbody>{[[1,'John Doe','IT',6000],[2,'Jane Smith','HR',7500],[3,'Ada Lovelace','IT',9500],[4,'John Lee','HR',5000],[5,'Bob Jones','IT',9500]].map(row => <tr key={row[0]}>{row.map((value,index) => <td key={index}>{value}</td>)}</tr>)}</tbody></table></div><p>Numbers: <code>[1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 7, 10]</code></p><p>Names: <code>["alice", "apple", "bob", "bat", "apple", "cat"]</code></p></>}<p className="sql-muted">You can change the sample data in Main.java to test more cases.</p></>}
         <h2>Expected output</h2>{expectedBusy ? <p className="sql-muted">Running the reference solution…</p> : <pre>{expected || '(no output)'}</pre>}<p className="sql-muted">The reference output uses the sample input above.</p><details className="sql-hint"><summary>Hint</summary><p>{streamHintFor(question.title)}</p></details></>}
       {tab === 'solution' && <><h1>Solution</h1>{notice && <p role="status">{notice}</p>}{question.solutions.map((solution,index) => <section className="stream-solution-example" key={index}><h2>{solution.title}</h2>{question.runnable && <button className="stream-load-solution" data-solution-index={index} onClick={() => load(index)}>{index ? 'Load alternative into editor' : 'Load solution into editor'}</button>}<pre>{solution.code}</pre>{solution.choose && <p>{solution.choose}</p>}</section>)}</>}
     </div></section>
