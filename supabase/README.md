@@ -19,7 +19,7 @@ The browser still saves drafts locally immediately. After sign-in, click **Submi
 
 ## GitHub Pages deployment
 
-Because `.env.local` is intentionally ignored, add these repository secrets before deploying:
+Because `.env.local` is intentionally ignored, add these GitHub Actions secrets before deploying. They may be repository secrets or secrets on the `github-pages` environment:
 
 - `VITE_SUPABASE_URL` = the project URL without `/rest/v1/`
 - `VITE_SUPABASE_ANON_KEY` = the `sb_publishable_...` key
