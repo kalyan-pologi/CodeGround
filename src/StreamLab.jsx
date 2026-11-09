@@ -4,6 +4,16 @@ import { useExerciseDraft, readPreference, writePreference } from './exercise-dr
 import CloudSaveControls from './CloudSaveControls';
 
 const expectedCache = new Map();
+function normalizeOutput(value) { return String(value || '').replace(/\r\n?/g, '\n').trim(); }
+async function loadExpected(question, signal) {
+  const cached = expectedCache.get(question.id);
+  if (cached !== undefined) return cached;
+  const output = await executeJava(question.solutions[0].program, '', { signal, timeoutMs: 45000 });
+  if (output.status?.id !== 3) throw new Error(output.compile_output || output.stderr || output.status?.description || 'Reference solution did not complete.');
+  const value = output.stdout || '(no output)';
+  expectedCache.set(question.id, value);
+  return value;
+}
 function streamHintFor(title) {
   const prompt = title.toLowerCase();
   if (prompt.includes('sorted by salary')) return 'Filter to the requested department first, then sort with Comparator.comparing and reversed salary order.';
@@ -25,6 +35,7 @@ export default function StreamLab({ questions }) {
   const [selected,setSelected] = useState(() => readPreference('streams:selected',questions[0].id,id => questions.some(question => question.id === id)));
   const [completed,setCompleted] = useState(() => readPreference('streams:completed:v1',[],value => Array.isArray(value) && value.every(id => questions.some(question => question.id === id))));
   const [query,setQuery] = useState('');
+  const [validation,setValidation] = useState({ id: null, passed: false });
   const drawer=useRef(null), search=useRef(null), menu=useRef(null);
   const question=questions.find(item => item.id === selected) || questions[0], index=questions.indexOf(question);
   const draft=useExerciseDraft(question,'streams');
@@ -33,6 +44,7 @@ export default function StreamLab({ questions }) {
   const categories=[...new Set(filtered.map(item => item.category))];
   function select(id) { setSelected(id); writePreference('streams:selected',id); drawer.current?.close(); }
   async function submitCurrent() {
+    if (question.runnable && (validation.id !== question.id || !validation.passed)) return { error: new Error('Run your code and pass the sample before submitting.') };
     const result = await draft.saveToCloud();
     if (!result.error) setCompleted(previous => {
       if (previous.includes(question.id)) return previous;
@@ -44,14 +56,14 @@ export default function StreamLab({ questions }) {
   }
   return <main className="sql-lab stream-lab"><header className="sql-lab-header"><button className="sql-lab-menu stream-lab-menu" ref={menu} aria-haspopup="dialog" aria-controls="stream-question-drawer" onClick={() => { drawer.current.showModal(); search.current.focus(); }}><span aria-hidden="true">☰</span> Java Streams</button>
     <button aria-label="Previous Stream question" disabled={index === 0} onClick={() => select(questions[index-1].id)}>‹</button><button aria-label="Next Stream question" disabled={index === questions.length-1} onClick={() => select(questions[index+1].id)}>›</button><span className="sql-question-count">{question.id} / {questions.length}</span><div className="sql-header-actions"><button className="stream-run-button sql-run-button" disabled={!question.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={submitCurrent} /></div></header>
-    <StreamQuestion key={question.id} question={question} draft={draft} runAction={runAction} />
+    <StreamQuestion key={question.id} question={question} draft={draft} runAction={runAction} onValidationChange={passed => setValidation({ id: question.id, passed })} />
     <dialog className="sql-question-drawer stream-question-drawer" id="stream-question-drawer" ref={drawer} aria-label="Java Stream questions" onClose={() => menu.current?.focus()} onClick={event => { if(event.target === event.currentTarget) drawer.current.close(); }}>
       <div className="sql-drawer-inner"><div className="sql-drawer-header"><h2>Java Streams</h2><button aria-label="Close Stream questions" onClick={() => drawer.current.close()}>×</button></div><label className="sql-search-label"><span className="sql-sr-only">Search Stream questions</span><input ref={search} type="search" placeholder="Search questions" value={query} onChange={event => setQuery(event.target.value)} /></label>
       <div className="sql-question-list">{categories.map(category => <section key={category}><h3>{category}</h3>{filtered.filter(item => item.category === category).map(item => { const isCompleted = completed.includes(item.id); return <button key={item.id} className={'sql-question-button stream-question-button' + (isCompleted ? ' completed' : '')} data-question-id={item.id} aria-current={question.id === item.id ? 'page' : undefined} aria-label={`${item.id}. ${item.title}${isCompleted ? ', completed' : ''}`} onClick={() => select(item.id)}><span className="sql-question-dot">{isCompleted ? '✓' : ''}</span><span>{item.id}. {item.title}</span><small>{item.runnable ? 'Java 17' : 'Reference'}</small></button>; })}</section>)}{!filtered.length && <p className="sql-muted">No matching questions.</p>}</div></div>
     </dialog>
   </main>;
 }
-function StreamQuestion({ question, draft, runAction }) {
+function StreamQuestion({ question, draft, runAction, onValidationChange }) {
   const {code,stdin,setCode,setStdin,saveStatus}=draft;
   const [tab,setTab]=useState('description'), [resultTab,setResultTab]=useState('output'), [file,setFile]=useState('code');
   const [expected,setExpected]=useState(() => expectedCache.get(question.id) || null), [expectedBusy,setExpectedBusy]=useState(false);
@@ -64,10 +76,9 @@ function StreamQuestion({ question, draft, runAction }) {
     const cached = expectedCache.get(question.id);
     if (!question.runnable || cached) { setExpected(cached || '(reference-only example)'); return undefined; }
     const controller = new AbortController(); setExpectedBusy(true);
-    executeJava(question.solutions[0].program, '', { signal: controller.signal, timeoutMs: 45000 }).then(output => {
+    loadExpected(question, controller.signal).then(value => {
       if (!active) return;
-      const value = output.stdout || (output.compile_output ? `Compilation failed:\n${output.compile_output}` : '(no output)');
-      expectedCache.set(question.id, value); setExpected(value);
+      setExpected(value);
     }).catch(error => { if (active && error.name !== 'AbortError') setExpected(`Expected output unavailable: ${error.message}`); })
       .finally(() => { if (active) setExpectedBusy(false); });
     return () => { active = false; controller.abort(); };
@@ -80,8 +91,18 @@ function StreamQuestion({ question, draft, runAction }) {
   function reset() { if(code !== question.starter && !window.confirm('Reset your code to the starter?')) return; setCode(question.starter); setResult(null); setStatus(''); setNotice(''); }
   async function run() {
     if(!question.runnable || request.current || !code.trim()) return;
+    onValidationChange(false);
     const controller=new AbortController(); request.current=controller; setBusy(true); setResult(null); setStatus('Submitting…'); setResultTab('output'); setSnapshot({code,stdin});
-    try { const output=await executeJava(code,stdin,{signal:controller.signal,onStatus:value => setStatus(value.description)}); if(!controller.signal.aborted) { setResult(output); setStatus(output.status.description); } }
+    try {
+      const output=await executeJava(code,stdin,{signal:controller.signal,onStatus:value => setStatus(value.description)});
+      if(!controller.signal.aborted) {
+        const expectedOutput = await loadExpected(question, controller.signal);
+        const passed = output.status?.id === 3 && normalizeOutput(output.stdout) === normalizeOutput(expectedOutput);
+        setResult({ ...output, passed, expectedOutput, status: passed ? output.status : { ...output.status, id: 4 } });
+        setStatus(output.status?.id === 3 ? (passed ? 'Accepted' : 'Wrong answer') : output.status.description);
+        onValidationChange(passed);
+      }
+    }
     catch(error) { if(!controller.signal.aborted) setStatus(error.message); }
     finally { if(!controller.signal.aborted) setBusy(false); request.current=null; }
   }
