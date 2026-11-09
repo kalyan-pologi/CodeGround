@@ -37,6 +37,7 @@ const hints = {
 
 export default function SqlLab({ questions }) {
   const [selected, setSelected] = useState(() => readPreference('sql-lab:selected', questions[0].id, id => questions.some(question => question.id === id)));
+  const [completed,setCompleted] = useState(() => readPreference('sql-lab:completed:v1',[],value => Array.isArray(value) && value.every(id => questions.some(question => question.id === id))));
   const [query, setQuery] = useState('');
   const drawer = useRef(null), search = useRef(null), menu = useRef(null);
   const current = questions.find(question => question.id === selected) || questions[0];
@@ -46,20 +47,30 @@ export default function SqlLab({ questions }) {
   const filtered = questions.filter(question => (question.title + ' ' + question.category).toLowerCase().includes(query.trim().toLowerCase()));
   const categories = [...new Set(filtered.map(question => question.category))];
   function select(id) { setSelected(id); writePreference('sql-lab:selected', id); drawer.current?.close(); }
+  async function submitCurrent() {
+    const result = await draft.saveToCloud();
+    if (!result.error) setCompleted(previous => {
+      if (previous.includes(current.id)) return previous;
+      const next = [...previous, current.id];
+      writePreference('sql-lab:completed:v1', next);
+      return next;
+    });
+    return result;
+  }
   function showQuestions() { drawer.current.showModal(); search.current.focus(); }
   return <main className="sql-lab">
     <header className="sql-lab-header">
       <button className="sql-lab-menu" onClick={showQuestions} ref={menu} aria-haspopup="dialog" aria-controls="sql-question-drawer"><span aria-hidden="true">☰</span> SQL Lab</button>
       <button aria-label="Previous SQL question" disabled={index === 0} onClick={() => select(questions[index - 1].id)}>‹</button>
       <button aria-label="Next SQL question" disabled={index === questions.length - 1} onClick={() => select(questions[index + 1].id)}>›</button>
-      <span className="sql-question-count">{current.id} / {questions.length}</span><div className="sql-header-actions"><button className="sql-run-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={draft.saveToCloud} /></div>
+      <span className="sql-question-count">{current.id} / {questions.length}</span><div className="sql-header-actions"><button className="sql-run-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={submitCurrent} /></div>
     </header>
     {current.canCheck && <button className="sql-check-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => checkAction.current()}>Check sample</button>}
     <SqlQuestion key={current.id} question={current} draft={draft} runAction={runAction} checkAction={checkAction} />
     <dialog id="sql-question-drawer" className="sql-question-drawer" ref={drawer} aria-label="SQL Lab questions" onClose={() => menu.current?.focus()} onClick={event => { if (event.target === event.currentTarget) drawer.current.close(); }}>
       <div className="sql-drawer-inner"><div className="sql-drawer-header"><h2>SQL Lab</h2><button aria-label="Close SQL questions" onClick={() => drawer.current.close()}>×</button></div>
         <label className="sql-search-label"><span className="sql-sr-only">Search SQL questions</span><input ref={search} type="search" placeholder="Search questions" value={query} onChange={event => setQuery(event.target.value)} /></label>
-        <div className="sql-question-list">{categories.map(category => <section key={category}><h3>{category}</h3>{filtered.filter(question => question.category === category).map(question => <button key={question.id} className="sql-question-button" data-question-id={question.id} aria-current={current.id === question.id ? 'page' : undefined} onClick={() => select(question.id)}><span className="sql-question-dot" /><span>{question.id}. {question.title}</span><small>{question.runnable ? 'SQLite' : 'MySQL'}</small></button>)}</section>)}{!filtered.length && <p className="sql-muted">No questions match your search.</p>}</div>
+        <div className="sql-question-list">{categories.map(category => <section key={category}><h3>{category}</h3>{filtered.filter(question => question.category === category).map(question => { const isCompleted = completed.includes(question.id); return <button key={question.id} className={'sql-question-button' + (isCompleted ? ' completed' : '')} data-question-id={question.id} aria-current={current.id === question.id ? 'page' : undefined} aria-label={`${question.id}. ${question.title}${isCompleted ? ', completed' : ''}`} onClick={() => select(question.id)}><span className="sql-question-dot">{isCompleted ? '✓' : ''}</span><span>{question.id}. {question.title}</span><small>{question.runnable ? 'SQLite' : 'MySQL'}</small></button>; })}</section>)}{!filtered.length && <p className="sql-muted">No questions match your search.</p>}</div>
       </div>
     </dialog>
   </main>;
@@ -73,7 +84,6 @@ function SqlQuestion({ question, draft, runAction, checkAction }) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
   const [snapshot, setSnapshot] = useState(null);
-  const [notes, setNotes] = useState(() => readPreference('sql-notes:' + question.id, '', value => typeof value === 'string'));
   const [width, setWidth] = useState(48), [height, setHeight] = useState(55), [expanded, setExpanded] = useState(false);
   const [cursor, setCursor] = useState({ line: 1, column: 1 });
   const request = useRef(null), grid = useRef(null), right = useRef(null), gutter = useRef(null), editor = useRef(null);
@@ -115,7 +125,7 @@ function SqlQuestion({ question, draft, runAction, checkAction }) {
     onKeyDown: event => { const down = axis === 'x' ? 'ArrowLeft' : 'ArrowUp', up = axis === 'x' ? 'ArrowRight' : 'ArrowDown'; if (![down, up].includes(event.key)) return; event.preventDefault(); (axis === 'x' ? setWidth : setHeight)(value => Math.max(28, Math.min(axis === 'x' ? 65 : 75, value + (event.key === up ? 2 : -2)))); } });
   return <section className={'sql-lab-grid' + (expanded ? ' editor-expanded' : '')} ref={grid} data-question-id={question.id} style={{ '--description-width': width + '%', '--code-height': height + '%' }}>
     <section className="sql-description-panel" aria-label="SQL question">
-      <nav className="sql-panel-tabs" aria-label="SQL question views">{[['description','Description'],['solution','Solution'],['notes','Notes']].map(([id,label]) => <button key={id} aria-pressed={leftTab === id} onClick={() => setLeftTab(id)}>{label}</button>)}</nav>
+      <nav className="sql-panel-tabs" aria-label="SQL question views">{[['description','Description'],['solution','Solution']].map(([id,label]) => <button key={id} aria-pressed={leftTab === id} onClick={() => setLeftTab(id)}>{label}</button>)}</nav>
       <div className="sql-description-scroll">
         {leftTab === 'description' && <><h1>{question.id}. {question.title}</h1><div className="sql-tags"><span>{question.category}</span><span>{question.runnable ? 'SQLite' : 'MySQL · Reference'}</span></div>{question.description && <p>{question.description}</p>}<p>{question.runnable ? 'Write a query that satisfies the question. Use the sample tables below.' : 'This stored procedure requires MySQL. It cannot run in the SQLite lab.'}</p>
           <h2>Tables</h2>{!schema && <p className="sql-muted">Loading sample data…</p>}{schema?.error && <p className="sql-error">{schema.error}</p>}{schema?.tables?.length === 0 && <p className="sql-muted">This question starts with an empty database.</p>}
@@ -125,7 +135,6 @@ function SqlQuestion({ question, draft, runAction, checkAction }) {
           <details className="sql-setup"><summary>Sample setup SQL</summary><pre>{question.setup}</pre></details>
         </>}
         {leftTab === 'solution' && <><h1>Solution</h1><button className="sql-load-solution" onClick={loadSolution}>Load solution into editor</button>{notice && <p role="status">{notice}</p>}{question.note && <p>{question.note}</p>}<pre>{question.solution}</pre>{question.solution !== question.original.trim() && <><h2>Original snippet</h2><pre>{question.original}</pre></>}</>}
-        {leftTab === 'notes' && <><h1>Notes</h1><p className="sql-muted">Saved locally for this question.</p><textarea aria-label="SQL question notes" className="sql-notes" value={notes} onChange={event => { setNotes(event.target.value); setNotice(writePreference('sql-notes:' + question.id, event.target.value) ? 'Notes saved locally.' : 'Notes could not be saved.'); }} placeholder="Your approach, edge cases, and follow-up ideas…" />{notice && <p role="status">{notice}</p>}</>}
       </div>
     </section>
     <div className="sql-divider vertical" role="separator" aria-label="Resize SQL description" aria-orientation="vertical" aria-valuemin={28} aria-valuemax={65} aria-valuenow={Math.round(width)} tabIndex={0} {...resizeEvents('x')} />

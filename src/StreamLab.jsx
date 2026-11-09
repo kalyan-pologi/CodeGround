@@ -5,6 +5,7 @@ import CloudSaveControls from './CloudSaveControls';
 
 export default function StreamLab({ questions }) {
   const [selected,setSelected] = useState(() => readPreference('streams:selected',questions[0].id,id => questions.some(question => question.id === id)));
+  const [completed,setCompleted] = useState(() => readPreference('streams:completed:v1',[],value => Array.isArray(value) && value.every(id => questions.some(question => question.id === id))));
   const [query,setQuery] = useState('');
   const drawer=useRef(null), search=useRef(null), menu=useRef(null);
   const question=questions.find(item => item.id === selected) || questions[0], index=questions.indexOf(question);
@@ -13,18 +14,29 @@ export default function StreamLab({ questions }) {
   const filtered=questions.filter(item => (item.title+' '+item.category).toLowerCase().includes(query.trim().toLowerCase()));
   const categories=[...new Set(filtered.map(item => item.category))];
   function select(id) { setSelected(id); writePreference('streams:selected',id); drawer.current?.close(); }
+  async function submitCurrent() {
+    const result = await draft.saveToCloud();
+    if (!result.error) setCompleted(previous => {
+      if (previous.includes(question.id)) return previous;
+      const next = [...previous, question.id];
+      writePreference('streams:completed:v1', next);
+      return next;
+    });
+    return result;
+  }
   return <main className="sql-lab stream-lab"><header className="sql-lab-header"><button className="sql-lab-menu stream-lab-menu" ref={menu} aria-haspopup="dialog" aria-controls="stream-question-drawer" onClick={() => { drawer.current.showModal(); search.current.focus(); }}><span aria-hidden="true">☰</span> Java Streams</button>
-    <button aria-label="Previous Stream question" disabled={index === 0} onClick={() => select(questions[index-1].id)}>‹</button><button aria-label="Next Stream question" disabled={index === questions.length-1} onClick={() => select(questions[index+1].id)}>›</button><span className="sql-question-count">{question.id} / {questions.length}</span><div className="sql-header-actions"><button className="stream-run-button sql-run-button" disabled={!question.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={draft.saveToCloud} /></div></header>
+    <button aria-label="Previous Stream question" disabled={index === 0} onClick={() => select(questions[index-1].id)}>‹</button><button aria-label="Next Stream question" disabled={index === questions.length-1} onClick={() => select(questions[index+1].id)}>›</button><span className="sql-question-count">{question.id} / {questions.length}</span><div className="sql-header-actions"><button className="stream-run-button sql-run-button" disabled={!question.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={submitCurrent} /></div></header>
     <StreamQuestion key={question.id} question={question} draft={draft} runAction={runAction} />
     <dialog className="sql-question-drawer stream-question-drawer" id="stream-question-drawer" ref={drawer} aria-label="Java Stream questions" onClose={() => menu.current?.focus()} onClick={event => { if(event.target === event.currentTarget) drawer.current.close(); }}>
       <div className="sql-drawer-inner"><div className="sql-drawer-header"><h2>Java Streams</h2><button aria-label="Close Stream questions" onClick={() => drawer.current.close()}>×</button></div><label className="sql-search-label"><span className="sql-sr-only">Search Stream questions</span><input ref={search} type="search" placeholder="Search questions" value={query} onChange={event => setQuery(event.target.value)} /></label>
-      <div className="sql-question-list">{categories.map(category => <section key={category}><h3>{category}</h3>{filtered.filter(item => item.category === category).map(item => <button key={item.id} className="sql-question-button stream-question-button" data-question-id={item.id} aria-current={question.id === item.id ? 'page' : undefined} onClick={() => select(item.id)}><span className="sql-question-dot" /><span>{item.id}. {item.title}</span><small>{item.runnable ? 'Java 17' : 'Reference'}</small></button>)}</section>)}{!filtered.length && <p className="sql-muted">No matching questions.</p>}</div></div>
+      <div className="sql-question-list">{categories.map(category => <section key={category}><h3>{category}</h3>{filtered.filter(item => item.category === category).map(item => { const isCompleted = completed.includes(item.id); return <button key={item.id} className={'sql-question-button stream-question-button' + (isCompleted ? ' completed' : '')} data-question-id={item.id} aria-current={question.id === item.id ? 'page' : undefined} aria-label={`${item.id}. ${item.title}${isCompleted ? ', completed' : ''}`} onClick={() => select(item.id)}><span className="sql-question-dot">{isCompleted ? '✓' : ''}</span><span>{item.id}. {item.title}</span><small>{item.runnable ? 'Java 17' : 'Reference'}</small></button>; })}</section>)}{!filtered.length && <p className="sql-muted">No matching questions.</p>}</div></div>
     </dialog>
   </main>;
 }
 function StreamQuestion({ question, draft, runAction }) {
   const {code,stdin,setCode,setStdin,saveStatus}=draft;
   const [tab,setTab]=useState('description'), [resultTab,setResultTab]=useState('output'), [file,setFile]=useState('code');
+  const [expected,setExpected]=useState(null), [expectedBusy,setExpectedBusy]=useState(false);
   const [result,setResult]=useState(null), [status,setStatus]=useState(''), [busy,setBusy]=useState(false), [notice,setNotice]=useState('');
   const [snapshot,setSnapshot]=useState(null), [width,setWidth]=useState(45), [height,setHeight]=useState(65);
   const grid=useRef(null), right=useRef(null), gutter=useRef(null), editor=useRef(null), request=useRef(null);
@@ -35,6 +47,16 @@ function StreamQuestion({ question, draft, runAction }) {
     setCode(solution); setFile('code'); setNotice('Solution loaded into Main.java.');
   }
   function reset() { if(code !== question.starter && !window.confirm('Reset your code to the starter?')) return; setCode(question.starter); setResult(null); setStatus(''); setNotice(''); }
+  async function showExpected() {
+    setTab('expected');
+    if (!question.runnable || expected !== null || expectedBusy) return;
+    setExpectedBusy(true);
+    try {
+      const output = await executeJava(question.solutions[0].program, '', { timeoutMs: 45000 });
+      setExpected(output.stdout || (output.compile_output ? `Compilation failed:\n${output.compile_output}` : '(no output)'));
+    } catch (error) { setExpected(`Expected output unavailable: ${error.message}`); }
+    finally { setExpectedBusy(false); }
+  }
   async function run() {
     if(!question.runnable || request.current || !code.trim()) return;
     const controller=new AbortController(); request.current=controller; setBusy(true); setResult(null); setStatus('Submitting…'); setResultTab('output'); setSnapshot({code,stdin});
@@ -48,11 +70,11 @@ function StreamQuestion({ question, draft, runAction }) {
     onPointerUp:event => { if(event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); },
     onKeyDown:event => { const before=axis === 'x' ? 'ArrowLeft' : 'ArrowUp', after=axis === 'x' ? 'ArrowRight' : 'ArrowDown'; if(![before,after].includes(event.key)) return; event.preventDefault(); (axis === 'x' ? setWidth : setHeight)(value => Math.max(28,Math.min(axis === 'x' ? 65 : 75,value+(event.key === after ? 2 : -2)))); }});
   return <section className="sql-lab-grid stream-lab-grid" ref={grid} data-question-id={question.id} data-runnable={question.runnable} style={{'--description-width':width+'%','--code-height':height+'%'}}>
-    <section className="sql-description-panel" aria-label="Stream question"><nav className="sql-panel-tabs stream-question-tabs" aria-label="Stream question views">{[['description','Description'],['hints','Hints'],['solution','Solution']].map(([id,label]) => <button key={id} aria-pressed={tab === id} onClick={() => setTab(id)}>{label}</button>)}</nav><div className="sql-description-scroll">
+    <section className="sql-description-panel" aria-label="Stream question"><nav className="sql-panel-tabs stream-question-tabs" aria-label="Stream question views"><button aria-pressed={tab === 'description'} onClick={() => setTab('description')}>Description</button><button aria-pressed={tab === 'expected'} onClick={showExpected}>Expected output</button><button aria-pressed={tab === 'solution'} onClick={() => setTab('solution')}>Solution</button></nav><div className="sql-description-scroll">
       {tab === 'description' && <><h1>{question.id}. {question.title}</h1><div className="sql-tags"><span>{question.category}</span><span>{question.runnable ? 'Java 17' : 'Reference example'}</span></div>{question.description && <p>{question.description}</p>}<p>{question.runnable ? 'Implement the requested Stream operation and print your result. The editor includes the Employee model, imports, and sample data.' : 'This CompletableFuture example is kept as a reference. Its dependencies may come from preceding examples, so it is not submitted as a standalone program.'}</p>
         {question.runnable && <><h2>Sample data</h2><div className="sql-table-wrap"><table><caption>Employees used by the starter</caption><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th></tr></thead><tbody>{[[1,'John Doe','IT',6000],[2,'Jane Smith','HR',7500],[3,'Ada Lovelace','IT',9500],[4,'John Lee','HR',5000],[5,'Bob Jones','IT',9500]].map(row => <tr key={row[0]}>{row.map((value,index) => <td key={index}>{value}</td>)}</tr>)}</tbody></table></div><p>Numbers: <code>[1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 7, 10]</code></p><p>Names: <code>["alice", "apple", "bob", "bat", "apple", "cat"]</code></p><p className="sql-muted">Some questions define their own input within the solution. You can change the sample data in Main.java to test more cases.</p></>}
         <details className="sql-hint"><summary>Hint</summary><p>Identify the source, intermediate operations, and terminal operation. Decide whether encounter order and duplicate values matter.</p></details></>}
-      {tab === 'hints' && <><h1>Hints</h1><details className="sql-hint"><summary>Hint 1 · Plan the pipeline</summary><p>Start from the input collection. Apply filtering or mapping before the terminal operation.</p></details><details className="sql-hint"><summary>Hint 2 · Check edge cases</summary><p>Try empty input, repeated values, salary ties, and unmatched filters. Use Optional when no result is possible.</p></details></>}
+      {tab === 'expected' && <><h1>Expected output</h1>{!question.runnable ? <p className="sql-muted">Reference-only examples do not have a standalone output.</p> : expectedBusy ? <p className="sql-muted">Running the reference solution…</p> : <><pre>{expected || '(no output)'}</pre><p className="sql-muted">This is produced by the reference solution using the sample data shown in Description.</p></>}</>}
       {tab === 'solution' && <><h1>Solution</h1>{notice && <p role="status">{notice}</p>}{question.solutions.map((solution,index) => <section className="stream-solution-example" key={index}><h2>{solution.title}</h2>{question.runnable && <button className="stream-load-solution" data-solution-index={index} onClick={() => load(index)}>{index ? 'Load alternative into editor' : 'Load solution into editor'}</button>}<pre>{solution.code}</pre>{solution.choose && <p>{solution.choose}</p>}</section>)}</>}
     </div></section>
     <div className="sql-divider vertical" role="separator" aria-label="Resize Stream description" aria-orientation="vertical" aria-valuemin={28} aria-valuemax={65} aria-valuenow={Math.round(width)} tabIndex={0} {...events('x')} />
