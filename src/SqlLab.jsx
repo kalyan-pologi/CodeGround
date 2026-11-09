@@ -34,6 +34,18 @@ const hints = {
   'Date Functions': 'Use SQLite date functions and ISO YYYY-MM-DD dates. Test the boundary conditions.',
   'Miscellaneous Queries': 'Break the task into the required columns, source tables, conditions, and ordering.'
 };
+function sqlHintFor(question) {
+  const title = question.title.toLowerCase();
+  if (title.includes('child rows') || title.includes('foreign key')) return 'Define the child-table foreign key and use ON DELETE SET NULL so the child row remains while its reference becomes NULL.';
+  if (title.includes('top 2') || title.includes('highest paid')) return 'Order salary descending and use LIMIT; use DISTINCT or a ranking function when the question asks about salary levels rather than employees.';
+  if (title.includes('second highest') || title.includes('nth highest')) return 'First identify distinct salary levels, then rank or offset them so ties do not change the requested salary position.';
+  if (title.includes('average') || title.includes('minimum') || title.includes('maximum') || title.includes('count')) return 'Choose the aggregate that matches the question, group only by the requested dimensions, and give the result a clear alias.';
+  if (title.includes('duplicate')) return 'Group by the columns that define a duplicate and use a window function or aggregate to identify which row to retain.';
+  if (title.includes('null')) return 'Use IS NULL or IS NOT NULL explicitly; comparisons with NULL do not evaluate to TRUE.';
+  if (title.includes('join')) return 'Join on the related key columns and choose INNER or OUTER JOIN based on whether unmatched rows must remain.';
+  if (title.includes('date')) return 'Use SQLite ISO dates and compare with date functions; test both sides of the requested boundary.';
+  return hints[question.category] || 'Identify the required tables, columns, conditions, and output order before writing the query.';
+}
 
 export default function SqlLab({ questions }) {
   const [selected, setSelected] = useState(() => readPreference('sql-lab:selected', questions[0].id, id => questions.some(question => question.id === id)));
@@ -128,10 +140,10 @@ function SqlQuestion({ question, draft, runAction, checkAction }) {
       <nav className="sql-panel-tabs" aria-label="SQL question views">{[['description','Description'],['solution','Solution']].map(([id,label]) => <button key={id} aria-pressed={leftTab === id} onClick={() => setLeftTab(id)}>{label}</button>)}</nav>
       <div className="sql-description-scroll">
         {leftTab === 'description' && <><h1>{question.id}. {question.title}</h1><div className="sql-tags"><span>{question.category}</span><span>{question.runnable ? 'SQLite' : 'MySQL · Reference'}</span></div>{question.description && <p>{question.description}</p>}<p>{question.runnable ? 'Write a query that satisfies the question. Use the sample tables below.' : 'This stored procedure requires MySQL. It cannot run in the SQLite lab.'}</p>
-          <h2>Tables</h2>{!schema && <p className="sql-muted">Loading sample data…</p>}{schema?.error && <p className="sql-error">{schema.error}</p>}{schema?.tables?.length === 0 && <p className="sql-muted">This question starts with an empty database.</p>}
+          <h2>Sample input</h2>{!schema && <p className="sql-muted">Loading sample data…</p>}{schema?.error && <p className="sql-error">{schema.error}</p>}{schema?.tables?.length === 0 && <p className="sql-muted">This question starts with an empty database.</p>}
           {schema?.tables?.map(table => <section key={table.name} className="sql-schema"><h3>{table.name}</h3><ResultTable label={table.name + ' columns'} result={table.schema && { columns: ['Column name', 'Type', 'Constraints'], values: table.schema.values.map(row => [row[1], row[2], [row[5] ? 'PRIMARY KEY' : '', row[3] ? 'NOT NULL' : ''].filter(Boolean).join(', ') || '—']) }} /><ResultTable label={table.name + ' sample rows'} result={table.data} /></section>)}
           <h2>Expected sample output</h2>{question.canCheck ? schema?.expected?.results?.map((result,index) => <ResultTable key={index} result={result} label={'Output ' + (index + 1)} />) : <p>Run the statement and inspect its effect on the database schema below.</p>}{schema?.expected && !schema.expected.results?.length && <p>The statement executes successfully. Use Run to inspect its effects.</p>}<p className="sql-muted">{question.canCheck ? 'Check sample compares column names and rows using the provided data. Each run starts with fresh data.' : question.runnable ? 'DDL changes can be explored with Run. Review the resulting schema and constraints.' : 'Read the solution and run it in a MySQL environment.'}</p>
-          <details className="sql-hint"><summary>Hint 1</summary><p>{hints[question.category] || 'Identify the required tables, columns, conditions and output shape first.'}</p></details><details className="sql-hint"><summary>Hint 2</summary><p>Test the sample data, then consider duplicate values, NULLs, and boundary cases. Match the requested output column names.</p></details>
+          <details className="sql-hint"><summary>Hint</summary><p>{sqlHintFor(question)}</p></details>
           <details className="sql-setup"><summary>Sample setup SQL</summary><pre>{question.setup}</pre></details>
         </>}
         {leftTab === 'solution' && <><h1>Solution</h1><button className="sql-load-solution" onClick={loadSolution}>Load solution into editor</button>{notice && <p role="status">{notice}</p>}{question.note && <p>{question.note}</p>}<pre>{question.solution}</pre>{question.solution !== question.original.trim() && <><h2>Original snippet</h2><pre>{question.original}</pre></>}</>}

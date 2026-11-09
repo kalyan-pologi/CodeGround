@@ -3,6 +3,24 @@ import { executeJava } from '../practice/src/services/compiler';
 import { useExerciseDraft, readPreference, writePreference } from './exercise-drafts';
 import CloudSaveControls from './CloudSaveControls';
 
+const expectedCache = new Map();
+function streamHintFor(title) {
+  const prompt = title.toLowerCase();
+  if (prompt.includes('sorted by salary')) return 'Filter to the requested department first, then sort with Comparator.comparing and reversed salary order.';
+  if (prompt.includes('top 2') || prompt.includes('highest paid')) return 'Sort by salary descending, then use limit. Add a tie-breaker when the prompt requires deterministic employee selection.';
+  if (prompt.includes('null')) return 'Use filter(Objects::nonNull) before the operation that would dereference or compare each value.';
+  if (prompt.includes('any employee') || prompt.includes('whether any')) return 'Use anyMatch with the exact predicate; it short-circuits as soon as a matching employee is found.';
+  if (prompt.includes('every')) return 'Filter to the requested group, then use allMatch. Remember that an empty stream makes allMatch true.';
+  if (prompt.includes('first employee') || prompt.includes('find the first')) return 'Filter with the requested condition and finish with findFirst, which returns an Optional.';
+  if (prompt.includes('group') || prompt.includes('department')) return 'Use groupingBy for the requested key and select the downstream collector that matches the required value or statistics.';
+  if (prompt.includes('count') || prompt.includes('frequency')) return 'Use groupingBy with counting, then sort or select the entry required by the question.';
+  if (prompt.includes('distinct')) return 'Use distinct when uniqueness is required, and preserve encounter order unless the prompt asks for sorting.';
+  if (prompt.includes('sum') || prompt.includes('total') || prompt.includes('average')) return 'Choose the matching numeric terminal operation and use mapToInt or mapToDouble when a primitive summary is appropriate.';
+  if (prompt.includes('map')) return 'Use toMap with an explicit merge function when keys can repeat; do not assume duplicate keys are impossible.';
+  if (prompt.includes('future') || prompt.includes('async')) return 'Choose thenApply for a value transformation, thenCompose for a dependent future, and allOf/anyOf for coordination.';
+  return 'Identify the source, intermediate operations, and terminal operation. Check ordering, duplicates, empty input, and ties.';
+}
+
 export default function StreamLab({ questions }) {
   const [selected,setSelected] = useState(() => readPreference('streams:selected',questions[0].id,id => questions.some(question => question.id === id)));
   const [completed,setCompleted] = useState(() => readPreference('streams:completed:v1',[],value => Array.isArray(value) && value.every(id => questions.some(question => question.id === id))));
@@ -36,27 +54,30 @@ export default function StreamLab({ questions }) {
 function StreamQuestion({ question, draft, runAction }) {
   const {code,stdin,setCode,setStdin,saveStatus}=draft;
   const [tab,setTab]=useState('description'), [resultTab,setResultTab]=useState('output'), [file,setFile]=useState('code');
-  const [expected,setExpected]=useState(null), [expectedBusy,setExpectedBusy]=useState(false);
+  const [expected,setExpected]=useState(() => expectedCache.get(question.id) || null), [expectedBusy,setExpectedBusy]=useState(false);
   const [result,setResult]=useState(null), [status,setStatus]=useState(''), [busy,setBusy]=useState(false), [notice,setNotice]=useState('');
   const [snapshot,setSnapshot]=useState(null), [width,setWidth]=useState(45), [height,setHeight]=useState(65);
   const grid=useRef(null), right=useRef(null), gutter=useRef(null), editor=useRef(null), request=useRef(null);
   useEffect(() => { const area=editor.current; if(area && question.runnable) { area.scrollTop=area.scrollHeight; gutter.current.scrollTop=area.scrollTop; } return () => request.current?.abort(); },[question]);
+  useEffect(() => {
+    let active = true;
+    const cached = expectedCache.get(question.id);
+    if (!question.runnable || cached) { setExpected(cached || '(reference-only example)'); return undefined; }
+    const controller = new AbortController(); setExpectedBusy(true);
+    executeJava(question.solutions[0].program, '', { signal: controller.signal, timeoutMs: 45000 }).then(output => {
+      if (!active) return;
+      const value = output.stdout || (output.compile_output ? `Compilation failed:\n${output.compile_output}` : '(no output)');
+      expectedCache.set(question.id, value); setExpected(value);
+    }).catch(error => { if (active && error.name !== 'AbortError') setExpected(`Expected output unavailable: ${error.message}`); })
+      .finally(() => { if (active) setExpectedBusy(false); });
+    return () => { active = false; controller.abort(); };
+  }, [question]);
   function load(index) {
     const solution=question.solutions[index].program;
     if(code !== question.starter && !question.solutions.some(item => item.program === code) && !window.confirm('Replace your current draft with this solution?')) return;
     setCode(solution); setFile('code'); setNotice('Solution loaded into Main.java.');
   }
   function reset() { if(code !== question.starter && !window.confirm('Reset your code to the starter?')) return; setCode(question.starter); setResult(null); setStatus(''); setNotice(''); }
-  async function showExpected() {
-    setTab('expected');
-    if (!question.runnable || expected !== null || expectedBusy) return;
-    setExpectedBusy(true);
-    try {
-      const output = await executeJava(question.solutions[0].program, '', { timeoutMs: 45000 });
-      setExpected(output.stdout || (output.compile_output ? `Compilation failed:\n${output.compile_output}` : '(no output)'));
-    } catch (error) { setExpected(`Expected output unavailable: ${error.message}`); }
-    finally { setExpectedBusy(false); }
-  }
   async function run() {
     if(!question.runnable || request.current || !code.trim()) return;
     const controller=new AbortController(); request.current=controller; setBusy(true); setResult(null); setStatus('Submitting…'); setResultTab('output'); setSnapshot({code,stdin});
@@ -70,11 +91,10 @@ function StreamQuestion({ question, draft, runAction }) {
     onPointerUp:event => { if(event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); },
     onKeyDown:event => { const before=axis === 'x' ? 'ArrowLeft' : 'ArrowUp', after=axis === 'x' ? 'ArrowRight' : 'ArrowDown'; if(![before,after].includes(event.key)) return; event.preventDefault(); (axis === 'x' ? setWidth : setHeight)(value => Math.max(28,Math.min(axis === 'x' ? 65 : 75,value+(event.key === after ? 2 : -2)))); }});
   return <section className="sql-lab-grid stream-lab-grid" ref={grid} data-question-id={question.id} data-runnable={question.runnable} style={{'--description-width':width+'%','--code-height':height+'%'}}>
-    <section className="sql-description-panel" aria-label="Stream question"><nav className="sql-panel-tabs stream-question-tabs" aria-label="Stream question views"><button aria-pressed={tab === 'description'} onClick={() => setTab('description')}>Description</button><button aria-pressed={tab === 'expected'} onClick={showExpected}>Expected output</button><button aria-pressed={tab === 'solution'} onClick={() => setTab('solution')}>Solution</button></nav><div className="sql-description-scroll">
+    <section className="sql-description-panel" aria-label="Stream question"><nav className="sql-panel-tabs stream-question-tabs" aria-label="Stream question views"><button aria-pressed={tab === 'description'} onClick={() => setTab('description')}>Description</button><button aria-pressed={tab === 'solution'} onClick={() => setTab('solution')}>Solution</button></nav><div className="sql-description-scroll">
       {tab === 'description' && <><h1>{question.id}. {question.title}</h1><div className="sql-tags"><span>{question.category}</span><span>{question.runnable ? 'Java 17' : 'Reference example'}</span></div>{question.description && <p>{question.description}</p>}<p>{question.runnable ? 'Implement the requested Stream operation and print your result. The editor includes the Employee model, imports, and sample data.' : 'This CompletableFuture example is kept as a reference. Its dependencies may come from preceding examples, so it is not submitted as a standalone program.'}</p>
-        {question.runnable && <><h2>Sample data</h2><div className="sql-table-wrap"><table><caption>Employees used by the starter</caption><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th></tr></thead><tbody>{[[1,'John Doe','IT',6000],[2,'Jane Smith','HR',7500],[3,'Ada Lovelace','IT',9500],[4,'John Lee','HR',5000],[5,'Bob Jones','IT',9500]].map(row => <tr key={row[0]}>{row.map((value,index) => <td key={index}>{value}</td>)}</tr>)}</tbody></table></div><p>Numbers: <code>[1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 7, 10]</code></p><p>Names: <code>["alice", "apple", "bob", "bat", "apple", "cat"]</code></p><p className="sql-muted">Some questions define their own input within the solution. You can change the sample data in Main.java to test more cases.</p></>}
-        <details className="sql-hint"><summary>Hint</summary><p>Identify the source, intermediate operations, and terminal operation. Decide whether encounter order and duplicate values matter.</p></details></>}
-      {tab === 'expected' && <><h1>Expected output</h1>{!question.runnable ? <p className="sql-muted">Reference-only examples do not have a standalone output.</p> : expectedBusy ? <p className="sql-muted">Running the reference solution…</p> : <><pre>{expected || '(no output)'}</pre><p className="sql-muted">This is produced by the reference solution using the sample data shown in Description.</p></>}</>}
+        {question.runnable && <><h2>Sample input</h2><div className="sql-table-wrap"><table><caption>Employees used by the starter</caption><thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th></tr></thead><tbody>{[[1,'John Doe','IT',6000],[2,'Jane Smith','HR',7500],[3,'Ada Lovelace','IT',9500],[4,'John Lee','HR',5000],[5,'Bob Jones','IT',9500]].map(row => <tr key={row[0]}>{row.map((value,index) => <td key={index}>{value}</td>)}</tr>)}</tbody></table></div><p>Numbers: <code>[1, 2, 3, 4, 5, 5, 6, 7, 8, 9, 7, 10]</code></p><p>Names: <code>["alice", "apple", "bob", "bat", "apple", "cat"]</code></p><p className="sql-muted">Some questions define their own input within the solution. You can change the sample data in Main.java to test more cases.</p></>}
+        <h2>Expected output</h2>{expectedBusy ? <p className="sql-muted">Running the reference solution…</p> : <pre>{expected || '(no output)'}</pre>}<p className="sql-muted">The reference output uses the sample input above.</p><details className="sql-hint"><summary>Hint</summary><p>{streamHintFor(question.title)}</p></details></>}
       {tab === 'solution' && <><h1>Solution</h1>{notice && <p role="status">{notice}</p>}{question.solutions.map((solution,index) => <section className="stream-solution-example" key={index}><h2>{solution.title}</h2>{question.runnable && <button className="stream-load-solution" data-solution-index={index} onClick={() => load(index)}>{index ? 'Load alternative into editor' : 'Load solution into editor'}</button>}<pre>{solution.code}</pre>{solution.choose && <p>{solution.choose}</p>}</section>)}</>}
     </div></section>
     <div className="sql-divider vertical" role="separator" aria-label="Resize Stream description" aria-orientation="vertical" aria-valuemin={28} aria-valuemax={65} aria-valuenow={Math.round(width)} tabIndex={0} {...events('x')} />
