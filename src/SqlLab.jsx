@@ -115,7 +115,7 @@ function SqlQuestion({ question, draft, runAction, checkAction }) {
     } catch (error) { if (!controller.signal.aborted) setOutput({ error: error.message }); }
     finally { if (!controller.signal.aborted) setBusy(false); request.current = null; }
   }
-  runAction.current = () => run();
+  runAction.current = () => run('check');
   checkAction.current = () => run('check');
   function loadSolution() {
     if (code !== question.starter && code !== question.solution && !window.confirm('Replace your query with the solution?')) return;
