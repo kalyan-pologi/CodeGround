@@ -1,7 +1,11 @@
+import { useMemo } from 'react';
 import { topicGroups } from '../data/topics';
 
 export default function TopicFilter({ value, onChange, availableTopics }) {
-  const groups = topicGroups.map(group => ({ ...group, topics: group.topics.filter(topic => !availableTopics || availableTopics.includes(topic)) })).filter(group => group.topics.length);
+  const available = useMemo(() => availableTopics && new Set(availableTopics), [availableTopics]);
+  const groups = useMemo(() => topicGroups
+    .map(group => ({ ...group, topics: group.topics.filter(topic => !available || available.has(topic)) }))
+    .filter(group => group.topics.length), [available]);
   return <label>Topic <select value={value} onChange={event => onChange(event.target.value)}>
     <option value="All">All topics</option>
     {groups.map(group => <optgroup key={group.label} label={group.label}>

@@ -1701,13 +1701,13 @@
     "repo": "practice",
     "file": "practice/src/components/CodingPractice.jsx",
     "sha256": "27831cdcffb9ddd04d1289c7cc92c5a5b275d5813434ff8380b6238ff4560965",
-    "adaptedSha256": "95d49a26336991bd1e21352142f7b00e3a4cb64805a1bb5f2d880125640468ac",
+    "adaptedSha256": "52f25bbcfa9fb9e3263b3c1a493a0b6c727e56b55b2718cb062396db02e3157d",
     "adaptation": "Support project and production exercises with structured content and Java, SQL, and YAML editors."
   },
   {
     "repo": "practice",
     "file": "practice/src/components/McqPractice.jsx",
-    "sha256": "f46a7af95f864254890a1adae4d7c3ac66466c8bb1275376906b7b313031eb7e"
+    "sha256": "b0881258e546d2acea6639427c7d8bc388b2a284278d69e85d357718e23bedf0"
   },
   {
     "repo": "practice",
@@ -1718,7 +1718,7 @@
     "repo": "practice",
     "file": "practice/src/components/TopicFilter.jsx",
     "sha256": "fbe05a31ee351d901c472c18dc3e3ef7d97833915aaf273f08f85e5c3fd58f38",
-    "adaptedSha256": "2ef815a2197d93b404d0f71db4b614f3686ec877df9af9e98b9f701f5924f6db",
+    "adaptedSha256": "8afc1f8856389bde1495f4550eb753cdf0acebc3d06341b3c3ad7d599a8265c4",
     "adaptation": "Filter topics to the selected exercise bank."
   },
   {
@@ -1764,7 +1764,7 @@
   {
     "repo": "practice",
     "file": "practice/src/services/compiler.js",
-    "sha256": "a2957188f5e19445a07b5b2f49c6c0935c27ac7bcc76792d9c4f0eddbba0ab49"
+    "sha256": "da818ed8cf611f9f5dae936dab92ca25c1bfa4265ced29e4eb21d44e23741d5b"
   },
   {
     "repo": "practice",

@@ -6,7 +6,11 @@ export const JAVA_LANGUAGE_ID = 91;
 export async function executeJava(sourceCode, stdin = '', {
   signal, onStatus, timeoutMs = 45000, pollIntervalMs = 1000,
 } = {}) {
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) throw new RangeError('timeoutMs must be greater than zero.');
+  if (!Number.isFinite(pollIntervalMs) || pollIntervalMs < 0) throw new RangeError('pollIntervalMs cannot be negative.');
   if (!sourceCode.trim()) throw new Error('Enter Java code before running.');
+  if (sourceCode.length > 100_000) throw new Error('Java source is too large to submit.');
+  if (typeof stdin !== 'string' || stdin.length > 100_000) throw new Error('Standard input is too large to submit.');
   const controller = new AbortController();
   let timedOut = false;
   const cancel = () => controller.abort();

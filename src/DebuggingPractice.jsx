@@ -1,13 +1,23 @@
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import QuestionDrawer from './QuestionDrawer';
-import { readPreference, writePreference } from './exercise-drafts';
+import { readPreference, writePreference, useExerciseDraft } from './exercise-drafts';
+import CloudSaveControls from './CloudSaveControls';
 import './debugging.css';
 
 export default function DebuggingPractice({ questions }) {
-  const [progress,setProgress]=useState(() => readPreference('debugging:progress:v1',{current:questions[0].id,choices:{},answers:{}},value => {
+  const initialProgress = useMemo(() => readPreference('debugging:progress:v1',{current:questions[0].id,choices:{},answers:{}},value => {
     if(!value || !questions.some(question => question.id === value.current) || !value.choices || !value.answers) return false;
     return [value.choices,value.answers].every(records => typeof records === 'object' && !Array.isArray(records) && Object.entries(records).every(([id,answer]) => { const question=questions.find(item => String(item.id) === id); return question && Number.isInteger(answer) && answer >= 0 && answer < question.options.length; }));
-  }));
+  }), [questions]);
+  const [progress,setProgress]=useState(initialProgress);
+  const cloudTask = useMemo(() => ({ id: 'progress', starter: JSON.stringify(initialProgress) }), [initialProgress]);
+  const draft = useExerciseDraft(cloudTask, 'debugging');
+  useEffect(() => {
+    try {
+      const remote = JSON.parse(draft.code);
+      if (remote && remote.choices && remote.answers && questions.some(question => question.id === remote.current)) setProgress(remote);
+    } catch { /* Keep the current local progress if a draft is malformed. */ }
+  }, [draft.code, questions]);
   const [topic,setTopic]=useState('All'), [review,setReview]=useState(false), [saved,setSaved]=useState('');
   const drawer=useRef(null), trigger=useRef(null);
   const incorrect=questions.filter(question => progress.answers[question.id] !== undefined && progress.answers[question.id] !== question.answer);
@@ -15,10 +25,11 @@ export default function DebuggingPractice({ questions }) {
   const question=filtered.find(item => item.id === progress.current) || filtered[0], index=filtered.indexOf(question);
   const answered=Object.keys(progress.answers).length, correct=questions.filter(item => progress.answers[item.id] === item.answer).length;
   const selected=question && progress.choices[question.id], submitted=question && progress.answers[question.id] !== undefined;
-  function update(patch) { const next={...progress,...patch}; setProgress(next); setSaved(writePreference('debugging:progress:v1',next) ? 'Progress saved locally' : 'Progress could not be saved'); }
+  function update(patch) { const next={...progress,...patch}; setProgress(next); draft.setCode(JSON.stringify(next)); setSaved(writePreference('debugging:progress:v1',next) ? 'Progress saved locally' : 'Progress could not be saved'); }
+  function restoreAfterSignOut() { setProgress(initialProgress); setSaved('Signed out. Local progress cleared.'); }
   function reset() { const choices={...progress.choices}, answers={...progress.answers}; delete choices[question.id]; delete answers[question.id]; update({choices,answers,current:question.id}); setReview(false); }
   return <main className="debugging-app">
-    <header className="debugging-header"><button className="debugging-menu" ref={trigger} aria-label="Open debugging question list" aria-haspopup="dialog" onClick={() => drawer.current.open()}>☰</button><div><h1>Debugging</h1><p>{questions.length} questions across Java and Spring.</p></div><span className="debugging-score" aria-live="polite">{correct} correct <span>/ {answered} answered</span></span></header>
+    <header className="debugging-header"><button className="debugging-menu" ref={trigger} aria-label="Open debugging question list" aria-haspopup="dialog" onClick={() => drawer.current.open()}>☰</button><div><h1>Debugging</h1><p>{questions.length} questions across Java and Spring.</p></div><span className="debugging-score" aria-live="polite">{correct} correct <span>/ {answered} answered</span></span><div className="debugging-header-actions"><CloudSaveControls compact draft={draft} onSubmit={draft.saveToCloud} onSignedOut={restoreAfterSignOut} /></div></header>
     <div className="debugging-toolbar"><label>Topic<select aria-label="Filter debugging by topic" value={topic} onChange={event => setTopic(event.target.value)}><option>All</option>{[...new Set(questions.map(item => item.topic))].map(item => <option key={item}>{item}</option>)}</select></label><button className="debugging-review" aria-pressed={review} onClick={() => setReview(value => !value)}>Review incorrect <span>{incorrect.length}</span></button><span className="debugging-saved" role="status">{saved}</span></div>
     <QuestionDrawer ref={drawer} title="Debugging" questions={filtered} selectedId={question?.id} onSelect={current => update({current})} triggerRef={trigger} statusFor={item => progress.answers[item.id] === undefined ? '' : progress.answers[item.id] === item.answer ? 'correct' : 'incorrect'} />
     {question ? <div className="debugging-grid">

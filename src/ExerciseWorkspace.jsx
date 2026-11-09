@@ -9,15 +9,16 @@ const Editor = lazy(() => import('./TaskCodeEditor'));
 
 export default function ExerciseWorkspace({ task, kind = 'task', onBack, onPrevious, onNext, questions, onSelect }) {
   const bank = kind === 'challenge' ? 'java' : 'reidy';
-  const { code, stdin, setCode, setStdin, saveStatus } = useExerciseDraft(task, bank);
+  const { code, stdin, setCode, setStdin, saveStatus, user, cloudEnabled, cloudStatus, cloudError, signIn, signUp, signOut, saveToCloud } = useExerciseDraft(task, bank);
   const project = task.runtime === 'project';
+  const taskIndex = Math.max(0, questions.findIndex(item => item.id === task.id));
   const samples = useMemo(() => sampleChecksFor(task, kind), [task, kind]);
   const editorTask = useMemo(() => ({ ...task, id: bank + '-' + task.id }), [task, bank]);
   const filename = task.language === 'sql' ? 'query.sql' : task.language === 'yaml' ? 'application.yaml' : project ? 'Exercise.java' : 'Main.java';
   const [checkResults, setCheckResults] = useState([]);
   const [snapshot, setSnapshot] = useState(null);
   const [file, setFile] = useState('code');
-  const questionDrawer = useRef(null), questionButton = useRef(null);
+  const questionDrawer = useRef(null), questionButton = useRef(null), cloudSaveControl = useRef(null);
   function selectFile(id) { setFile(id); }
   const [view, setView] = useState('problem');
   const [resultTab, setResultTab] = useState('testcase');
@@ -28,6 +29,9 @@ export default function ExerciseWorkspace({ task, kind = 'task', onBack, onPrevi
   const [status, setStatus] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState('');
+  const [cloudEmail, setCloudEmail] = useState('');
+  const [cloudPassword, setCloudPassword] = useState('');
+  const [cloudBusy, setCloudBusy] = useState(false);
   const split = useRef(null), request = useRef(null);
   useEffect(() => { writePreference('workspace:problem-width:v2', width); }, [width]);
 
@@ -39,6 +43,33 @@ export default function ExerciseWorkspace({ task, kind = 'task', onBack, onPrevi
   function loadSolution() {
     if (code !== task.starter && code !== task.solution && !window.confirm('Replace your draft with the solution?')) return;
     setCode(task.solution); setFile('code'); setNotice('Solution loaded into ' + filename + '.');
+  }
+  async function authenticate(mode) {
+    setCloudBusy(true);
+    try {
+      const result = mode === 'signup'
+        ? await signUp(cloudEmail, cloudPassword)
+        : await signIn(cloudEmail, cloudPassword);
+      if (result.error) setNotice(result.error.message);
+      else if (mode === 'signup' && !result.data?.session) setNotice('Account created. Check your email if confirmation is enabled.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Authentication failed.');
+    } finally {
+      setCloudBusy(false);
+    }
+  }
+  async function submitTask() {
+    if (!user) {
+      cloudSaveControl.current?.setAttribute('open', '');
+      setNotice(cloudEnabled ? 'Sign in to submit this task to the cloud.' : 'Configure Supabase before submitting this task.');
+      return;
+    }
+    try {
+      const result = await saveToCloud();
+      setNotice(result.error ? result.error.message : 'Task submitted and saved to the cloud.');
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : 'Cloud save failed.');
+    }
   }
   async function run(mode = 'run') {
     if (project || request.current || !code.trim()) return;
@@ -69,13 +100,27 @@ export default function ExerciseWorkspace({ task, kind = 'task', onBack, onPrevi
     setWidth(Math.max(28, Math.min(65, (event.clientX - bounds.left) / bounds.width * 100)));
   }
   return <main className="sample-app exercise-workspace" data-task-id={task.id}>
+    <div className="sample-context-bar">{kind === 'challenge' ? 'Backend Practice / Java Practice' : 'Backend Practice / ReidyAI Tasks'}</div>
     <header className="sample-header">
       <button className="sample-explorer-toggle sample-questions-toggle" ref={questionButton} aria-label="Open question list" aria-haspopup="dialog" onClick={() => questionDrawer.current.open()}>☰</button>
-      <button className="sample-back back-to-tasks" onClick={onBack}>← {kind === 'challenge' ? 'Challenges' : 'Tasks'}</button>
-      <div className="sample-title"><span>{kind === 'challenge' ? 'Java Practice / Challenge' : 'ReidyAI / Task'} {task.id}</span><strong>{task.title}</strong></div>
-      <span className="sample-language">{project ? 'Project' : 'Java 17'}</span>
+      <button className="sample-back back-to-tasks legacy-control" onClick={onBack}>← {kind === 'challenge' ? 'Challenges' : 'Tasks'}</button>
+      <div className="sample-title"><strong>{kind === 'challenge' ? 'Java Practice' : 'ReidyAI Tasks'}</strong></div>
       <button aria-label="Previous exercise" disabled={!onPrevious} onClick={onPrevious}>←</button><button aria-label="Next exercise" disabled={!onNext} onClick={onNext}>→</button>
-      <button onClick={reset}>Reset</button><button className="sample-checks" onClick={() => run('checks')} disabled={project || busy || !code.trim() || !samples.length}>Run sample checks</button><button className="sample-run" onClick={() => run()} disabled={project || busy || !code.trim()}>{project ? 'Run in project' : busy ? 'Running…' : '▶ Run code'}</button>
+      <span className="sample-count">{taskIndex + 1} / {questions.length}</span>
+      <div className="sample-header-actions"><button className="sample-checks legacy-control" onClick={() => run('checks')} disabled={project || busy || !code.trim() || !samples.length}>Run sample checks</button><button className="sample-run" onClick={() => run()} disabled={project || busy || !code.trim()}>{project ? 'Run in project' : busy ? 'Running…' : '▶ Run'}</button>
+      <details className="cloud-save-control compact" ref={cloudSaveControl}>
+        <summary>{user ? 'Cloud synced' : 'Save online'}</summary>
+        {!cloudEnabled && <p>Configure Supabase to enable cloud saving.</p>}
+        {cloudEnabled && user && <div><p>Signed in as {user.email}</p><button type="button" onClick={signOut}>Sign out</button></div>}
+        {cloudEnabled && !user && <form onSubmit={event => { event.preventDefault(); authenticate('signin'); }}>
+          <input type="email" value={cloudEmail} onChange={event => setCloudEmail(event.target.value)} placeholder="Email" required />
+          <input type="password" value={cloudPassword} onChange={event => setCloudPassword(event.target.value)} placeholder="Password" minLength="6" required />
+          <button type="submit" disabled={cloudBusy}>{cloudBusy ? 'Working...' : 'Sign in'}</button>
+          <button type="button" disabled={cloudBusy} onClick={() => authenticate('signup')}>Create account</button>
+        </form>}
+        {cloudError && <small role="alert">{cloudError}</small>}
+      </details>
+      <button className="sample-submit" type="button" onClick={submitTask}>Submit &amp; Save</button>{notice && <span className="sample-submit-status" role="status" aria-live="polite">{notice}</span>}</div>
     </header>
     <QuestionDrawer ref={questionDrawer} title={kind === 'challenge' ? 'Java Practice' : 'ReidyAI Tasks'} questions={questions} selectedId={task.id} onSelect={onSelect} triggerRef={questionButton} />
     <div className="sample-body">
@@ -85,7 +130,7 @@ export default function ExerciseWorkspace({ task, kind = 'task', onBack, onPrevi
         <div className="sample-info-content">
           {view === 'problem' && <><div className="sample-meta"><span>{task.difficulty}</span><span>{task.topic}</span></div><h1>{task.title}</h1><p>{task.statement}</p>{task.incident && <><h2>Symptoms</h2><ul>{task.incident.symptoms.map(item => <li key={item}>{item}</li>)}</ul><h2>Investigate</h2><ol>{task.incident.investigate.map(item => <li key={item}>{item}</li>)}</ol></>}<section className="sample-requirements"><h2>{task.requirements ? 'Requirements' : 'Acceptance criteria'}</h2>{!task.requirements && <p>{task.expected}</p>}<ol>{(task.requirements || []).map(item => <li key={item}>{item}</li>)}</ol></section><h2>Expected behavior</h2><pre>{task.expected}</pre><h2>Checks and context</h2><p>{task.notes}</p></>}
           {view === 'hint' && <><h1>Hints</h1><p>Open one hint at a time.</p>{(task.hintSteps || [task.pseudocode]).map((hint, index) => <details key={hint}><summary>Hint {index + 1}</summary><p>{hint}</p></details>)}</>}
-          {view === 'solution' && <><h1>Solution</h1><button className="sample-load" onClick={loadSolution}>Load into editor</button>{notice && <p role="status">{notice}</p>}<pre>{task.solution}</pre>{task.explanation && <><h2>Why this approach</h2>{task.explanation.map(item => <p key={item}>{item}</p>)}</>}</>}
+          {view === 'solution' && <><h1>Solution</h1><button className="sample-load" onClick={loadSolution}>Load into editor</button><pre>{task.solution}</pre>{task.explanation && <><h2>Why this approach</h2>{task.explanation.map(item => <p key={item}>{item}</p>)}</>}</>}
         </div>
       </section>
       <div className="sample-right-column" ref={codeSplit} style={{ '--code-height': height + '%' }}><section className="sample-code-pane" aria-label="Code workspace"><div className="sample-code-heading"><strong><span aria-hidden="true">&lt;/&gt;</span> Code</strong><span>{project ? task.language || 'Java' : 'Java 17'}</span><button onClick={reset} aria-label="Reset code" title="Reset code">↺</button></div>

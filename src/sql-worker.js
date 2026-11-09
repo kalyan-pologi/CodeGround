@@ -2,6 +2,14 @@ import initSqlJs from 'sql.js';
 import wasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
 import { compareSqlResults } from './sql-result-checks';
 
+// sql.js initialization is expensive. Keep the WASM module warm for the
+// lifetime of this worker while still creating and closing a database per job.
+let sqlPromise;
+function loadSql() {
+  sqlPromise ??= initSqlJs({ locateFile: () => wasmUrl });
+  return sqlPromise;
+}
+
 function execute(db, code, preview = '') {
   const results = [];
   const changesBefore = db.exec('SELECT total_changes()')[0].values[0][0];
@@ -21,7 +29,7 @@ function execute(db, code, preview = '') {
 self.onmessage = async ({ data }) => {
   let db, reference;
   try {
-    const SQL = await initSqlJs({ locateFile: () => wasmUrl });
+    const SQL = await loadSql();
     db = new SQL.Database(); db.run(data.setup);
     if (data.mode === 'inspect') {
       const names = db.exec("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name")[0]?.values || [];

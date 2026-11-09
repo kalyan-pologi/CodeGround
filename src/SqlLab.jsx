@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useExerciseDraft, readPreference, writePreference } from './exercise-drafts';
+import CloudSaveControls from './CloudSaveControls';
 
 function sqlJob(data, signal) {
   return new Promise((resolve, reject) => {
@@ -40,6 +41,8 @@ export default function SqlLab({ questions }) {
   const drawer = useRef(null), search = useRef(null), menu = useRef(null);
   const current = questions.find(question => question.id === selected) || questions[0];
   const index = questions.indexOf(current);
+  const draft = useExerciseDraft(current, 'sql');
+  const runAction = useRef(() => {}), checkAction = useRef(() => {});
   const filtered = questions.filter(question => (question.title + ' ' + question.category).toLowerCase().includes(query.trim().toLowerCase()));
   const categories = [...new Set(filtered.map(question => question.category))];
   function select(id) { setSelected(id); writePreference('sql-lab:selected', id); drawer.current?.close(); }
@@ -49,9 +52,10 @@ export default function SqlLab({ questions }) {
       <button className="sql-lab-menu" onClick={showQuestions} ref={menu} aria-haspopup="dialog" aria-controls="sql-question-drawer"><span aria-hidden="true">☰</span> SQL Lab</button>
       <button aria-label="Previous SQL question" disabled={index === 0} onClick={() => select(questions[index - 1].id)}>‹</button>
       <button aria-label="Next SQL question" disabled={index === questions.length - 1} onClick={() => select(questions[index + 1].id)}>›</button>
-      <span className="sql-question-count">{current.id} / {questions.length}</span><span className="sql-header-title">{current.category}</span>
+      <span className="sql-question-count">{current.id} / {questions.length}</span><div className="sql-header-actions"><button className="sql-run-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={draft.saveToCloud} /></div>
     </header>
-    <SqlQuestion key={current.id} question={current} />
+    {current.canCheck && <button className="sql-check-button" disabled={!current.runnable || !draft.code.trim()} onClick={() => checkAction.current()}>Check sample</button>}
+    <SqlQuestion key={current.id} question={current} draft={draft} runAction={runAction} checkAction={checkAction} />
     <dialog id="sql-question-drawer" className="sql-question-drawer" ref={drawer} aria-label="SQL Lab questions" onClose={() => menu.current?.focus()} onClick={event => { if (event.target === event.currentTarget) drawer.current.close(); }}>
       <div className="sql-drawer-inner"><div className="sql-drawer-header"><h2>SQL Lab</h2><button aria-label="Close SQL questions" onClick={() => drawer.current.close()}>×</button></div>
         <label className="sql-search-label"><span className="sql-sr-only">Search SQL questions</span><input ref={search} type="search" placeholder="Search questions" value={query} onChange={event => setQuery(event.target.value)} /></label>
@@ -60,8 +64,8 @@ export default function SqlLab({ questions }) {
     </dialog>
   </main>;
 }
-function SqlQuestion({ question }) {
-  const { code, setCode, saveStatus } = useExerciseDraft(question, 'sql');
+function SqlQuestion({ question, draft, runAction, checkAction }) {
+  const { code, setCode, saveStatus } = draft;
   const [leftTab, setLeftTab] = useState('description');
   const [resultTab, setResultTab] = useState('testcase');
   const [schema, setSchema] = useState(null);
@@ -90,6 +94,8 @@ function SqlQuestion({ question }) {
     } catch (error) { if (!controller.signal.aborted) setOutput({ error: error.message }); }
     finally { if (!controller.signal.aborted) setBusy(false); request.current = null; }
   }
+  runAction.current = () => run();
+  checkAction.current = () => run('check');
   function loadSolution() {
     if (code !== question.starter && code !== question.solution && !window.confirm('Replace your query with the solution?')) return;
     setCode(question.solution); setNotice('Solution loaded into the editor.');
@@ -126,7 +132,7 @@ function SqlQuestion({ question }) {
     <section className="sql-right-panel" ref={right}>
       <section className="sql-editor-panel" aria-label="SQL code workspace">
         <div className="sql-code-heading"><strong><span aria-hidden="true">〈/〉</span> Code</strong><div><button aria-label="Copy SQL code" onClick={async () => { try { await navigator.clipboard.writeText(code); setNotice('Query copied.'); } catch { setNotice('Select your query to copy it.'); } }}>Copy</button><button aria-label="Expand SQL editor" aria-pressed={expanded} onClick={() => setExpanded(value => !value)}>{expanded ? 'Restore' : 'Expand'}</button><button onClick={reset}>Reset</button></div></div>
-        <div className="sql-editor-actions"><span>SQLite</span><div><button className="sql-run-button" disabled={!question.runnable || busy} onClick={() => run()}>{busy ? 'Running…' : '▶ Run'}</button><button className="sql-check-button" disabled={!question.canCheck || busy} onClick={() => run('check')}>Check sample</button></div></div>
+        <div className="sql-editor-actions"><span>SQLite</span></div>
         <div className="sql-editor-area"><pre className="sql-line-numbers" ref={gutter} aria-hidden="true">{Array.from({ length: code.split('\n').length }, (_,index) => index + 1).join('\n')}</pre><textarea ref={editor} aria-label="SQL code" className="sql-lab-code" spellCheck="false" wrap="off" value={code} onChange={event => setCode(event.target.value)}
           onSelect={event => { const before = event.target.value.slice(0,event.target.selectionStart); setCursor({ line: before.split('\n').length, column: before.length - before.lastIndexOf('\n') }); }}
           onScroll={event => { gutter.current.scrollTop = event.currentTarget.scrollTop; }}

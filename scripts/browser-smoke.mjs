@@ -71,7 +71,7 @@ try {
   const practicePosition = await evaluate(`(() => { const box=document.querySelector('[data-tab="practice"]').getBoundingClientRect(); return {x:box.left+box.width/2,y:box.top+box.height/2}; })()`);
   await command('Input.dispatchMouseEvent', {type:'mouseMoved',...practicePosition}, sessionId);
   await until(`!document.querySelector('.mega-menu').hidden && document.querySelector('[data-tab="practice"]').getAttribute('aria-expanded') === 'true'`);
-  assert.equal(await evaluate(`document.querySelectorAll('.mega-menu .side-link').length`), 5);
+  assert.equal(await evaluate(`document.querySelectorAll('.mega-menu .side-link').length`), 6);
   await command('Input.dispatchKeyEvent', {type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27}, sessionId);
   await until(`document.querySelector('.mega-menu').hidden`);
   await evaluate(`document.querySelector('[data-tab="backend"]').focus()`);
@@ -106,7 +106,7 @@ try {
   await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.task-title-list button').length === 34`);
   await evaluate(`document.querySelector('[data-tab="practice"]').click()`);
   await until(`!document.querySelector('.mega-menu').hidden`);
-  assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.mega-menu .side-link')).map(link => link.hash)`), ['#practice/tasks', '#practice/workspace', '#practice/debugging', '#practice/interview/java-snippets', '#practice/interview/sql-snippets']);
+  assert.deepEqual(await evaluate(`Array.from(document.querySelectorAll('.mega-menu .side-link')).map(link => link.hash)`), ['#practice/tasks', '#practice/workspace', '#practice/debugging', '#practice/interview/java-interview-questions', '#practice/interview/java-snippets', '#practice/interview/sql-snippets']);
   assert.ok(await evaluate(`!Array.from(document.querySelectorAll('.side-section-title')).some(title => title.textContent.trim() === 'Reference')`));
   await evaluate(`document.querySelector('.mega-close').click()`);
   assert.ok(await evaluate(`!document.querySelector('iframe').contentDocument.querySelector('.monaco-editor')`), 'List should not load the editor');
@@ -172,7 +172,7 @@ try {
   await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.sample-views button')[2].click()`);
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.sample-load'))`);
   await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.sample-load').click()`);
-  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.sample-info-content')?.textContent.includes('Solution loaded')`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.sample-submit-status')?.textContent.includes('Solution loaded')`);
   if (process.env.CODEGROUND_RUN_JAVA === '1') {
     await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.sample-checks').click()`);
     await until(`document.querySelector('iframe')?.contentDocument?.querySelector('[aria-label="Execution result"]')?.textContent.includes('1/1 sample checks passed')`);

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import Navigator from './Navigator';
 import TopicFilter from './TopicFilter';
 export default function McqPractice({ questions }) {
@@ -7,8 +7,8 @@ export default function McqPractice({ questions }) {
   const [current, setCurrent] = useState(questions[0].id);
   const [choices, setChoices] = useState({});
   const [answers, setAnswers] = useState({});
-  const incorrect = questions.filter(q => answers[q.id] !== undefined && answers[q.id] !== q.answer);
-  const filtered = questions.filter(q => (topic === 'All' || q.topic === topic) && (!review || incorrect.includes(q)));
+  const incorrectIds = useMemo(() => new Set(questions.filter(q => answers[q.id] !== undefined && answers[q.id] !== q.answer).map(q => q.id)), [answers, questions]);
+  const filtered = useMemo(() => questions.filter(q => (topic === 'All' || q.topic === topic) && (!review || incorrectIds.has(q.id))), [incorrectIds, questions, review, topic]);
   const question = filtered.find(q => q.id === current) || filtered[0];
   const index = filtered.indexOf(question);
   const submitted = question && answers[question.id] !== undefined;
@@ -29,7 +29,7 @@ export default function McqPractice({ questions }) {
     setReview(false);
   }
   return <section aria-label="Debugging practice">
-    <div className="toolbar"><TopicFilter value={topic} onChange={setTopic} /><label className="check"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} />Review incorrect ({incorrect.length})</label><span className="score" aria-live="polite">Score: {correct} / {Object.keys(answers).length} answered | {questions.length} total</span></div>
+    <div className="toolbar"><TopicFilter value={topic} onChange={setTopic} /><label className="check"><input type="checkbox" checked={review} onChange={e => setReview(e.target.checked)} />Review incorrect ({incorrectIds.size})</label><span className="score" aria-live="polite">Score: {correct} / {Object.keys(answers).length} answered | {questions.length} total</span></div>
     <div className="layout"><aside className="panel"><h2>Questions</h2><Navigator key={`${topic}-${review}`} items={filtered} current={question?.id} onSelect={setCurrent} pageSize={20} status={q => answers[q.id] === undefined ? '' : answers[q.id] === q.answer ? 'correct' : 'incorrect'} /><p className="muted">Green: correct | Red: incorrect<br />Outlined: current question</p></aside>
     {question ? <article className="panel"><div className="meta">MCQ {question.id}  |  {question.topic}  |  {question.difficulty}</div><h2>{question.title}</h2><p>{question.prompt}</p><pre><code>{question.code}</code></pre><fieldset disabled={submitted}><legend>Choose one answer</legend>{question.options.map((option, i) => <label className="option" key={i}><input type="radio" name={`mcq-${question.id}`} checked={choices[question.id] === i} onChange={() => setChoices({ ...choices, [question.id]: i })} /><span>{String.fromCharCode(65 + i)}. {option}</span></label>)}</fieldset>
     <div className="toolbar"><button className="primary" disabled={submitted || choices[question.id] === undefined} onClick={() => setAnswers({ ...answers, [question.id]: choices[question.id] })}>{submitted ? 'Submitted' : 'Submit answer'}</button>{submitted && <button onClick={resetAnswer}>Reset answer</button>}</div>

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Editor, { loader } from '@monaco-editor/react';
 import * as monaco from 'monaco-editor/esm/vs/editor/editor.api';
 import 'monaco-editor/esm/vs/basic-languages/java/java.contribution';
@@ -20,8 +20,12 @@ export default function CodingPractice({ challenges, active, initialSelectedId }
   const [runs, setRuns] = useState({});
   const [runningId, setRunningId] = useState(null);
   const request = useRef(null);
-  useEffect(() => () => request.current?.abort(), []);
-  const filtered = challenges.filter(question => topic === 'All' || question.topic === topic);
+  useEffect(() => {
+    if (!active) request.current?.abort();
+    return () => request.current?.abort();
+  }, [active]);
+  const availableTopics = useMemo(() => [...new Set(challenges.map(challenge => challenge.topic))], [challenges]);
+  const filtered = useMemo(() => challenges.filter(question => topic === 'All' || question.topic === topic), [challenges, topic]);
   const question = filtered.find(question => question.id === selected) || filtered[0];
   const current = question?.id;
   const requiresProject = question?.runtime === 'project';
@@ -62,7 +66,7 @@ export default function CodingPractice({ challenges, active, initialSelectedId }
     if (window.confirm('Reset this challenge to the selected code template?')) setDrafts(previous => ({ ...previous, [current]: base }));
   }
   return <section aria-label="Coding practice">
-    <div className="toolbar"><TopicFilter value={topic} onChange={setTopic} availableTopics={challenges.map(challenge => challenge.topic)} /></div>
+    <div className="toolbar"><TopicFilter value={topic} onChange={setTopic} availableTopics={availableTopics} /></div>
     <div className="layout"><aside className="panel"><h2>Challenges</h2><Navigator key={topic} items={filtered} current={current} onSelect={setSelected} pageSize={20} /></aside>
     {question ? <article className="panel"><div className="meta">Challenge {current} | {question.topic} | {question.difficulty}</div><h2>{question.title}</h2><p className="muted">{question.environment}</p><p>{question.statement}</p>
     {question.incident && <><section aria-label="Incident symptoms"><h3>Symptoms</h3><ul>{question.incident.symptoms.map(symptom => <li key={symptom}>{symptom}</li>)}</ul></section><section aria-label="Incident investigation"><h3>Investigate</h3><ol>{question.incident.investigate.map(step => <li key={step}>{step}</li>)}</ol></section></>}

@@ -4,6 +4,18 @@ import './modern.css';
 import catalog from './catalog.json';
 import { fetchText, loadNoteContent } from './note-content.js';
 
+let supabase = null;
+let supabaseLoad;
+async function loadSupabase() {
+  if (supabase) return supabase;
+  supabaseLoad ??= import('./supabase.js').then(module => {
+    supabase = module.supabase;
+    if (supabase) supabase.auth.onAuthStateChange((_event, session) => updateProfileControl(session));
+    return supabase;
+  });
+  return supabaseLoad;
+}
+
 const tabs = ['Home', 'Backend', 'Backend Practice', 'DevOps', 'Web', 'SD', 'GenAI'];
 const slugs = ['home', 'backend', 'practice', 'devops', 'web', 'sd', 'genai'];
 const groups = {
@@ -16,6 +28,14 @@ const groups = {
 const names = { '@overview': 'Overview', '@tasks': 'ReidyAI Project Tasks', '@workspace': 'Java Practice Exercises', '@debugging': 'Debugging', 'java-snippets': 'Java Stream Code' };
 const labels = { backend: 'Java, Spring Boot & design principles', practice: 'Build skills through project work', devops: 'Commands, containers & cloud', web: 'Frontend fundamentals & frameworks', sd: 'Architecture & distributed systems', genai: 'Models, retrieval & AI applications' };
 const escape = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+const initials = email => {
+  const value = String(email || '').split('@')[0].replace(/[^a-z0-9]+/gi, ' ').trim();
+  const parts = value.split(/\s+/).filter(Boolean);
+  return (parts.length > 1 ? parts[0][0] + parts[1][0] : value.slice(0, 2) || '?').toUpperCase();
+};
+const clearLocalDrafts = () => {
+  try { Object.keys(localStorage).filter(key => key.startsWith('codeground:draft:v1:')).forEach(key => localStorage.removeItem(key)); } catch { /* Local storage may be unavailable. */ }
+};
 const noteIndex = new Map(catalog.map(note => [`${note.repo}/${note.id}`, note]));
 const getNote = (repo, id) => noteIndex.get(`${repo}/${id}`);
 const notesByRepo = catalog.reduce((map, note) => {
@@ -68,12 +88,25 @@ const noteRoute = note => `#${tabFor(note)}/${note.repo}/${note.id}`;
 const defaultRoute = tab => tab === 'home' ? '#home' : tab === 'practice' ? '#practice/tasks' : (tab === 'sd' || tab === 'genai') ? `#${tab}/${tab}/home` : `#${tab}/interview/${groups[tab][0][1][0]}`;
 let routeVersion = 0;
 document.querySelector('#app').innerHTML = `
-  <header class="topbar"><div class="brand-group"><a class="brand" href="#home"><span class="brand-icon">&lt;/&gt;</span><span>CodeGround</span></a></div><nav class="tabs" aria-label="Main navigation">${tabs.map((tab, i) => `<button class="nav-tab" data-tab="${slugs[i]}" aria-expanded="false" aria-controls="topic-menu">${tab}<span class="nav-chevron" aria-hidden="true"></span></button>`).join('')}</nav><div class="toplinks"><input class="search" type="search" aria-label="Search all notes" placeholder="Search all notes…"></div></header>
+  <header class="topbar"><div class="brand-group"><a class="brand" href="#home"><span class="brand-icon">&lt;/&gt;</span><span>CodeGround</span></a></div><nav class="tabs" aria-label="Main navigation">${tabs.map((tab, i) => `<button class="nav-tab" data-tab="${slugs[i]}" aria-expanded="false" aria-controls="topic-menu">${tab}<span class="nav-chevron" aria-hidden="true"></span></button>`).join('')}</nav><div class="toplinks"><input class="search" type="search" aria-label="Search all notes" placeholder="Search all notes…"><a class="profile-link" href="#profile" aria-label="Open profile"><span class="profile-avatar">?</span><span class="profile-label">Profile</span></a></div></header>
   <section id="topic-menu" class="mega-menu" aria-label="Topic navigation" hidden><div class="mega-header"><button class="mega-close" aria-label="Close topic menu">×</button></div><div class="mega-columns"></div></section><div class="workspace"><main class="main" id="main"></main></div>`;
 const main = document.querySelector('#main');
 const search = document.querySelector('.search');
+const profileLink = document.querySelector('.profile-link');
+const profileAvatar = document.querySelector('.profile-avatar');
 const topicMenu = document.querySelector('.mega-menu');
 const topicContent = document.querySelector('.mega-columns');
+async function updateProfileControl(session) {
+  const client = await loadSupabase();
+  const current = session === undefined
+    ? (client ? (await client.auth.getSession()).data.session : null)
+    : session;
+  const email = current?.user?.email || '';
+  profileAvatar.textContent = initials(email);
+  profileLink.classList.toggle('signed-in', Boolean(email));
+  profileLink.title = email ? `Signed in as ${email}` : 'Open profile and sign in';
+}
+updateProfileControl();
 function closeDropdown(restoreFocus = false) {
   clearTimeout(closeTimer);
   const trigger = document.querySelector('[data-tab="' + openTab + '"]');
@@ -222,6 +255,36 @@ function showSearch(query) {
   const matches = searchIndex.filter(entry => entry.text.includes(normalizedQuery)).map(entry => entry.note);
   main.innerHTML = `<div class="page"><div class="eyebrow">All learning areas</div><h1>Search your library.</h1><p class="muted">${matches.length} topic matches for “${escape(query)}”</p>${matches.map(note => `<a class="result" href="${noteRoute(note)}">${escape(note.title)}<small>${escape(tabs[slugs.indexOf(tabFor(note))])} · ${escape(note.repo)}</small></a>`).join('') || '<p>No matching topics. Try Java, cache, RAG, or Docker.</p>'}</div>`;
 }
+function showProfile() {
+  main.innerHTML = `<div class="profile-page"><div class="profile-card"><p class="eyebrow">CodeGround account</p><div class="profile-hero"><div class="profile-avatar profile-avatar-large">?</div><div><h1>Your profile</h1><p class="muted">Manage your practice account and cloud-saved work.</p></div></div><div id="profile-content" class="profile-content"><p class="loading">Loading profile…</p></div></div></div>`;
+  const content = main.querySelector('#profile-content');
+  async function renderProfile(sessionOverride) {
+    const client = await loadSupabase();
+    const session = sessionOverride === undefined
+      ? (client ? (await client.auth.getSession()).data.session : null)
+      : sessionOverride;
+    const user = session?.user;
+    const avatar = main.querySelector('.profile-avatar-large');
+    avatar.textContent = initials(user?.email);
+    if (!client) {
+      content.innerHTML = '<div class="profile-empty"><h2>Cloud saving is not configured</h2><p>Set the Supabase environment variables to use profiles and cloud saving.</p></div>';
+      return;
+    }
+    if (!user) {
+      content.innerHTML = `<h2>Sign in to your profile</h2><p class="muted">Your practice drafts stay local until you sign in and choose Submit &amp; Save.</p><form class="profile-auth-form"><label>Email<input type="email" name="email" required autocomplete="email"></label><label>Password<input type="password" name="password" required minlength="6" autocomplete="current-password"></label><div class="profile-actions"><button type="submit">Sign in</button><button type="button" data-profile-signup>Create account</button></div><p class="profile-message" role="status"></p></form>`;
+      const form = content.querySelector('form');
+      const message = content.querySelector('.profile-message');
+      const credentials = () => ({ email: form.elements.email.value.trim(), password: form.elements.password.value });
+      form.addEventListener('submit', async event => { event.preventDefault(); message.textContent = 'Signing in…'; const result = await client.auth.signInWithPassword(credentials()); message.textContent = result.error ? result.error.message : 'Signed in successfully.'; if (!result.error) renderProfile(); });
+      content.querySelector('[data-profile-signup]').addEventListener('click', async () => { message.textContent = 'Creating account…'; const result = await client.auth.signUp(credentials()); message.textContent = result.error ? result.error.message : result.data.session ? 'Account created and signed in.' : 'Account created. Check your email if confirmation is enabled.'; if (!result.error && result.data.session) renderProfile(); });
+      return;
+    }
+    const created = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown';
+    content.innerHTML = `<div class="profile-details"><div><span>Email</span><strong>${escape(user.email || 'Unknown')}</strong></div><div><span>Account created</span><strong>${escape(created)}</strong></div><div><span>Cloud drafts</span><strong>Available</strong></div></div><div class="profile-actions"><button type="button" data-profile-signout>Sign out</button><a class="profile-secondary" href="#practice/tasks">Practice tasks</a></div><p class="profile-message" role="status"></p>`;
+    content.querySelector('[data-profile-signout]').addEventListener('click', async () => { const result = await client.auth.signOut(); const message = content.querySelector('.profile-message'); message.textContent = result.error ? result.error.message : 'Signed out.'; if (!result.error) { clearLocalDrafts(); updateProfileControl(null); renderProfile(null); } });
+  }
+  renderProfile();
+}
 function router() {
   clearTimeout(searchTimer);
   closeDropdown();
@@ -232,6 +295,7 @@ function router() {
     const query = new URLSearchParams(location.hash.split('?')[1]).get('q') || '';
     search.value = query; showSearch(query); return;
   }
+  if (requestedTab === 'profile') { search.value = ''; showProfile(); return; }
   const tab = slugs.includes(requestedTab) ? requestedTab : 'home';
   search.value = '';
   document.querySelectorAll('[data-tab]').forEach(link => { link.classList.toggle('active', link.dataset.tab === tab); link.setAttribute('aria-current', link.dataset.tab === tab ? 'page' : 'false'); });

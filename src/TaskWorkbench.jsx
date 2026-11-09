@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import './task-workbench.css';
 const ExerciseWorkspace = lazy(() => import('./ExerciseWorkspace'));
 
@@ -8,11 +8,11 @@ export default function TaskWorkbench({ tasks, initialSelectedId, kind = 'task' 
   const [selectedId, setSelectedId] = useState(initialSelectedId || null);
   const [query, setQuery] = useState('');
   const [topic, setTopic] = useState('All');
-  const task = tasks.find(item => item.id === selectedId);
-  const topics = [...new Set(tasks.map(item => item.topic))];
+  const task = useMemo(() => tasks.find(item => item.id === selectedId), [tasks, selectedId]);
+  const topics = useMemo(() => [...new Set(tasks.map(item => item.topic))], [tasks]);
   const normalizedQuery = query.trim().toLowerCase();
-  const filtered = tasks.filter(item => (topic === 'All' || item.topic === topic)
-    && `${item.id} ${item.title} ${item.topic}`.toLowerCase().includes(normalizedQuery));
+  const filtered = useMemo(() => tasks.filter(item => (topic === 'All' || item.topic === topic)
+    && `${item.id} ${item.title} ${item.topic}`.toLowerCase().includes(normalizedQuery)), [normalizedQuery, tasks, topic]);
   const index = task ? tasks.indexOf(task) : -1;
   if (task) return <Suspense fallback={<p role="status">Loading workspace…</p>}><ExerciseWorkspace key={kind + '-' + task.id} task={task} kind={kind} questions={tasks} onSelect={setSelectedId}
     onBack={() => setSelectedId(null)} onPrevious={index > 0 ? () => setSelectedId(tasks[index - 1].id) : undefined}

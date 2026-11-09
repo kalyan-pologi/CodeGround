@@ -1,26 +1,29 @@
 import { useEffect, useRef, useState } from 'react';
 import { executeJava } from '../practice/src/services/compiler';
 import { useExerciseDraft, readPreference, writePreference } from './exercise-drafts';
+import CloudSaveControls from './CloudSaveControls';
 
 export default function StreamLab({ questions }) {
   const [selected,setSelected] = useState(() => readPreference('streams:selected',questions[0].id,id => questions.some(question => question.id === id)));
   const [query,setQuery] = useState('');
   const drawer=useRef(null), search=useRef(null), menu=useRef(null);
   const question=questions.find(item => item.id === selected) || questions[0], index=questions.indexOf(question);
+  const draft=useExerciseDraft(question,'streams');
+  const runAction=useRef(() => {});
   const filtered=questions.filter(item => (item.title+' '+item.category).toLowerCase().includes(query.trim().toLowerCase()));
   const categories=[...new Set(filtered.map(item => item.category))];
   function select(id) { setSelected(id); writePreference('streams:selected',id); drawer.current?.close(); }
   return <main className="sql-lab stream-lab"><header className="sql-lab-header"><button className="sql-lab-menu stream-lab-menu" ref={menu} aria-haspopup="dialog" aria-controls="stream-question-drawer" onClick={() => { drawer.current.showModal(); search.current.focus(); }}><span aria-hidden="true">☰</span> Java Streams</button>
-    <button aria-label="Previous Stream question" disabled={index === 0} onClick={() => select(questions[index-1].id)}>‹</button><button aria-label="Next Stream question" disabled={index === questions.length-1} onClick={() => select(questions[index+1].id)}>›</button><span className="sql-question-count">{question.id} / {questions.length}</span><span className="sql-header-title">{question.category}</span></header>
-    <StreamQuestion key={question.id} question={question} />
+    <button aria-label="Previous Stream question" disabled={index === 0} onClick={() => select(questions[index-1].id)}>‹</button><button aria-label="Next Stream question" disabled={index === questions.length-1} onClick={() => select(questions[index+1].id)}>›</button><span className="sql-question-count">{question.id} / {questions.length}</span><div className="sql-header-actions"><button className="stream-run-button sql-run-button" disabled={!question.runnable || !draft.code.trim()} onClick={() => runAction.current()}>▶ Run</button><CloudSaveControls compact draft={draft} onSubmit={draft.saveToCloud} /></div></header>
+    <StreamQuestion key={question.id} question={question} draft={draft} runAction={runAction} />
     <dialog className="sql-question-drawer stream-question-drawer" id="stream-question-drawer" ref={drawer} aria-label="Java Stream questions" onClose={() => menu.current?.focus()} onClick={event => { if(event.target === event.currentTarget) drawer.current.close(); }}>
       <div className="sql-drawer-inner"><div className="sql-drawer-header"><h2>Java Streams</h2><button aria-label="Close Stream questions" onClick={() => drawer.current.close()}>×</button></div><label className="sql-search-label"><span className="sql-sr-only">Search Stream questions</span><input ref={search} type="search" placeholder="Search questions" value={query} onChange={event => setQuery(event.target.value)} /></label>
       <div className="sql-question-list">{categories.map(category => <section key={category}><h3>{category}</h3>{filtered.filter(item => item.category === category).map(item => <button key={item.id} className="sql-question-button stream-question-button" data-question-id={item.id} aria-current={question.id === item.id ? 'page' : undefined} onClick={() => select(item.id)}><span className="sql-question-dot" /><span>{item.id}. {item.title}</span><small>{item.runnable ? 'Java 17' : 'Reference'}</small></button>)}</section>)}{!filtered.length && <p className="sql-muted">No matching questions.</p>}</div></div>
     </dialog>
   </main>;
 }
-function StreamQuestion({ question }) {
-  const {code,stdin,setCode,setStdin,saveStatus}=useExerciseDraft(question,'streams');
+function StreamQuestion({ question, draft, runAction }) {
+  const {code,stdin,setCode,setStdin,saveStatus}=draft;
   const [tab,setTab]=useState('description'), [resultTab,setResultTab]=useState('output'), [file,setFile]=useState('code');
   const [result,setResult]=useState(null), [status,setStatus]=useState(''), [busy,setBusy]=useState(false), [notice,setNotice]=useState('');
   const [snapshot,setSnapshot]=useState(null), [width,setWidth]=useState(45), [height,setHeight]=useState(65);
@@ -39,6 +42,7 @@ function StreamQuestion({ question }) {
     catch(error) { if(!controller.signal.aborted) setStatus(error.message); }
     finally { if(!controller.signal.aborted) setBusy(false); request.current=null; }
   }
+  runAction.current=run;
   const events=axis => ({onPointerDown:event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); },
     onPointerMove:event => { if(!event.currentTarget.hasPointerCapture(event.pointerId)) return; const box=(axis === 'x' ? grid : right).current.getBoundingClientRect(); if(axis === 'x') setWidth(Math.max(28,Math.min(65,(event.clientX-box.left)/box.width*100))); else setHeight(Math.max(28,Math.min(75,(event.clientY-box.top)/box.height*100))); },
     onPointerUp:event => { if(event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); },
@@ -52,7 +56,7 @@ function StreamQuestion({ question }) {
       {tab === 'solution' && <><h1>Solution</h1>{notice && <p role="status">{notice}</p>}{question.solutions.map((solution,index) => <section className="stream-solution-example" key={index}><h2>{solution.title}</h2>{question.runnable && <button className="stream-load-solution" data-solution-index={index} onClick={() => load(index)}>{index ? 'Load alternative into editor' : 'Load solution into editor'}</button>}<pre>{solution.code}</pre>{solution.choose && <p>{solution.choose}</p>}</section>)}</>}
     </div></section>
     <div className="sql-divider vertical" role="separator" aria-label="Resize Stream description" aria-orientation="vertical" aria-valuemin={28} aria-valuemax={65} aria-valuenow={Math.round(width)} tabIndex={0} {...events('x')} />
-    <section className="sql-right-panel" ref={right}><section className="sql-editor-panel" aria-label="Java Stream code"><div className="sql-code-heading"><nav className="stream-file-tabs" aria-label="Stream editor files"><button aria-pressed={file === 'code'} onClick={() => setFile('code')}>{question.runnable ? 'Main.java' : 'Reference.java'}</button><button aria-pressed={file === 'input'} onClick={() => setFile('input')}>Input</button></nav><button disabled={!question.runnable} onClick={reset}>Reset</button></div><div className="sql-editor-actions"><span>{question.runnable ? 'Java 17 · Judge0' : 'Read-only reference'}</span><button className="stream-run-button sql-run-button" disabled={!question.runnable || busy || !code.trim()} onClick={run}>{busy ? 'Running…' : '▶ Run code'}</button></div>
+    <section className="sql-right-panel" ref={right}><section className="sql-editor-panel" aria-label="Java Stream code"><div className="sql-code-heading"><nav className="stream-file-tabs" aria-label="Stream editor files"><button aria-pressed={file === 'code'} onClick={() => setFile('code')}>{question.runnable ? 'Main.java' : 'Reference.java'}</button><button aria-pressed={file === 'input'} onClick={() => setFile('input')}>Input</button></nav><button disabled={!question.runnable} onClick={reset}>Reset</button></div><div className="sql-editor-actions"><span>{question.runnable ? 'Java 17 · Judge0' : 'Read-only reference'}</span></div>
       <div className="sql-editor-area" hidden={file !== 'code'}><pre className="sql-line-numbers" ref={gutter} aria-hidden="true">{Array.from({length:code.split('\n').length},(_,index) => index+1).join('\n')}</pre><textarea ref={editor} className="sql-lab-code stream-lab-code" aria-label="Java Stream code" spellCheck="false" wrap="off" readOnly={!question.runnable} value={code} onChange={event => setCode(event.target.value)} onScroll={event => { gutter.current.scrollTop=event.currentTarget.scrollTop; }}
         onKeyDown={event => { if(event.key !== 'Tab' || !question.runnable) return; event.preventDefault(); const target=event.currentTarget, start=target.selectionStart, end=target.selectionEnd; setCode(code.slice(0,start)+'    '+code.slice(end)); requestAnimationFrame(() => target.setSelectionRange(start+4,start+4)); }} /></div>
       {file === 'input' && <div className="stream-input-pane"><label>Standard input<textarea aria-label="Stream standard input" value={stdin} onChange={event => setStdin(event.target.value)} placeholder="Optional input for System.in" /></label><p>Sample collections are already included in Main.java. Leave input empty unless your code reads System.in.</p></div>}
