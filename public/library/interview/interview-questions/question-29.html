@@ -1,1 +1,54 @@
+<h3>Question: How do optimistic and pessimistic locking work, and how would you prevent lost updates when multiple transactions modify the same database record?</h3>
+<h3>Short answer</h3>
+<p>Optimistic locking assumes collisions are uncommon: read a row with a version, then update only if the version is unchanged. A failed update means another transaction won; reload and retry or return a conflict. Pessimistic locking acquires a database row lock before changing data, making contenders wait or fail according to timeout. Both protect against lost updates when correctly used inside transactions; choose based on contention and business rules.</p>
 
+<h3>Internal working</h3>
+<p>With optimistic locking, an update resembles <code>UPDATE account SET balance=?, version=version+1 WHERE id=? AND version=?</code>. Zero affected rows means stale state. JPA's <code>@Version</code> automates this for managed entities and raises an optimistic-lock exception. With pessimistic locking, a transaction may use <code>SELECT ... FOR UPDATE</code> or JPA <code>PESSIMISTIC_WRITE</code>; the lock normally lasts until commit/rollback. Locking behavior and isolation details depend on the database.</p>
+
+<h3>Runnable Java 17 + H2 example</h3>
+<p>Add H2 to the classpath, save as <code>OptimisticUpdateDemo.java</code>, and run it. This uses JDBC's affected-row count to show the version check.</p>
+<pre><code>import java.sql.*;
+
+public class OptimisticUpdateDemo {
+    public static void main(String[] args) throws Exception {
+        try (Connection db = DriverManager.getConnection("jdbc:h2:mem:demo")) {
+            db.createStatement().execute(
+                "create table account(id int primary key, balance int, version int)");
+            db.createStatement().execute("insert into account values(1,100,0)");
+            String sql = "update account set balance=?, version=version+1 "
+                       + "where id=1 and version=?";
+            try (PreparedStatement update = db.prepareStatement(sql)) {
+                update.setInt(1, 90);
+                update.setInt(2, 0);
+                int first = update.executeUpdate();
+                update.setInt(1, 80);
+                update.setInt(2, 0); // Stale version.
+                int stale = update.executeUpdate();
+                System.out.println("first=" + first + ", stale=" + stale);
+            }
+            try (ResultSet row = db.createStatement().executeQuery(
+                    "select balance, version from account")) {
+                row.next();
+                System.out.println("balance=" + row.getInt(1)
+                    + ", version=" + row.getInt(2));
+            }
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>first=1, stale=0
+balance=90, version=1</code></pre>
+
+<h3>Real-world decisions and edge cases</h3>
+<p>Use optimistic locking for many reads and infrequent conflicting writes, such as editing a profile. Use pessimistic locking for short, highly contended critical sections when waiting is acceptable, such as reserving a scarce seat; set lock timeouts and maintain consistent lock ordering. For a balance decrement, a single conditional SQL update (<code>WHERE balance &gt;= amount</code>) can enforce the invariant atomically without first reading the row. On optimistic conflict, retry only if the operation is idempotent or can safely be recomputed; never blindly reapply a payment side effect. A local Java lock does not coordinate multiple application instances.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>What does JPA <code>@Version</code> do?</strong> Adds a version check to updates/deletes and detects stale writes.</li>
+  <li><strong>Does pessimistic locking prevent deadlocks?</strong> No. Two transactions can lock rows in opposite orders.</li>
+  <li><strong>Is optimistic locking the same as serializable isolation?</strong> No; it detects conflicts on versioned rows but does not cover every multi-row invariant.</li>
+  <li><strong>What should an API return on an edit conflict?</strong> Often HTTP 409 or 412, with a way for the client to reload and resolve.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I prevent lost updates with a version check or a database row lock, not an in-process mutex. Optimistic locking updates only when the version still matches and handles a zero-row update as a conflict. Pessimistic locking obtains a row lock for a short transaction. I choose by contention, add timeouts and retry policy, and use conditional SQL for invariants such as non-negative balance.</blockquote>

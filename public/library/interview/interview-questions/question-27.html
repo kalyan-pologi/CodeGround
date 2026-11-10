@@ -1,1 +1,54 @@
+<h3>Question: A Spring Boot application works locally but fails or performs poorly in production. How would you troubleshoot profiles, configuration, Actuator, logging, startup, connection pools, and resource limitations?</h3>
+<h3>Short answer</h3>
+<p>Compare the production environment with local assumptions before changing code. Confirm the active profile and resolved non-secret configuration, startup failure cause, dependency reachability, health/readiness, database pool state, thread/memory/CPU limits, and latency by dependency. Use structured logs, metrics, and traces to narrow the difference; reproduce with production-like limits and configuration.</p>
 
+<h3>Investigation, step by step</h3>
+<ol>
+  <li>Check the exact image/commit, JDK, Spring Boot version, startup arguments, active profiles, and environment-variable names. Configuration precedence can make a production setting override a local file.</li>
+  <li>Read startup logs from the first exception, not just the final “application failed” line. Inspect missing beans, port binding, migrations, credentials, TLS, DNS, and database connectivity.</li>
+  <li>Use protected Actuator health, readiness, metrics, and condition reports. A live JVM is not necessarily ready to serve requests.</li>
+  <li>For slowness, correlate request traces with JDBC pool active/pending/acquisition time, slow SQL, HTTP client timeouts, thread states, GC, and container throttling or memory pressure.</li>
+  <li>Reproduce using the same profile, resource limits, and downstream behavior. Roll back if customer impact is high, then fix the verified cause.</li>
+</ol>
+
+<h3>Runnable Spring Boot diagnostic example</h3>
+<p>In a Spring Boot project, place this in <code>src/main/java/demo/ConfigDemo.java</code>. Run with <code>--spring.profiles.active=prod --app.name=orders</code>. It prints only non-secret settings.</p>
+<pre><code>package demo;
+
+import java.util.Arrays;
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.core.env.Environment;
+
+@SpringBootApplication
+public class ConfigDemo {
+    public static void main(String[] args) { SpringApplication.run(ConfigDemo.class, args); }
+
+    @Bean
+    ApplicationRunner showConfig(Environment env) {
+        return args -&gt; {
+            System.out.println("profiles=" + Arrays.toString(env.getActiveProfiles()));
+            System.out.println("app=" + env.getProperty("app.name", "unset"));
+        };
+    }
+}</code></pre>
+<p><strong>Expected application output with those arguments:</strong></p>
+<pre><code>profiles=[prod]
+app=orders</code></pre>
+<p>Do not print passwords, tokens, connection strings, or full environment dumps in production logs.</p>
+
+<h3>Real-world edge cases</h3>
+<p>A pool of ten DB connections can saturate even with 200 request workers and low CPU. Kubernetes liveness failures can cause restart loops while readiness should only remove traffic. JVM heap below its max does not rule out container OOM. A local database may hide production query-plan/index differences. Actuator endpoints should expose only needed information and be secured; centralized logs need correlation IDs and redaction.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>What is the first thing to compare?</strong> Deployed commit/image, active profiles, resolved config, and the first failure log.</li>
+  <li><strong>Does “health UP” prove the app is fast?</strong> No. It is a coarse availability signal; use latency and dependency metrics.</li>
+  <li><strong>Why can CPU be low while requests time out?</strong> Threads can be waiting for DB connections, locks, or remote IO.</li>
+  <li><strong>How do you protect secrets during debugging?</strong> Log configuration keys and safe values only; use redaction and least-privilege access.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would compare the deployed artifact, JDK, profile, and effective configuration with local behavior, then follow the earliest startup or request failure. I would use secured Actuator metrics, logs with correlation IDs, traces, thread dumps, and pool/GC/container metrics to locate the bottleneck. I would reproduce under production-like limits, fix the confirmed difference, and roll back promptly if users are affected.</blockquote>

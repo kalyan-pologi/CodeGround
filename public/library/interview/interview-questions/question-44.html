@@ -1,1 +1,52 @@
+<h3>Question: How would you implement Redis caching using cache-aside, TTL, eviction, cache invalidation, and distributed locking while preventing stale data and cache stampedes?</h3>
+<h3>Short answer</h3>
+<p>With cache-aside, read Redis first; on miss, load from the authoritative database and cache the result with a TTL. On a write, commit the database change and invalidate or update the cache according to a clear consistency policy. Bound Redis memory with an eviction policy and size monitoring. Prevent many simultaneous misses from overwhelming the database using single-flight, short-lived locks, TTL jitter, or early refresh, but never assume a cache is perfectly current.</p>
 
+<h3>Internal working, step by step</h3>
+<ol>
+  <li>Construct a stable key including tenant and schema/version where needed. <code>GET</code> it; deserialize only validated data.</li>
+  <li>On miss, query the DB, then <code>SET</code> with a TTL. Cache “not found” briefly if safe to prevent repeated misses.</li>
+  <li>For a write, update the DB transaction first, then delete the cache key. A crash between commit and deletion can leave stale data until TTL; use an event/outbox or versioning if a tighter guarantee is needed.</li>
+  <li>Add TTL jitter to spread expirations, cap cache size, and choose an eviction policy matching the workload.</li>
+  <li>For stampedes, one loader can acquire a short lease (<code>SET key token NX PX ...</code>); others wait briefly or serve acceptable stale data. Release only if the token still matches, typically with an atomic script.</li>
+</ol>
+
+<h3>Runnable Java 17 cache-aside illustration</h3>
+<p>Save as <code>CacheAsideDemo.java</code>. This local map models the read/invalidating sequence; Redis adds distributed storage, TTL, and eviction.</p>
+<pre><code>import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class CacheAsideDemo {
+    static final Map&lt;String, String&gt; db = new ConcurrentHashMap&lt;&gt;();
+    static final Map&lt;String, String&gt; cache = new ConcurrentHashMap&lt;&gt;();
+
+    static String read(String key) {
+        return cache.computeIfAbsent(key, db::get);
+    }
+    static void write(String key, String value) {
+        db.put(key, value);
+        cache.remove(key);
+    }
+    public static void main(String[] args) {
+        write("product:7", "old");
+        System.out.println(read("product:7"));
+        write("product:7", "new");
+        System.out.println(read("product:7"));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>old
+new</code></pre>
+<p>The example has no TTL; production Redis commands must set one. <code>computeIfAbsent</code> also does not solve distributed stampedes across many app instances.</p>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p>A simple Redis lock is a lease, not a universal correctness guarantee. If a worker pauses past lock expiry, another worker may start; use fencing/version checks for operations where duplicate work is harmful. Never use a cache as the only financial source of truth. Measure hit rate, miss storm size, eviction count, memory, stale-read tolerance, and DB fallback latency. Avoid caching sensitive data without access controls and encryption policy.</p>
+<ul>
+  <li><strong>What is a cache stampede?</strong> Many clients miss the same hot key at once and all query the origin.</li>
+  <li><strong>Does deleting on write guarantee fresh reads?</strong> Not across every race or crash; TTL/versioning and invalidation ordering matter.</li>
+  <li><strong>Why add TTL jitter?</strong> To prevent many keys expiring simultaneously.</li>
+  <li><strong>What is eviction versus expiry?</strong> Expiry removes keys by TTL; eviction removes keys to satisfy memory policy.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I use cache-aside with the database as source of truth, TTL-bounded entries, and invalidation after writes. I size Redis and watch evictions and hit rate. For hot-key misses I add single-flight or a short token-based lease with safe release and TTL jitter; for correctness-critical updates I use database constraints or versioning rather than trusting a distributed cache lock.</blockquote>

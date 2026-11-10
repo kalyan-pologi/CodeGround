@@ -1,1 +1,51 @@
+<h3>Question: How would you design a scalable payment processing system using Spring Boot, REST APIs, Kafka, Redis, databases, and load balancing to handle thousands of requests per second?</h3>
+<h3>Short answer</h3>
+<p>Separate accepting a payment request from durable payment processing. Put Spring Boot instances behind a load balancer, require an idempotency key, validate/authenticate the request, and atomically store a payment record plus outbox event in a database. A relay publishes events to Kafka; workers process them with idempotent state transitions and an external payment provider. Redis may cache non-authoritative reads or rate-limit counters, but the database is the source of truth for money and duplicate prevention.</p>
 
+<h3>Flow and internal working</h3>
+<ol>
+  <li><strong>Ingress:</strong> API Gateway/load balancer applies TLS, authentication, rate limiting, and routing to stateless instances. The API validates currency, amount in minor units, merchant, and idempotency key.</li>
+  <li><strong>Durability:</strong> in one DB transaction, insert a unique <code>(merchant_id, idempotency_key)</code> request record and an outbox event. Return a stable payment ID/status; repeat requests return the original result.</li>
+  <li><strong>Messaging:</strong> relay publishes the outbox event to Kafka with payment ID as key, preserving per-payment partition order. Consumers can see duplicates, so claim work with a unique constraint/state transition.</li>
+  <li><strong>Provider:</strong> call the processor with its own idempotency key and timeout. Persist success/failure/pending transitions and reconcile uncertain results via provider lookup/webhooks.</li>
+  <li><strong>Scale:</strong> partition Kafka work, tune DB indexes/pools, autoscale on queue lag and latency, and load-test at target RPS. Redis can help with read cache/rate limits but never replace a durable ledger.</li>
+</ol>
+
+<h3>Runnable Java 17 miniature</h3>
+<p>Save as <code>PaymentIdempotencyDemo.java</code>. This models duplicate-request behavior in one process; production uses a database uniqueness constraint across all instances.</p>
+<pre><code>import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class PaymentIdempotencyDemo {
+    record Payment(String id, String status) {}
+    static final ConcurrentHashMap&lt;String, Payment&gt; requests =
+        new ConcurrentHashMap&lt;&gt;();
+    static final AtomicInteger sequence = new AtomicInteger();
+
+    static Payment create(String merchant, String key) {
+        return requests.computeIfAbsent(merchant + ":" + key,
+            ignored -&gt; new Payment("pay-" + sequence.incrementAndGet(), "PENDING"));
+    }
+
+    public static void main(String[] args) {
+        System.out.println(create("shop", "request-1"));
+        System.out.println(create("shop", "request-1"));
+        System.out.println("created=" + sequence.get());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>Payment[id=pay-1, status=PENDING]
+Payment[id=pay-1, status=PENDING]
+created=1</code></pre>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p>Never treat a timeout as proof the provider did not charge; reconcile by idempotency key. Store money as exact decimal or integer minor units, not <code>double</code>. Keep a balanced ledger/audit trail and separate payment authorization from settlement/refund. Kafka is not a database transaction across your DB and the provider; outbox plus idempotent consumers handles the dual-write gap. Monitor authorization rate, provider latency, DB saturation, consumer lag, duplicate count, and reconciliation backlog.</p>
+<ul>
+  <li><strong>Why not use Redis for the balance?</strong> Cache loss/eviction and stale reads are unacceptable as the sole financial source of truth.</li>
+  <li><strong>How do you scale consumers?</strong> Add partitions and consumers after measuring processing time and downstream limits.</li>
+  <li><strong>What if Kafka publish fails after DB commit?</strong> The outbox row remains for relay retry.</li>
+  <li><strong>What if a provider webhook arrives twice?</strong> Deduplicate by provider event ID and enforce a legal state transition.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would use stateless Spring Boot APIs behind a load balancer, a durable payment table with unique idempotency keys, and a transactional outbox to Kafka. Workers would process keyed events idempotently, call the provider with a provider-side idempotency key, and reconcile uncertain outcomes. Redis would support cache or rate limits, not financial truth. I would scale only within DB/provider limits and monitor latency, lag, duplicates, and reconciliation.</blockquote>

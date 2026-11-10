@@ -1,1 +1,45 @@
+<h3>Question: How does Apache Kafka work internally, including brokers, topics, partitions, offsets, consumer groups, rebalancing, and message ordering?</h3>
+<h3>Short answer</h3>
+<p>Kafka stores records in ordered partition logs spread across brokers. A topic is a named collection of partitions; each record has an offset within its partition. A consumer group divides partitions among its members so each partition is processed by one group member at a time under normal assignment. Adding/removing members triggers rebalancing. Ordering is guaranteed within a partition, not across an entire multi-partition topic.</p>
 
+<h3>Internal working, step by step</h3>
+<ol>
+  <li>A producer selects a topic partition, commonly from a stable record key such as <code>orderId</code>, and sends a batch to the partition leader broker.</li>
+  <li>The leader appends records and replicates them to follower brokers according to topic replication and producer acknowledgment settings.</li>
+  <li>Each partition's offsets increase monotonically. An offset is a position, not a global ID or timestamp.</li>
+  <li>A consumer polls assigned partitions, processes records, and commits the <em>next</em> offset to resume from. Different consumer groups track their own positions independently.</li>
+  <li>On rebalance, partitions move between consumers; uncommitted work may be read again. Make side effects idempotent.</li>
+</ol>
+
+<h3>Runnable Java 17 partition-key illustration</h3>
+<p>Save as <code>PartitionKeyDemo.java</code>. This is an illustration of stable key-to-partition mapping, not Kafka's exact partitioner algorithm.</p>
+<pre><code>public class PartitionKeyDemo {
+    static int partition(String key, int count) {
+        return Math.floorMod(key.hashCode(), count);
+    }
+
+    public static void main(String[] args) {
+        int first = partition("order-7", 3);
+        int second = partition("order-7", 3);
+        System.out.println("sameKeySamePartition=" + (first == second));
+        System.out.println("partitions=" + 3);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>sameKeySamePartition=true
+partitions=3</code></pre>
+<p>The same key is routed consistently while partition count and partitioner configuration stay stable. Changing the partition count can change routing for future records, so ordering across that change needs care.</p>
+
+<h3>Real-world edge cases</h3>
+<p>More consumers than partitions in one group leave some consumers idle. A hot key sends disproportionate load to one partition. Slow processing can exceed poll/rebalance constraints and cause repeat delivery. Retention is time/size based unless compaction is configured; committing an offset does not delete the record. Use schemas and compatibility rules for evolving event payloads. Replication improves availability but does not make an external database update exactly-once.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Does Kafka order a whole topic?</strong> No; only records within one partition have a total order.</li>
+  <li><strong>What is consumer lag?</strong> Difference between a partition's latest available offset and the group's committed/processed position, interpreted carefully.</li>
+  <li><strong>What happens during rebalance?</strong> Partition assignments change, and unfinished records can be reprocessed.</li>
+  <li><strong>Can two groups both read one record?</strong> Yes. Each group has independent offsets.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>Kafka is a replicated, partitioned append log. Producers append to partition leaders; offsets identify positions per partition. A consumer group assigns each partition to one member and stores its own progress. Rebalances move assignments and can cause replay, so consumers must be idempotent. I choose a stable aggregate key to preserve order for related events and scale by partitions, not by adding unlimited consumers.</blockquote>

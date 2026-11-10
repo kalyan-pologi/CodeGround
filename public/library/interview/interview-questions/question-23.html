@@ -1,1 +1,69 @@
+<h3>Question: How does dependency injection work in Spring, and how would you handle multiple beans, bean scopes, circular dependencies, and constructor vs. field injection?</h3>
+<h3>Short answer</h3>
+<p>Dependency injection means a class declares what it needs and Spring's <code>ApplicationContext</code> supplies those objects. Prefer constructor injection for required dependencies: it makes them explicit, non-null after construction, and easy to replace in tests. When multiple beans match one type, use <code>@Qualifier</code> or a deliberate <code>@Primary</code>. Choose scopes intentionally and redesign circular dependencies rather than hiding them.</p>
 
+<h3>Internal working and design choices</h3>
+<ol>
+  <li>Component scanning and <code>@Bean</code> methods register bean definitions. On creation, the container resolves constructor arguments by type and qualifiers.</li>
+  <li>A <strong>singleton</strong> is one bean instance per application context, not one per JVM. A <strong>prototype</strong> creates a new instance on lookup; request/session scopes belong to web contexts.</li>
+  <li>If a singleton directly injects a prototype once, it does not magically get a new prototype on every method call. Use <code>ObjectProvider</code> or an appropriate scoped proxy when dynamic lookup is required.</li>
+  <li>A → B → A constructor cycle cannot be satisfied. Break the cycle by separating responsibilities or introducing an event/interface boundary; <code>@Lazy</code> is a workaround, not usually a good design.</li>
+</ol>
+
+<h3>Runnable Spring Boot example</h3>
+<p>In a Spring Boot project with the core starter, place this in <code>src/main/java/demo/DiDemo.java</code>.</p>
+<pre><code>package demo;
+
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
+
+@SpringBootApplication
+public class DiDemo {
+    public static void main(String[] args) { SpringApplication.run(DiDemo.class, args); }
+
+    @Bean
+    CommandLineRunner demo(OrderService orders) {
+        return args -&gt; System.out.println(orders.confirmation());
+    }
+}
+
+interface Notifier { String send(); }
+
+@Component("emailNotifier")
+class EmailNotifier implements Notifier {
+    public String send() { return "email sent"; }
+}
+
+@Component("smsNotifier")
+class SmsNotifier implements Notifier {
+    public String send() { return "sms sent"; }
+}
+
+@Service
+class OrderService {
+    private final Notifier notifier;
+    OrderService(@Qualifier("emailNotifier") Notifier notifier) {
+        this.notifier = notifier;
+    }
+    String confirmation() { return notifier.send(); }
+}</code></pre>
+<p><strong>Expected application output:</strong> <code>email sent</code>. Without the qualifier, injection is ambiguous because two beans implement <code>Notifier</code>.</p>
+
+<h3>Real-world use and edge cases</h3>
+<p>Field injection hides required dependencies and makes plain unit construction harder; setter injection is appropriate for a truly optional dependency. Do not store per-request mutable state in a singleton service—concurrent requests share it. A request-scoped bean injected into a singleton needs a proxy/provider. An interface is useful when implementations vary, but do not create interfaces solely for every class without a reason. A very large constructor is a signal that the class may have too many responsibilities.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong><code>@Primary</code> versus <code>@Qualifier</code>?</strong> Primary sets a default candidate; qualifier selects a named candidate at a specific injection point.</li>
+  <li><strong>Is a Spring singleton thread-safe?</strong> Not automatically; concurrent callers share its mutable fields.</li>
+  <li><strong>Why constructor injection?</strong> Required dependencies are explicit and the object is complete as soon as construction finishes.</li>
+  <li><strong>Can Spring solve constructor cycles?</strong> It normally reports an unresolvable cycle; redesign the dependency graph.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>Spring registers bean definitions, resolves dependencies when creating beans, and injects them through constructors, setters, or fields. I prefer constructor injection for required collaborators. I resolve multiple implementations with qualifiers or a deliberate primary bean, choose scope based on lifetime, and keep singleton state thread-safe. A constructor cycle usually means the design should be split rather than patched with lazy injection.</blockquote>

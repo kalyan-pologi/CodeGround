@@ -1,1 +1,55 @@
+<h3>Question: What happens internally when a Spring Boot application starts, including @SpringBootApplication, auto-configuration, component scanning, ApplicationContext, and bean lifecycle?</h3>
+<h3>Short answer</h3>
+<p><code>SpringApplication.run()</code> creates and refreshes an <code>ApplicationContext</code>. <code>@SpringBootApplication</code> combines configuration, component scanning, and auto-configuration. Scanning discovers application components; auto-configuration contributes beans when classpath, properties, and missing-bean conditions match. Spring resolves dependencies, constructs beans, applies post-processors/proxies, runs initialization callbacks, starts the web server when relevant, then runs application runners.</p>
 
+<h3>Startup, step by step</h3>
+<ol>
+  <li>Boot builds an <code>Environment</code> from command-line arguments, environment variables, configuration files, and other property sources; profile selection affects which configuration applies.</li>
+  <li>It creates the appropriate context type (for example, a servlet web context) and registers the application's configuration class.</li>
+  <li><code>@ComponentScan</code> scans from the main class's package downward for <code>@Component</code>, <code>@Service</code>, <code>@Repository</code>, and <code>@Controller</code>. Explicit <code>@Bean</code> methods register more definitions.</li>
+  <li>Auto-configuration imports conditional configuration. Conditions such as “class exists,” “property enabled,” and “no user bean exists” determine which beans are added. User-defined beans can cause defaults to back off.</li>
+  <li>During context refresh, Spring resolves dependencies and instantiates non-lazy singletons, applies <code>BeanPostProcessor</code>s, initialization callbacks such as <code>@PostConstruct</code>, and AOP proxies. It starts embedded server infrastructure, then runners execute.</li>
+</ol>
+<p>The exact order of every internal callback depends on configuration and framework version. A bean should not rely on arbitrary peer-bean creation order. Use explicit dependencies or lifecycle interfaces when ordering matters.</p>
+
+<h3>Runnable Spring Boot example</h3>
+<p>In a Spring Boot project with the core starter, save as <code>src/main/java/demo/StartupDemo.java</code> and run the application. Boot's own log lines vary; the application line below is stable.</p>
+<pre><code>package demo;
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.stereotype.Service;
+
+@SpringBootApplication
+public class StartupDemo {
+    public static void main(String[] args) {
+        SpringApplication.run(StartupDemo.class, args);
+    }
+
+    @Bean
+    CommandLineRunner runner(GreetingService greeting) {
+        return args -&gt; System.out.println(greeting.message());
+    }
+}
+
+@Service
+class GreetingService {
+    String message() { return "context-ready"; }
+}</code></pre>
+<p><strong>Expected application output:</strong> <code>context-ready</code>. Spring first creates <code>GreetingService</code> and injects it into the runner.</p>
+
+<h3>Real-world issues and edge cases</h3>
+<p>A main class placed too deep in the package tree may not scan sibling packages. A missing database driver can alter auto-configuration; a failing constructor or circular dependency can stop refresh. Use Boot's condition evaluation report or <code>--debug</code> to see why an auto-configuration matched or backed off. Keep expensive migrations and remote calls out of constructors and <code>@PostConstruct</code>; control startup/readiness separately. Secure Actuator endpoints and do not expose internal configuration publicly.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>What does <code>@SpringBootApplication</code> combine?</strong> <code>@SpringBootConfiguration</code>, <code>@EnableAutoConfiguration</code>, and <code>@ComponentScan</code>.</li>
+  <li><strong>Does auto-configuration always override my bean?</strong> Usually conditional defaults back off when an appropriate user bean exists; inspect the specific condition.</li>
+  <li><strong>When are singleton beans created?</strong> Normally during context refresh, unless lazy initialization or another rule delays them.</li>
+  <li><strong>Why might <code>@Transactional</code> not work inside <code>@PostConstruct</code>?</strong> Proxy initialization and transaction advice may not yet be available as expected.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote><code>SpringApplication.run</code> builds the environment and application context, scans application packages, applies conditional auto-configuration, and refreshes the bean factory. During refresh, Spring injects dependencies and runs bean post-processors and initialization callbacks; for web apps it also starts the embedded server, then runners execute. I use the condition report to diagnose missing or unexpected beans and avoid heavy work in constructors.</blockquote>

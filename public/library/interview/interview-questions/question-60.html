@@ -1,1 +1,90 @@
+<h3>Question: Design a Kafka-based order processing workflow with retries, dead-letter topics, idempotent consumers, and database consistency.</h3>
+<h3>Short answer</h3>
+<p>Publish order events from a transactional outbox so a committed order change is not lost between the database and Kafka. Key records by order ID for per-order partition ordering. A consumer records each event ID under a unique constraint and applies a legal order-state transition in the same local database transaction. Commit the Kafka offset after that transaction succeeds; bounded transient retries and a monitored dead-letter topic handle failures. Replay must remain idempotent.</p>
 
+<h3>Workflow, step by step</h3>
+<ol>
+  <li>The API stores <code>Order(PENDING)</code> and an <code>OrderCreated</code> outbox row in one transaction. A relay publishes to the <code>orders</code> topic with <code>orderId</code> as key.</li>
+  <li>An inventory consumer reads the event, inserts <code>(consumer_name,event_id)</code> under a unique constraint, and reserves stock/updates order state in the same DB transaction. A duplicate ID becomes a no-op.</li>
+  <li>On success, the consumer commits the DB transaction, then acknowledges the Kafka record. A crash before acknowledgment can replay it, but the dedupe row prevents a second business update.</li>
+  <li>Temporary DB/API failures use bounded retries with backoff. Invalid or exhausted records go to a DLT with original topic, partition, offset, event ID, schema version, and error metadata.</li>
+  <li>Operators fix the cause and replay DLT events at a controlled rate. Track stuck orders, lag, retry count, DLT volume, and reconciliation state.</li>
+</ol>
+
+<h3>Runnable Java 17 state-transition model</h3>
+<p>Save as <code>OrderEventDemo.java</code>. It demonstrates duplicate-event handling; the Spring/Kafka version below moves both operations into a database transaction.</p>
+<pre><code>import java.util.HashSet;
+import java.util.Set;
+
+public class OrderEventDemo {
+    static final Set&lt;String&gt; processed = new HashSet&lt;&gt;();
+    static String status = "PENDING";
+
+    static void handle(String eventId) {
+        if (!processed.add(eventId)) return;
+        if (!status.equals("PENDING")) throw new IllegalStateException();
+        status = "RESERVED";
+    }
+
+    public static void main(String[] args) {
+        handle("event-1");
+        handle("event-1");
+        System.out.println("status=" + status);
+        System.out.println("processedIds=" + processed.size());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>status=RESERVED
+processedIds=1</code></pre>
+
+<h3>Project-ready Spring Kafka + PostgreSQL processing core</h3>
+<p>In a Spring Boot project with Spring Kafka, JDBC, and PostgreSQL, create tables with <code>PRIMARY KEY (consumer_name, event_id)</code> for <code>processed_events</code>, an <code>orders(id,status)</code> table, and an <code>order_outbox</code> table. Configure JSON deserialization, manual acknowledgment, and auto-commit disabled for the listener container:</p>
+<pre><code>record OrderEvent(String eventId, String orderId) {}
+
+@Component
+class OrderListener {
+    private final OrderHandler handler;
+    OrderListener(OrderHandler handler) { this.handler = handler; }
+
+    @KafkaListener(topics = "orders", groupId = "inventory")
+    void receive(OrderEvent event, Acknowledgment ack) {
+        handler.reserve(event); // Separate bean: transaction commits on return.
+        ack.acknowledge();       // Only after DB commit.
+    }
+}
+
+@Service
+class OrderHandler {
+    private final JdbcTemplate jdbc;
+    OrderHandler(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+
+    @Transactional
+    public void reserve(OrderEvent event) {
+        int claimed = jdbc.update(
+            "insert into processed_events(consumer_name,event_id) values(?,?) "
+          + "on conflict(consumer_name,event_id) do nothing",
+            "inventory", event.eventId());
+        if (claimed == 0) return; // Replay of a committed event.
+        int changed = jdbc.update(
+            "update orders set status='RESERVED' where id=? and status='PENDING'",
+            event.orderId());
+        if (changed != 1) throw new IllegalStateException("invalid order state");
+        jdbc.update(
+            "insert into order_outbox(event_id,order_id,event_type) values(?,?,?)",
+            java.util.UUID.randomUUID().toString(), event.orderId(),
+            "INVENTORY_RESERVED");
+    }
+}</code></pre>
+<p><strong>Expected behavior:</strong> the first valid event changes one order from <code>PENDING</code> to <code>RESERVED</code> and writes one outbox event; replay leaves both unchanged. If state validation fails, the transaction rolls back the processed-event claim too, allowing retry. Configure <code>DefaultErrorHandler</code> with bounded backoff and a <code>DeadLetterPublishingRecoverer</code>; acknowledge a recovered record only after confirmed DLT publication according to container mode. The actual topic names and schemas must match the application.</p>
+
+<h3>Real-world edge cases and follow-up questions</h3>
+<p>Retries on another topic can break per-order ordering when newer original-topic events overtake an older failed event. Validate event schema versions and preserve original bytes for deserialization errors. A DB transaction plus offset acknowledgment is at-least-once at the Kafka boundary, so deduplication is essential. Kafka producer transactions do not automatically include PostgreSQL; an outbox addresses that gap. DLT records need ownership, alerts, and a safe replay procedure.</p>
+<ul>
+  <li><strong>Why key by order ID?</strong> Related events go to one partition and retain per-order order while routing remains stable.</li>
+  <li><strong>When commit the offset?</strong> After the local DB transaction succeeds or after a confirmed durable recovery handoff.</li>
+  <li><strong>What if the consumer crashes after DB commit?</strong> Kafka replays; the unique event ID makes the second attempt a no-op.</li>
+  <li><strong>What if DLT publish fails?</strong> Do not silently advance the source offset; retry or stop according to the recovery policy.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I use a transactional outbox to publish order changes, key Kafka records by order ID, and process each event in a local DB transaction that inserts a unique processed-event ID and performs a conditional state change. I acknowledge only after commit, so replay is harmless. I use bounded retries for transient failures, a monitored DLT for poison messages, and controlled idempotent replay; I do not claim Kafka offsets alone make the database exactly-once.</blockquote>

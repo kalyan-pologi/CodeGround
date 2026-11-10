@@ -1,1 +1,34 @@
+<h3>Question: A Kubernetes pod repeatedly crashes, restarts, or fails health checks. How would you troubleshoot it using kubectl, logs, resource limits, readiness probes, and liveness probes?</h3>
+<h3>Short answer</h3>
+<p>First determine whether the container process exits, the kernel OOM-kills it, or kubelet restarts it after a failed startup/liveness probe. Use Pod status, events, previous-container logs, and probe configuration. Readiness failure removes a Pod from Service traffic but normally does not restart it; liveness failure can trigger restart. Fix the specific cause rather than increasing every timeout.</p>
 
+<h3>Investigation, step by step</h3>
+<ol>
+  <li><code>kubectl get pods -n app -o wide</code> shows phase, restarts, node, and readiness. <code>kubectl describe pod NAME -n app</code> shows events and last termination reason/exit code.</li>
+  <li><code>kubectl logs NAME -n app --previous</code> gets logs from the container that just crashed; current logs can be from a new process.</li>
+  <li>If <code>OOMKilled</code>, compare memory limit, JVM heap and non-heap use, direct buffers, and thread count. If the process exits normally/with error, inspect startup config, migrations, secrets, and dependency connectivity.</li>
+  <li>If probes fail, check path, port, timeout, initial delay, and whether the endpoint represents startup, liveness, or readiness. Probe from inside the Pod and inspect server bind address.</li>
+  <li>Confirm image tag/digest and rollout history, then fix config or roll back. Observe readiness and restart count after the change.</li>
+</ol>
+
+<h3>Runnable diagnostic commands</h3>
+<pre><code>kubectl get pods -n app -o wide
+kubectl describe pod orders-abc -n app
+kubectl logs orders-abc -n app --previous
+kubectl get pod orders-abc -n app -o jsonpath='{.status.containerStatuses[0].lastState.terminated.reason}'
+kubectl rollout history deployment/orders -n app</code></pre>
+<p><strong>Expected output shape:</strong> the JSONPath command may print <code>OOMKilled</code>, <code>Error</code>, or nothing if there is no previous termination. Events may show <code>Unhealthy</code> probe failures; logs reveal the app-side cause. Do not assume a blank result means success.</p>
+
+<h3>Real-world edge cases</h3>
+<p>A startup probe protects slow-starting apps from premature liveness restarts. A readiness probe that depends on a flaky external service may remove all replicas from traffic; design it to reflect ability to serve safely. A too-aggressive liveness probe can create a restart loop during temporary slowness. Resource <em>requests</em> affect scheduling; memory <em>limits</em> can cause OOM kills. CPU limits may throttle a pod and make probes time out even without high observed CPU. Inspect node pressure and sidecars too.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Does readiness failure restart a container?</strong> Normally no; it marks the Pod unready for Service routing.</li>
+  <li><strong>Why use <code>--previous</code>?</strong> To see logs from the terminated instance during a restart loop.</li>
+  <li><strong>What is CrashLoopBackOff?</strong> Kubelet is backing off repeated container restarts; inspect the underlying exit reason.</li>
+  <li><strong>Can low heap usage still mean OOMKilled?</strong> Yes; the container limit includes non-heap/native memory.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I start with Pod status, events, last termination reason, and previous-container logs to distinguish app crash, OOM kill, and probe-triggered restart. I compare probe path/timing with startup behavior and inspect resource limits and JVM memory. Readiness controls traffic; liveness controls restart. I fix the confirmed root cause or roll back, then verify stable ready replicas and no new restarts.</blockquote>

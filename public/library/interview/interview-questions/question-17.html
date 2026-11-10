@@ -1,1 +1,56 @@
+<h3>Question: How do platform threads, virtual threads, and ThreadLocal work, and what are their performance and memory implications in high-concurrency applications?</h3>
+<h3>Short answer</h3>
+<p>A platform thread is scheduled by the operating system and has a relatively expensive native stack. A Java 21 virtual thread is a Java <code>Thread</code> scheduled by the JVM onto carrier platform threads, making many mostly-blocking tasks affordable. Virtual threads improve concurrency during waiting; they do not add CPU capacity or database connections. <code>ThreadLocal</code> stores a separate value per thread, but widespread thread-local state can consume substantial memory when thousands or millions of virtual threads exist.</p>
 
+<h3>Internal working, step by step</h3>
+<ol>
+  <li>With a platform thread, blocking IO usually occupies its OS thread for the wait. A fixed pool limits the number of simultaneous waits.</li>
+  <li>When a virtual thread blocks in supported operations, the JVM can unmount it from its carrier and run another virtual thread. Its continuation/state is stored in managed memory.</li>
+  <li>When it becomes runnable, the JVM mounts it on a carrier again; it need not use the same carrier. In Java 21, some synchronized/native operations can pin a virtual thread to its carrier, so measure the runtime/version you deploy.</li>
+  <li><code>ThreadLocal.get()</code> looks up a value associated with the current thread. A pool may reuse platform threads across requests, so stale values can leak between requests unless removed. A virtual-thread-per-task design reduces reuse but multiplying large values across many threads still costs memory.</li>
+</ol>
+
+<h3>Runnable Java 21 example</h3>
+<p>Save as <code>VirtualThreadLocalDemo.java</code> and run with JDK 21 or newer.</p>
+<pre><code>import java.util.concurrent.Executors;
+
+public class VirtualThreadLocalDemo {
+    static final ThreadLocal&lt;String&gt; REQUEST_ID = new ThreadLocal&lt;&gt;();
+
+    public static void main(String[] args) throws Exception {
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var first = executor.submit(() -&gt; work("request-A"));
+            var second = executor.submit(() -&gt; work("request-B"));
+            System.out.println(first.get());
+            System.out.println(second.get());
+        }
+    }
+
+    static String work(String id) {
+        REQUEST_ID.set(id);
+        try {
+            return REQUEST_ID.get() + ": virtual="
+                + Thread.currentThread().isVirtual();
+        } finally {
+            REQUEST_ID.remove();
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>request-A: virtual=true
+request-B: virtual=true</code></pre>
+<p><code>Future.get()</code> makes print order deterministic; the tasks themselves may run in either order.</p>
+
+<h3>Real-world choice and edge cases</h3>
+<p>Use virtual threads for high-concurrency request-per-task code with blocking JDBC/HTTP calls, while keeping connection pools, rate limits, and timeouts. Use a bounded platform-thread pool for CPU-heavy work, because extra runnable threads only compete for the same cores. Avoid pooling virtual threads; bound scarce downstream resources instead. Be cautious with expensive thread locals, inheritable thread locals, native code, and libraries that assume a thread is a long-lived resource. Use scoped values only after checking the exact JDK release and preview status.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Are virtual threads faster?</strong> Usually not for one CPU-bound task; their advantage is scaling many blocking waits.</li>
+  <li><strong>Do virtual threads remove the need for a connection pool?</strong> No. A waiting request still consumes its database connection.</li>
+  <li><strong>Why remove a <code>ThreadLocal</code> value?</strong> A reused platform thread can retain the value and accidentally expose it to a later task.</li>
+  <li><strong>Are virtual threads OS threads?</strong> They are Java <code>Thread</code> objects scheduled on a smaller set of carrier platform threads.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>Platform threads map to OS scheduling resources, while virtual threads let the JVM run very many blocking tasks on fewer carriers. They help throughput when work spends time waiting, not when CPU or downstream capacity is the limit. <code>ThreadLocal</code> is per Java thread, so I clear it in pooled-thread code and avoid large per-thread state with virtual threads. I still enforce connection limits, timeouts, and load-test the deployed JDK.</blockquote>

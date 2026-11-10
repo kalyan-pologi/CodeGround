@@ -1,1 +1,51 @@
+<h3>Question: How would you implement authentication and authorization in Spring Boot microservices using Spring Security, OAuth2, JWT, RBAC, refresh tokens, and service-to-service authentication?</h3>
+<h3>Short answer</h3>
+<p>Authentication establishes who is calling; authorization decides whether that identity may perform a specific action on a specific resource. Use an OAuth2/OIDC identity provider to issue short-lived access tokens, configure each Spring Boot API as a resource server to validate JWT signature, issuer, expiry, and audience, then apply role/scope checks plus object-level ownership checks. Refresh tokens belong at the client/authorization-server boundary, not in every resource service. Service-to-service calls use workload identity or client credentials with least privilege.</p>
 
+<h3>Internal flow, step by step</h3>
+<ol>
+  <li>The client authenticates with the identity provider and obtains an access token for the API's audience. A refresh token, if used, is stored securely and rotated according to provider policy.</li>
+  <li>The gateway may validate a token, but every service still validates the token it trusts and authorizes the requested resource.</li>
+  <li>Spring Security's filter chain extracts the bearer token, verifies its signature using trusted keys, checks claims such as <code>iss</code>, <code>exp</code>, <code>nbf</code>, and <code>aud</code>, and builds an <code>Authentication</code>.</li>
+  <li>RBAC/scope rules guard endpoints or methods; the service also checks tenant and object ownership to prevent BOLA/IDOR.</li>
+  <li>For machine-to-machine calls, use client credentials or platform workload identity with separate scopes. Never forward a user's powerful token indiscriminately.</li>
+</ol>
+
+<h3>Project-ready Spring Security example</h3>
+<p>In a Spring Boot project with web, security, OAuth2 resource-server, and JOSE dependencies, configure a real issuer and audience. This filter chain requires the <code>orders.read</code> scope for read requests:</p>
+<pre><code>package demo;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+class ApiSecurity {
+    @Bean
+    SecurityFilterChain security(HttpSecurity http) throws Exception {
+        return http
+            .authorizeHttpRequests(auth -&gt; auth
+                .requestMatchers("/actuator/health").permitAll()
+                .requestMatchers("/api/orders/**").hasAuthority("SCOPE_orders.read")
+                .anyRequest().authenticated())
+            .oauth2ResourceServer(oauth -&gt; oauth.jwt(Customizer.withDefaults()))
+            .build();
+    }
+}</code></pre>
+<p><strong>Expected HTTP behavior:</strong> no token → 401; valid token missing <code>orders.read</code> → 403; valid token with scope → endpoint handler runs. The handler must still verify that the caller owns the requested order. Configure <code>spring.security.oauth2.resourceserver.jwt.issuer-uri</code> and audience validation for your provider; exact properties depend on Spring Boot version.</p>
+
+<h3>Real-world edge cases</h3>
+<p>JWTs are signed, not automatically encrypted; do not place secrets in claims. Short expirations limit damage but make revocation non-instant unless using introspection or additional controls. Validate algorithms and key rotation through trusted provider metadata. Cookies and bearer headers have different CSRF considerations. Use HTTPS everywhere, redact tokens from logs, and test tenant boundaries. A role such as ADMIN does not automatically authorize access to every tenant.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>401 versus 403?</strong> 401 means authentication is absent/invalid; 403 means authenticated but not authorized.</li>
+  <li><strong>Is a JWT enough for object authorization?</strong> No. The service must check ownership/tenant on each object.</li>
+  <li><strong>Where should refresh tokens go?</strong> To the trusted client and authorization server, not routine resource-service requests.</li>
+  <li><strong>How does a service call another service?</strong> Use client credentials or workload identity with narrowly scoped permissions and an appropriate delegation model.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I use OAuth2/OIDC for identity, validate access tokens in each Spring resource server, and require issuer, signature, expiry, and audience checks. Endpoint scopes/roles are only the first authorization layer; services enforce tenant and object ownership. Refresh tokens stay with the client/identity provider, while service-to-service calls use least-privilege machine identity. I protect tokens, rotate keys, and test 401, 403, and cross-tenant access.</blockquote>

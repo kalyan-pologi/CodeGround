@@ -1,1 +1,76 @@
+<h3>Question: Implement a bounded ThreadPoolExecutor with custom thread-pool configuration, queue capacity, rejection handling, and graceful shutdown.</h3>
+<h3>Short answer</h3>
+<p>Configure a finite number of workers and a finite queue, then make overload visible through a rejection policy. A custom thread factory names workers for debugging. On shutdown, reject new submissions, let queued work finish, wait for a deadline, and interrupt as a last resort. Handle task failures and interrupted work explicitly; do not silently discard important tasks.</p>
 
+<h3>Runnable Java 17 program</h3>
+<p>Save as <code>BoundedExecutorDemo.java</code>. The first task occupies the worker, the second is queued, and the third is rejected.</p>
+<pre><code>import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class BoundedExecutorDemo {
+    public static void main(String[] args) throws InterruptedException {
+        AtomicInteger threadIds = new AtomicInteger();
+        AtomicInteger completed = new AtomicInteger();
+        AtomicInteger rejected = new AtomicInteger();
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+
+        ThreadFactory namedThreads = task -&gt; {
+            Thread thread = new Thread(task,
+                "orders-worker-" + threadIds.incrementAndGet());
+            thread.setDaemon(false);
+            return thread;
+        };
+        RejectedExecutionHandler reject = (task, executor) -&gt; {
+            rejected.incrementAndGet();
+            throw new RejectedExecutionException("queue full");
+        };
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+            1, 1, 0, TimeUnit.SECONDS,
+            new ArrayBlockingQueue&lt;&gt;(1), namedThreads, reject);
+
+        pool.execute(() -&gt; {
+            started.countDown();
+            try {
+                release.await();
+                completed.incrementAndGet();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        started.await();
+        pool.execute(completed::incrementAndGet);
+        try { pool.execute(completed::incrementAndGet); }
+        catch (RejectedExecutionException expected) { /* overload is visible */ }
+
+        release.countDown();
+        pool.shutdown();
+        if (!pool.awaitTermination(5, TimeUnit.SECONDS)) {
+            pool.shutdownNow();
+            if (!pool.awaitTermination(5, TimeUnit.SECONDS))
+                throw new IllegalStateException("workers did not stop");
+        }
+        System.out.println("completed=" + completed.get());
+        System.out.println("rejected=" + rejected.get());
+        System.out.println("terminated=" + pool.isTerminated());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>completed=2
+rejected=1
+terminated=true</code></pre>
+
+<h3>Internal working and production choices</h3>
+<p>The executor grows to core size, then queues; when the queue is full it can grow toward max; when both are full it invokes the rejection handler. An unbounded queue usually prevents growth beyond core size and can exhaust memory. <code>AbortPolicy</code> or a custom rejection can return 429/503; <code>CallerRunsPolicy</code> creates backpressure by making the submitter do the work but can block a request thread. Size workers against CPU, blocking time, and downstream capacity; a 100-thread pool cannot increase a 10-connection database's throughput.</p>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p><code>shutdown()</code> drains accepted work; <code>shutdownNow()</code> interrupts workers and returns tasks that never started. A task ignoring interrupts may never stop. <code>execute()</code> can report an uncaught exception through the worker; <code>submit()</code> captures it in a <code>Future</code> that must be checked. Monitor queue length, active workers, queue wait, rejection count, and shutdown time.</p>
+<ul>
+  <li><strong>Why bound the queue?</strong> To cap memory and make overload explicit.</li>
+  <li><strong>What if a task hangs?</strong> Add task/downstream timeouts and cancellation; pool shutdown alone cannot fix uninterruptible IO.</li>
+  <li><strong>Why name threads?</strong> Thread dumps and logs become much easier to interpret.</li>
+  <li><strong>Does rejecting mean data loss?</strong> It can; durable work should be accepted only after persistence or sent to a reliable queue.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I create a <code>ThreadPoolExecutor</code> with explicit core/max workers, a bounded queue, named threads, and a rejection policy mapped to overload handling. I measure queue wait, active threads, and rejections against downstream limits. On shutdown I stop accepting tasks, wait for accepted work, then interrupt if needed and report unfinished tasks. I never use an unbounded queue for critical burst traffic.</blockquote>

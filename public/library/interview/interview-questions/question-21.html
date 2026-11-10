@@ -1,1 +1,46 @@
+<h3>Question: Why can a Kubernetes pod be OOMKilled even when Java heap usage is below its maximum, and how would you troubleshoot JVM and container memory consumption?</h3>
+<h3>Short answer</h3>
+<p>The container memory limit applies to total charged memory, not only Java heap. RSS can include heap, metaspace, JIT code cache, thread stacks, direct buffers, native/JNI allocations, GC structures, and other process memory. The kernel can kill the process when the cgroup limit is exceeded even if heap used is below <code>-Xmx</code>; in that case the JVM may not throw <code>OutOfMemoryError</code> or write a heap dump.</p>
 
+<h3>Internal working and investigation</h3>
+<ol>
+  <li>Confirm the termination reason and exit code with <code>kubectl describe pod</code> and <code>kubectl get pod -o yaml</code>. Distinguish <code>OOMKilled</code> from liveness-restart or node eviction.</li>
+  <li>Compare the pod's memory limit with container working-set/RSS graphs and the JVM's heap used, heap committed, and configured max. Heap <em>committed</em> may be higher than heap <em>used</em>.</li>
+  <li>Inspect thread count/stack size, direct buffer pools, metaspace, class loaders, code cache, and native libraries. Enable Native Memory Tracking before startup if its overhead is acceptable, then compare <code>jcmd &lt;pid&gt; VM.native_memory summary</code> over time.</li>
+  <li>Leave headroom: do not set <code>-Xmx</code> equal to the pod limit. Size heap plus non-heap, native memory, and a safety margin from measured peak traffic.</li>
+  <li>Fix the source of growth—unbounded buffers, excess threads, leaks, or large batch requests—before merely raising the limit.</li>
+</ol>
+
+<h3>Runnable Java 17 diagnostic example</h3>
+<p>Save as <code>MemoryBudgetDemo.java</code>. This prints JVM-reported values; the numeric values depend on your machine and flags.</p>
+<pre><code>import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryUsage;
+
+public class MemoryBudgetDemo {
+    public static void main(String[] args) {
+        MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
+        System.out.println("heapUsedMiB=" + heap.getUsed() / 1_048_576);
+        System.out.println("heapCommittedMiB=" + heap.getCommitted() / 1_048_576);
+        System.out.println("heapMaxMiB=" + heap.getMax() / 1_048_576);
+        System.out.println("threads=" + ManagementFactory.getThreadMXBean().getThreadCount());
+    }
+}</code></pre>
+<p><strong>Expected output shape:</strong> four labeled numeric lines, such as <code>heapUsedMiB=1</code>, <code>heapCommittedMiB=16</code>, <code>heapMaxMiB=256</code>, and <code>threads=6</code>. Those numbers are examples, not fixed results. This API does not report total container RSS.</p>
+
+<h3>Real-world commands and edge cases</h3>
+<pre><code>kubectl describe pod &lt;pod&gt; -n &lt;namespace&gt;
+kubectl top pod &lt;pod&gt; -n &lt;namespace&gt; --containers
+jcmd &lt;pid&gt; VM.native_memory summary
+jcmd &lt;pid&gt; GC.heap_info</code></pre>
+<p>Heap dumps diagnose heap retention, not every native allocation. NMT does not account for all third-party native allocations. Account for sidecars separately and verify whether the reported metric is usage, working set, or RSS before comparing graphs. Reproducing under a container with the same CPU/memory limits is more reliable than testing on an unconstrained laptop.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why no heap dump?</strong> The kernel killed the container before the JVM could throw a Java OOM exception.</li>
+  <li><strong>Is <code>-Xmx</code> the process memory limit?</strong> No; it only caps Java heap, not all JVM/native memory.</li>
+  <li><strong>Can virtual threads help?</strong> They can reduce platform-thread stack pressure for many blocking tasks, but other memory and downstream limits remain.</li>
+  <li><strong>What if memory rises while heap stays flat?</strong> Look at direct buffers, native/JNI memory, metaspace, threads, and mmap/page-cache behavior.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>OOMKilled is a container-level memory event, while <code>-Xmx</code> limits only Java heap. I would compare cgroup usage with heap used/committed and inspect threads, direct buffers, metaspace, code cache, and native memory. I would use pod events, JVM metrics, and NMT where available, then leave measured non-heap headroom below the pod limit and fix the growing allocation source.</blockquote>

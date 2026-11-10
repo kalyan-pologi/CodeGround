@@ -1,1 +1,46 @@
+<h3>Question: How would you handle failed Kafka messages using retries, retry topics, dead-letter topics, poison-message handling, manual acknowledgment, and safe event replay?</h3>
+<h3>Short answer</h3>
+<p>Classify failures. Retry temporary dependencies with bounded attempts and backoff; send permanently invalid or exhausted records to a dead-letter topic (DLT) with enough context to diagnose them. Acknowledge/commit the original offset only after successful processing or confirmed durable handoff to the retry/DLT path. Make consumers idempotent because crashes and rebalances can replay records.</p>
 
+<h3>Failure flow, step by step</h3>
+<ol>
+  <li>Validate and deserialize safely; preserve the original bytes and schema/version when deserialization fails.</li>
+  <li>For transient errors, use a bounded retry budget. Long in-place sleeps block a partition; retry topics schedule later work but may change ordering.</li>
+  <li>For poison records, publish to a DLT with original topic, partition, offset, event ID, attempt count, error class, and trace context—redact secrets.</li>
+  <li>Only after the DLT publish is confirmed should the original offset advance. Alert on DLT volume and assign a repair/replay owner.</li>
+  <li>Replay into a controlled topic or consumer after fixing the cause, preserving idempotency and considering ordering and rate limits.</li>
+</ol>
+
+<h3>Runnable Java 17 retry-routing model</h3>
+<p>Save as <code>RetryRoutingDemo.java</code>. This demonstrates bounded handling without a broker; Spring Kafka can implement it with <code>DefaultErrorHandler</code> and <code>DeadLetterPublishingRecoverer</code>.</p>
+<pre><code>public class RetryRoutingDemo {
+    static String process(String event, int attempts) {
+        for (int n = 1; n &lt;= attempts; n++) {
+            if (!event.equals("bad")) return "processed";
+        }
+        return "DLT";
+    }
+
+    public static void main(String[] args) {
+        System.out.println(process("good", 3));
+        System.out.println(process("bad", 3));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>processed
+DLT</code></pre>
+<p>In production, do not treat every failure as permanent; differentiate validation failures from temporary DB/API failures and make the DLT publication itself durable.</p>
+
+<h3>Real-world edge cases</h3>
+<p>Manual acknowledgment is powerful but dangerous if code acknowledges before a DB transaction commits or forgets to acknowledge a recovered record. A batch can contain valid records before a poison one; use framework-supported per-record recovery to avoid skipping data. Retry topics often break strict per-key ordering because a later original-topic event may overtake a retried event. DLT is not a trash can: monitor, triage, repair, and replay with a clear operational process.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>When commit the original offset after DLT?</strong> After durable DLT publication succeeds, according to the listener/container's acknowledgment mode.</li>
+  <li><strong>Why not retry forever?</strong> One poison message can block a partition and grow lag indefinitely.</li>
+  <li><strong>Can replay duplicate a side effect?</strong> Yes. Use event IDs and idempotent database state transitions.</li>
+  <li><strong>Does a retry topic preserve order?</strong> Not automatically; delayed records can be overtaken by newer ones.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I classify failures, retry transient ones with bounded backoff, and route invalid/exhausted records to a monitored DLT with original metadata. I commit offsets only after processing or a confirmed durable handoff. Consumers are idempotent so replay is safe, and I define an operator workflow to repair and replay DLT records without surprising ordering or downstream capacity.</blockquote>

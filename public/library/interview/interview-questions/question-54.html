@@ -1,1 +1,58 @@
+<h3>Question: Write a Java program using two threads to print odd and even numbers from 1 to 100 in sequence.</h3>
+<h3>Short answer</h3>
+<p>Share one counter and one monitor. The odd thread waits while the next number is even; the even thread waits while it is odd. Always test the condition in a <code>while</code> loop under the same lock, print/increment while holding it, and call <code>notifyAll()</code> so the other thread can proceed. When the counter passes 100, wake the peer so neither remains waiting forever.</p>
 
+<h3>Runnable Java 17 program</h3>
+<p>Save as <code>OddEvenDemo.java</code>.</p>
+<pre><code>public class OddEvenDemo {
+    private static final Object lock = new Object();
+    private static int next = 1;
+    private static final int MAX = 100;
+
+    static void printParity(int parity) {
+        while (true) {
+            synchronized (lock) {
+                while (next &lt;= MAX &amp;&amp; next % 2 != parity) {
+                    try { lock.wait(); }
+                    catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
+                        lock.notifyAll();
+                        return;
+                    }
+                }
+                if (next &gt; MAX) {
+                    lock.notifyAll();
+                    return;
+                }
+                System.out.print(next == MAX ? next + "\n" : next + " ");
+                next++;
+                lock.notifyAll();
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Thread odd = new Thread(() -&gt; printParity(1), "odd");
+        Thread even = new Thread(() -&gt; printParity(0), "even");
+        odd.start();
+        even.start();
+        odd.join();
+        even.join();
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> one line with every integer in order:</p>
+<pre><code>1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47 48 49 50 51 52 53 54 55 56 57 58 59 60 61 62 63 64 65 66 67 68 69 70 71 72 73 74 75 76 77 78 79 80 81 82 83 84 85 86 87 88 89 90 91 92 93 94 95 96 97 98 99 100</code></pre>
+
+<h3>Internal working and edge cases</h3>
+<p><code>wait()</code> atomically releases the monitor and suspends that thread. After notification it must reacquire the monitor and recheck the condition; wakeups can be spurious, and another thread might run first. Printing while holding the lock ensures that output order matches counter order. Both threads stop after 100, and <code>notifyAll()</code> wakes a peer that may still be waiting. If an interruption occurs, this demo restores the interrupt flag and exits; a production protocol should define how to cancel the other worker as well.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why <code>while</code> instead of <code>if</code> around <code>wait()</code>?</strong> Because a wakeup does not guarantee that the condition is now true.</li>
+  <li><strong>Why must <code>wait()</code> be inside <code>synchronized</code>?</strong> The caller must own that object's monitor.</li>
+  <li><strong>Could <code>notify()</code> work here?</strong> With exactly one waiter of the opposite role it may, but <code>notifyAll()</code> is safer when wait conditions or thread counts change.</li>
+  <li><strong>What happens if we forget the final notification?</strong> The peer could remain blocked after the last number.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I share a counter under one monitor. Each thread waits in a loop until the counter has its parity, then prints and increments while holding the lock and notifies all waiters. The loop checks termination before waiting and after wakeup, so spurious wakeups and the final number do not cause out-of-order output or a hang.</blockquote>

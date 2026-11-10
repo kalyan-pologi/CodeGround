@@ -1,1 +1,53 @@
+<h3>Question: How does Java garbage collection work, and how would you compare and tune G1GC, ZGC, and other collectors for throughput and low latency?</h3>
+<h3>Short answer</h3>
+<p>GC finds objects no longer reachable from roots and reclaims their memory. Most Java collectors exploit the observation that many objects die young, but their algorithms trade CPU, memory overhead, throughput, and pause time differently. G1 balances throughput with pause goals using heap regions; ZGC targets very short pauses by doing much work concurrently. Choose from measured application latency and allocation behavior, not a universal “best GC” claim.</p>
 
+<h3>Internal working, step by step</h3>
+<ol>
+  <li>New objects are usually allocated cheaply in a thread-local allocation buffer or the young generation.</li>
+  <li>GC traces from roots such as thread stacks and static references. Unreachable objects can be reclaimed; reachable objects may be copied, marked, or compacted depending on the collector.</li>
+  <li>Young collections handle short-lived objects. Long-lived objects eventually occupy old-generation space. A too-small heap or excessive live set increases collection frequency and pressure.</li>
+  <li>Stop-the-world phases pause application threads; concurrent phases run alongside them but use CPU and memory. Compare p99/p999 latency and throughput, not only average pause duration.</li>
+</ol>
+<table>
+  <thead><tr><th>Collector</th><th>Typical goal</th><th>Trade-off</th></tr></thead>
+  <tbody>
+    <tr><td>Serial</td><td>Small heaps/simple workloads</td><td>Longer pauses as heap grows</td></tr>
+    <tr><td>Parallel</td><td>High throughput</td><td>Can have longer stop-the-world pauses</td></tr>
+    <tr><td>G1</td><td>Balanced throughput/pause goals</td><td>Concurrent and remembered-set overhead</td></tr>
+    <tr><td>ZGC</td><td>Very low pause time</td><td>More concurrent CPU/memory work; verify JDK/version behavior</td></tr>
+  </tbody>
+</table>
+
+<h3>Runnable Java 17 example: reachability</h3>
+<p>Save as <code>ReachabilityDemo.java</code>. This demonstrates when a reference stops retaining an object; it does not predict when a collector will run.</p>
+<pre><code>import java.util.ArrayList;
+import java.util.List;
+
+public class ReachabilityDemo {
+    public static void main(String[] args) {
+        List&lt;byte[]&gt; retained = new ArrayList&lt;&gt;();
+        for (int i = 0; i &lt; 3; i++) retained.add(new byte[1_024]);
+        System.out.println("reachable=" + retained.size());
+        retained.clear();
+        System.out.println("reachableThroughList=" + retained.size());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>reachable=3
+reachableThroughList=0</code></pre>
+<p>After <code>clear()</code>, those arrays are eligible for collection if no other strong references exist. Their actual collection time is deliberately unspecified; avoid treating <code>System.gc()</code> as a correctness mechanism.</p>
+
+<h3>Tuning and real-world edge cases</h3>
+<p>Start with a supported JDK, sensible <code>-Xmx</code> and container headroom, then collect <code>-Xlog:gc*</code>, allocation rate, live-set size, pause percentiles, and CPU. G1 often needs only heap sizing and a pause target such as <code>-XX:MaxGCPauseMillis</code>; a goal is not a hard guarantee. Consider ZGC when strict tail-latency targets justify its trade-offs. Test under production-like load and compare throughput, p99 latency, GC CPU, RSS, and failure modes. A memory leak, oversized cache, or too many queued requests must be fixed in application behavior before collector tuning helps.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Does GC prevent all memory leaks?</strong> No. Strongly reachable but useless objects remain live.</li>
+  <li><strong>Does a larger heap always help?</strong> It may reduce collection frequency but raises memory cost and can hide unbounded retention.</li>
+  <li><strong>Why compare tail latency?</strong> A small average pause can hide occasional long pauses that violate an API's SLA.</li>
+  <li><strong>Can you tune GC without logs?</strong> It is guesswork; use GC logs, heap and allocation metrics, and workload experiments.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>GC reclaims objects that are no longer reachable from roots. I compare collectors against a real workload: G1 is a general balance of throughput and pause goals, Parallel favors throughput, and ZGC targets very low pauses with concurrent-work overhead. I first measure live set, allocation rate, GC logs, CPU, and p99 latency, then tune heap and collector settings one change at a time. I do not expect GC tuning to fix an application leak or an undersized container.</blockquote>

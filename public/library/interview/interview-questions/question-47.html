@@ -1,1 +1,49 @@
+<h3>Question: How would you test a payment microservice using JUnit, Mockito, integration testing, Testcontainers, concurrency testing, and failure scenarios?</h3>
+<h3>Short answer</h3>
+<p>Test the payment invariants at several boundaries. Unit tests exercise pure calculation and state transitions with JUnit and mocks only for external collaborators. Integration tests run real database constraints/transactions using Testcontainers and real HTTP/controller wiring. Concurrency tests race duplicate idempotency keys. Failure tests inject provider timeouts, Kafka duplicates, DB rollback, and restart/replay. Verify the ledger and external call count, not only an HTTP status.</p>
 
+<h3>Test pyramid, step by step</h3>
+<ol>
+  <li><strong>Unit:</strong> amount/currency validation, legal state transitions, retry classification, and response mapping. Mockito verifies interactions with a provider interface, not database behavior.</li>
+  <li><strong>Integration:</strong> Testcontainers starts the same database family used in production so unique constraints, isolation, SQL, and migrations are exercised.</li>
+  <li><strong>API/contract:</strong> test 201/202/409, schema validation, authorization, and identical retry responses. Contract tests cover provider and Kafka event schemas.</li>
+  <li><strong>Concurrency:</strong> synchronize many requests on the same key with a barrier/latch, then assert exactly one payment row and one provider charge. Repeat under different timing and DB isolation.</li>
+  <li><strong>Failure/recovery:</strong> simulate timeout after provider success, crash before offset commit, duplicate webhook, outbox relay retry, and refund failure. Confirm reconciliation converges.</li>
+</ol>
+
+<h3>Runnable JUnit 5 example</h3>
+<p>In a project with JUnit 5, save as <code>PaymentRuleTest.java</code>. It tests a small deterministic rule; real tests add the service, mock provider, and Testcontainers database.</p>
+<pre><code>import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+
+class PaymentRuleTest {
+    static long cents(long amount) {
+        if (amount &lt;= 0) throw new IllegalArgumentException("amount");
+        return amount;
+    }
+
+    @Test
+    void acceptsPositiveMinorUnits() {
+        assertEquals(125, cents(125));
+    }
+
+    @Test
+    void rejectsZero() {
+        assertThrows(IllegalArgumentException.class, () -&gt; cents(0));
+    }
+}</code></pre>
+<p><strong>Expected test output:</strong> two tests pass, zero fail. For a Testcontainers integration test, start a PostgreSQL container, apply migrations, call the actual service twice with one key, and assert one unique row; do not mock away the very constraint being tested.</p>
+
+<h3>Real-world edge cases</h3>
+<p>Mocks can confirm <code>provider.charge()</code> was called once in one process but cannot prove cross-instance deduplication. Use a real shared DB for that. Avoid <code>Thread.sleep()</code>-based race tests; coordinate starts with a latch and wait for all futures. External provider sandboxes may behave differently from production; keep a small contract suite and use fault injection. Do not expose real credentials or payment data in test logs.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why Testcontainers?</strong> It exercises real DB behavior and migrations instead of an in-memory substitute with different semantics.</li>
+  <li><strong>What should be mocked?</strong> External boundaries in unit tests, not the domain logic under test.</li>
+  <li><strong>What is the key concurrency assertion?</strong> One durable charge/result for one idempotency key under simultaneous requests.</li>
+  <li><strong>How test uncertain payment outcome?</strong> Simulate provider success followed by client timeout, then retry and reconcile using the same key.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I test payment rules with JUnit, mock external providers in focused unit tests, and use Testcontainers for database constraints, transactions, and migrations. I run concurrent same-key requests and verify one durable payment and one provider charge. I also inject timeouts, duplicate events/webhooks, crashes, and replay, checking that idempotency and reconciliation preserve the ledger.</blockquote>

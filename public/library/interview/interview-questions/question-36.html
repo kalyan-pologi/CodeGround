@@ -1,1 +1,56 @@
+<h3>Question: How would you handle distributed transactions when payment succeeds but inventory reservation fails, using Saga, compensation transactions, eventual consistency, and the Transactional Outbox pattern?</h3>
+<h3>Short answer</h3>
+<p>A local Spring transaction cannot atomically commit payment and inventory databases in different services. Model the order as a saga: each service performs a local transaction and emits a durable result event. If inventory fails after payment succeeds, initiate a compensating refund/void, not a fictional database rollback of the completed payment. The order is temporarily inconsistent while the saga runs; explicit states and reconciliation make that eventual consistency visible and recoverable.</p>
 
+<h3>Flow, step by step</h3>
+<ol>
+  <li>Create order <code>PENDING</code> with a unique request ID. Reserve inventory first when possible, then authorize payment; sequence depends on the business's failure cost.</li>
+  <li>Each local transaction writes its business row and an outbox event together. A relay publishes the event to Kafka; if it crashes after publish, it may publish again.</li>
+  <li>Consumers insert the event ID in a processed-events table within their local transaction, making duplicate delivery harmless.</li>
+  <li>If payment succeeds but reservation fails, record <code>COMPENSATING</code>, issue an idempotent void/refund command, and transition to <code>CANCELLED</code> only after confirmation.</li>
+  <li>Track timeouts, stuck states, retry budgets, and a manual reconciliation path. Compensation can itself fail and must be retried safely.</li>
+</ol>
+
+<h3>Runnable Java 17 state-machine example</h3>
+<p>Save as <code>SagaStateDemo.java</code>. This is a deterministic in-process model; the production implementation persists each transition and command.</p>
+<pre><code>public class SagaStateDemo {
+    enum State { PENDING, PAID, COMPENSATING, CANCELLED, COMPLETED }
+
+    static State onPaymentSuccess(State state) {
+        if (state != State.PENDING) throw new IllegalStateException();
+        return State.PAID;
+    }
+    static State onInventoryFailure(State state) {
+        if (state != State.PAID) throw new IllegalStateException();
+        return State.COMPENSATING;
+    }
+    static State onRefundConfirmed(State state) {
+        if (state != State.COMPENSATING) throw new IllegalStateException();
+        return State.CANCELLED;
+    }
+
+    public static void main(String[] args) {
+        State state = onPaymentSuccess(State.PENDING);
+        state = onInventoryFailure(state);
+        System.out.println("before refund=" + state);
+        state = onRefundConfirmed(state);
+        System.out.println("final=" + state);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>before refund=COMPENSATING
+final=CANCELLED</code></pre>
+
+<h3>Real-world edge cases</h3>
+<p>A compensation is a new business action, not time travel: a refund may take time or incur fees. Outbox removes the local DB + broker dual-write gap, but it does not guarantee exactly-once delivery to a consumer. Publish and consume events with stable IDs; use unique constraints and idempotent state transitions. Orchestration centralizes saga decisions; choreography lets services react to events but can become difficult to trace. Define what a customer sees while an order is pending or refunding.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why not one <code>@Transactional</code> annotation?</strong> It controls a local transaction manager, not separate databases and payment providers.</li>
+  <li><strong>What if the outbox relay publishes twice?</strong> Consumers deduplicate by event ID in their own transaction.</li>
+  <li><strong>What if refund fails?</strong> Keep the order in a compensating state, retry idempotently, alert, and reconcile.</li>
+  <li><strong>What is eventual consistency?</strong> Services may temporarily disagree, but a defined process converges them to a valid outcome.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would use a saga with explicit states and local transactions. If payment succeeds and inventory fails, I record a compensation command and perform an idempotent void/refund, leaving the order pending until confirmed. A transactional outbox reliably publishes local state changes, and consumers deduplicate repeated events. I monitor stuck sagas and reconcile failures because compensation can fail too.</blockquote>

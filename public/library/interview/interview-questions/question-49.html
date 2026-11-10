@@ -1,1 +1,70 @@
+<h3>Question: How would you containerize and deploy a Spring Boot microservice to AWS using Docker, Kubernetes/EKS, Pods, Services, Deployments, load balancers, and IAM?</h3>
+<h3>Short answer</h3>
+<p>Build a reproducible Spring Boot JAR, package it in a small non-root image, push an immutable image digest to ECR, and deploy it through an EKS Deployment. Pods run the containers; a Kubernetes Service gives stable in-cluster access; an Ingress or LoadBalancer backed by an AWS load balancer routes external traffic. Readiness/liveness/startup probes, resource requests/limits, rolling updates, and a least-privilege pod identity make it production-ready.</p>
 
+<h3>Deployment flow, step by step</h3>
+<ol>
+  <li>Run tests and build the JAR in CI. Pin base images and scan both dependencies and image layers.</li>
+  <li>Build as non-root, expose the application port, and pass environment-specific config/secrets at runtime—not inside the image.</li>
+  <li>Push to ECR by immutable digest. Create a Deployment with replicas across nodes/AZs, requests/limits, and probes.</li>
+  <li>Expose Pods through a ClusterIP Service. An AWS Load Balancer Controller can reconcile an Ingress/Service into an ALB/NLB, with TLS and health checks.</li>
+  <li>Associate a Kubernetes service account with a least-privilege EKS Pod Identity/IRSA role for AWS API calls; do not embed access keys or use the node role broadly.</li>
+</ol>
+
+<h3>Runnable deployment example</h3>
+<p>For a Spring Boot JAR named <code>app.jar</code>, this Dockerfile can be built with <code>docker build -t orders:local .</code>:</p>
+<pre><code>FROM eclipse-temurin:21-jre
+WORKDIR /app
+COPY app.jar /app/app.jar
+USER 10001
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/app.jar"]</code></pre>
+<p>A minimal Kubernetes workload (replace the image digest and namespace with real values):</p>
+<pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: orders }
+  template:
+    metadata:
+      labels: { app: orders }
+    spec:
+      serviceAccountName: orders
+      containers:
+      - name: orders
+        image: ACCOUNT.dkr.ecr.REGION.amazonaws.com/orders@sha256:DIGEST
+        ports: [{ containerPort: 8080 }]
+        resources:
+          requests: { cpu: 250m, memory: 512Mi }
+          limits: { memory: 1Gi }
+        readinessProbe:
+          httpGet: { path: /actuator/health/readiness, port: 8080 }
+          initialDelaySeconds: 5
+        livenessProbe:
+          httpGet: { path: /actuator/health/liveness, port: 8080 }
+          initialDelaySeconds: 20
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders
+spec:
+  selector: { app: orders }
+  ports: [{ port: 80, targetPort: 8080 }]
+  type: ClusterIP</code></pre>
+<p><strong>Expected result:</strong> once the image and identity are valid and probes return success, <code>kubectl get deployment orders</code> reports <code>3/3</code> available replicas and the Service routes to ready Pods. Probe paths require Spring Boot Actuator and probe support enabled in the chosen version.</p>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p>Do not set <code>-Xmx</code> equal to the Pod memory limit; native memory needs headroom. Keep secrets in a secret manager and restrict Kubernetes Secret access. A readiness probe should remove traffic during startup/dependency unavailability; a liveness probe should not restart the app for a brief downstream outage. Use rolling-update controls, PodDisruptionBudget where appropriate, ECR pull permissions, network policies, and logs/metrics/traces.</p>
+<ul>
+  <li><strong>Pod versus Deployment?</strong> A Pod runs containers; a Deployment manages desired replica count and rollout.</li>
+  <li><strong>Service versus load balancer?</strong> Service selects ready Pods; an ingress/load balancer handles external entry.</li>
+  <li><strong>How does a pod access S3 securely?</strong> Use a service-account-associated IAM role, not static keys in the image.</li>
+  <li><strong>Why pin image digest?</strong> It makes a deployed artifact unambiguous and reproducible.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I build and scan a non-root Spring Boot image, push it to ECR by digest, and deploy it to EKS through a replicated Deployment with resource budgets and startup/readiness/liveness probes. A Service routes internally and an ALB/NLB exposes it where needed. I give the workload least-privilege AWS permissions through pod identity, keep secrets external, and verify rolling updates and observability under load.</blockquote>

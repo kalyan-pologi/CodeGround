@@ -1,1 +1,52 @@
+<h3>Question: How would you design a secure CI/CD pipeline using Git, Jenkins, automated testing, security scanning, blue-green/canary deployments, rollback, and secrets management?</h3>
+<h3>Short answer</h3>
+<p>Make every release traceable from a reviewed Git commit to an immutable artifact. CI builds once, runs unit/integration/security checks, signs or records artifact provenance, and publishes an image by digest. CD promotes that same digest through environments with least-privilege credentials, deploy health checks, and gradual traffic shifting. Keep secrets in a managed store or Jenkins credentials, not in Git, logs, or container images; define a rollback path before deployment.</p>
 
+<h3>Pipeline, step by step</h3>
+<ol>
+  <li>Protect the main branch with review and required checks. Avoid building untrusted pull-request code with production credentials.</li>
+  <li>Run reproducible dependency install, unit tests, integration tests, lint, SCA/dependency scanning, secret scanning, and image scanning. Fail on agreed severity thresholds with documented exceptions.</li>
+  <li>Build an immutable image once, record commit SHA and image digest, and store it in a registry with restricted write access.</li>
+  <li>Deploy to staging and run smoke/contract tests. In production, use blue-green or canary routing with metrics gates and a short observation window.</li>
+  <li>Rollback traffic to the previous known-good digest when latency/error thresholds fail. Use expand–contract database migrations so old code remains compatible during rollback.</li>
+</ol>
+
+<h3>Project-ready Jenkinsfile illustration</h3>
+<p>For a repository with a Maven wrapper and a Jenkins agent equipped with Docker and approved registry credentials:</p>
+<pre><code>pipeline {
+  agent any
+  stages {
+    stage('Test') {
+      steps { sh './mvnw -B verify' }
+    }
+    stage('Scan') {
+      steps { sh 'trivy fs --exit-code 1 --severity HIGH,CRITICAL .' }
+    }
+    stage('Build image') {
+      steps { sh 'docker build -t orders:${GIT_COMMIT} .' }
+    }
+    stage('Publish') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'registry',
+            usernameVariable: 'REG_USER', passwordVariable: 'REG_PASS')]) {
+          sh 'echo "$REG_PASS" | docker login registry.example --username "$REG_USER" --password-stdin'
+          sh 'docker tag orders:${GIT_COMMIT} registry.example/orders:${GIT_COMMIT}'
+          sh 'docker push registry.example/orders:${GIT_COMMIT}'
+        }
+      }
+    }
+  }
+}</code></pre>
+<p><strong>Expected result:</strong> a successful run reports passing tests/scans and publishes one image tagged with the commit. Registry address, credential ID, tools, and deployment stages must be configured for the environment. Never print credential variables; Jenkins masking is not a substitute for restricting script access.</p>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p>Canary requires a reliable metric gate and enough traffic to detect regression; blue-green needs capacity for two environments. A rollback of code cannot undo a destructive schema migration, so schema evolution must be compatible. Pin build tools/actions/plugins, restrict who can modify pipeline code, and prefer short-lived cloud identity over long-lived keys. Scan the artifact actually deployed, not just source files.</p>
+<ul>
+  <li><strong>Blue-green versus canary?</strong> Blue-green switches between two complete environments; canary gradually routes a small percentage to the new version.</li>
+  <li><strong>What triggers rollback?</strong> Defined error/latency/health thresholds and failed smoke tests, not a subjective visual check.</li>
+  <li><strong>Where store secrets?</strong> Jenkins credentials or a managed secret store with least-privilege access.</li>
+  <li><strong>Why deploy by digest?</strong> Tags can move; digests identify exact bytes.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I build once from a reviewed commit, run automated tests and security scans, publish an immutable image with provenance, and promote that digest through environments. Production release uses canary or blue-green traffic with health/latency gates and an automatic rollback path. I keep credentials out of code and logs, use least-privilege short-lived identities, and design database changes to remain rollback-compatible.</blockquote>

@@ -1,1 +1,43 @@
+<h3>Question: Kafka consumer lag keeps increasing even though all consumers are running. How would you diagnose partition limitations, processing bottlenecks, database latency, and consumer configurations?</h3>
+<h3>Short answer</h3>
+<p>Lag grows when records arrive faster than the group can finish and commit them. “Running” does not mean productive: consumers may be idle because there are too few partitions, blocked on a database, retrying poison messages, rebalancing repeatedly, or committing slowly. Compare per-partition incoming rate, processing rate, lag, and dependency latency before adding consumers.</p>
 
+<h3>Diagnosis, step by step</h3>
+<ol>
+  <li>Inspect lag by partition, not only a topic total. One hot partition/key can dominate while others are idle.</li>
+  <li>Compare partitions to active consumers in the group. More consumers than partitions do not increase parallelism for that topic/group.</li>
+  <li>Measure handler time, batch size, DB pool wait, query latency, downstream API latency, and retries. A slow dependency often explains low CPU and rising lag.</li>
+  <li>Inspect poll cadence, <code>max.poll.interval.ms</code>, heartbeat/rebalance events, commit failures, and consumer errors. Long processing between polls can trigger reassignment and duplicate work.</li>
+  <li>Optimize the bottleneck, use bounded worker concurrency with correct per-partition ordering, add partitions if key/order requirements allow, then retest under production-like input.</li>
+</ol>
+
+<h3>Runnable Java 17 capacity illustration</h3>
+<p>Save as <code>LagBudgetDemo.java</code>. This models one interval of arrival and processing; it is not a Kafka metrics client.</p>
+<pre><code>public class LagBudgetDemo {
+    public static void main(String[] args) {
+        int oldLag = 100;
+        int produced = 500;
+        int processed = 300;
+        int newLag = Math.max(0, oldLag + produced - processed);
+        System.out.println("newLag=" + newLag);
+        System.out.println("growing=" + (produced &gt; processed));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>newLag=300
+growing=true</code></pre>
+<p>For real Kafka metrics, be precise about whether you compare log-end offset with committed offset or actual completed processing; async workers can make committed position misleading.</p>
+
+<h3>Real-world edge cases</h3>
+<p>Increasing partitions can change key-to-partition routing for future records and affect per-key ordering assumptions. Increasing <code>max.poll.records</code> may improve batch efficiency but can make processing exceed poll intervals. Moving work to a thread pool requires a safe offset-commit strategy: do not commit past unfinished records. If the database can process only 200 writes/s, more consumers may just exhaust its connections. A retry loop on one bad record can block a partition; use bounded retries and a DLT policy.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why are consumers idle?</strong> A group cannot assign one partition to more than one active member at a time.</li>
+  <li><strong>Why does lag rise with low CPU?</strong> Consumers may be waiting on database connections or remote IO.</li>
+  <li><strong>What does a rebalance do to lag?</strong> It pauses/reassigns consumption and can repeat uncommitted work.</li>
+  <li><strong>Should we add partitions first?</strong> Only after confirming partition count is the bottleneck and understanding ordering/routing effects.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I break lag down by partition and compare arrival rate with completed processing rate. Then I check active assignments, hot keys, handler timing, database pool/queries, retry loops, and rebalances or poll-timeout settings. I fix the limiting resource before increasing consumers; if partition count is truly limiting, I plan a partition increase with ordering implications and load-test the result.</blockquote>

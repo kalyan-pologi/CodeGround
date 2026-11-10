@@ -1,1 +1,51 @@
+<h3>Question: A SQL query performs well with 100 records but becomes extremely slow with millions of records. How would you analyze execution plans, indexing, joins, and query optimization?</h3>
+<h3>Short answer</h3>
+<p>Reproduce the slow query with representative data and parameters, then inspect its actual execution plan and time. Look for full scans, wrong row estimates, large sorts/hash joins, expensive nested loops, missing selective indexes, and unnecessary rows/columns. Tune the query and schema together, refresh statistics where appropriate, and measure again rather than assuming an index always helps.</p>
 
+<h3>Step-by-step diagnosis</h3>
+<ol>
+  <li>Capture the exact SQL, bind values, latency, returned row count, frequency, and database version. A query can be fast for one parameter and slow for another due to skew.</li>
+  <li>Run <code>EXPLAIN (ANALYZE, BUFFERS)</code> in PostgreSQL on a safe representative system. Compare estimated versus actual rows and find where time and reads accumulate.</li>
+  <li>Inspect predicates and join keys. An index on <code>(tenant_id, created_at, id)</code> can serve a tenant filter plus ordered pagination; leading-column order matters for B-tree indexes.</li>
+  <li>Remove unnecessary <code>SELECT *</code>, limit early when semantically valid, avoid functions/casts on indexed columns when they prevent useful index access, and replace N+1 application queries.</li>
+  <li>Check statistics, table bloat, partition pruning, memory for sorts/hashes, locks, and concurrent load. Re-run the plan after each change and compare p95 latency and write overhead.</li>
+</ol>
+
+<h3>Runnable Java 17 JDBC example</h3>
+<p>In a PostgreSQL JDBC project, the following code uses bind parameters so the database can execute the query safely. Replace the connection settings with your environment.</p>
+<pre><code>import java.sql.*;
+
+public class RecentOrders {
+    public static void main(String[] args) throws Exception {
+        String sql = "select id from orders "
+            + "where tenant_id=? and created_at &gt;= ? "
+            + "order by created_at, id limit ?";
+        try (Connection db = DriverManager.getConnection(
+                "jdbc:postgresql://localhost:5432/app", "app", "password");
+             PreparedStatement query = db.prepareStatement(sql)) {
+            query.setLong(1, 7);
+            query.setTimestamp(2, Timestamp.valueOf("2026-01-01 00:00:00"));
+            query.setInt(3, 20);
+            try (ResultSet rows = query.executeQuery()) {
+                int count = 0;
+                while (rows.next()) count++;
+                System.out.println("rows=" + count);
+            }
+        }
+    }
+}</code></pre>
+<p><strong>Expected output shape:</strong> <code>rows=0</code> through <code>rows=20</code>, depending on data. The query cannot return more than 20 rows. A useful supporting PostgreSQL index is <code>CREATE INDEX ON orders (tenant_id, created_at, id);</code>. Verify the real plan; an index is not guaranteed to be chosen for every data distribution.</p>
+
+<h3>Real-world edge cases</h3>
+<p>An index speeds reads but costs storage and write maintenance. Low-selectivity predicates may make a sequential scan cheaper. Joining two large tables without selective filters can produce a huge intermediate result. Deep <code>OFFSET</code> pagination still visits/skips many rows; keyset pagination may be better. <code>EXPLAIN ANALYZE</code> actually executes the query, so use caution with writes or expensive production statements. Always compare under representative concurrency, not just an empty test database.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why did an index not help?</strong> The planner may estimate scanning is cheaper, or the query cannot use the index effectively.</li>
+  <li><strong>Why are row estimates important?</strong> Wrong estimates can cause a poor join order or algorithm.</li>
+  <li><strong>Can <code>SELECT *</code> hurt?</strong> Yes; it transfers more data and may prevent an index-only plan.</li>
+  <li><strong>What is an N+1 query?</strong> One parent query followed by one child query per result, multiplying database round trips.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I start with the exact slow SQL and representative data, then use the database's actual plan to find scans, join costs, sorts, and row-estimate errors. I align indexes with filters, join keys, and ordering, reduce unnecessary data, and check statistics and pagination. I measure the revised plan and end-to-end latency under load because an index or rewrite can help one query while hurting writes or another query.</blockquote>

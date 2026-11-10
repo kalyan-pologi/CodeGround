@@ -1,1 +1,55 @@
+<h3>Question: How do @Async, CompletableFuture, RestTemplate, WebClient, and FeignClient differ, and when would you use each for asynchronous and inter-service communication?</h3>
+<h3>Short answer</h3>
+<p><code>@Async</code> schedules a Spring method on an executor; <code>CompletableFuture</code> composes asynchronous Java results. <code>RestTemplate</code> is a synchronous HTTP client common in older Spring code; modern Spring also offers synchronous <code>RestClient</code>. <code>WebClient</code> supports non-blocking HTTP pipelines. Feign-style clients generate an HTTP client from an annotated interface, usually with blocking calls unless configured otherwise. These are different layers: scheduling work does not turn a blocking network call into non-blocking IO.</p>
 
+<h3>Internal working and choice</h3>
+<table>
+  <thead><tr><th>Tool</th><th>What it does</th><th>Key caution</th></tr></thead>
+  <tbody>
+    <tr><td><code>@Async</code></td><td>Proxy submits method execution to an executor</td><td>Self-invocation bypasses proxy; size executor</td></tr>
+    <tr><td><code>CompletableFuture</code></td><td>Compose completion, error, timeout, and combination stages</td><td>Choose an executor; never lose failures</td></tr>
+    <tr><td><code>RestTemplate</code>/<code>RestClient</code></td><td>Synchronous request/response</td><td>Calling thread waits; configure timeouts</td></tr>
+    <tr><td><code>WebClient</code></td><td>Non-blocking reactive HTTP</td><td>A terminal <code>block()</code> makes that call blocking</td></tr>
+    <tr><td>Feign client</td><td>Declarative interface-to-HTTP proxy</td><td>Verify timeout, retry, and client behavior</td></tr>
+  </tbody>
+</table>
+<p>For a normal synchronous MVC service, a bounded executor plus blocking clients can be simple and effective. For many concurrent remote waits, a non-blocking WebClient pipeline or appropriately bounded virtual threads may scale better. Never assume “async” automatically means faster; parallel calls still consume downstream capacity and may amplify failures.</p>
+
+<h3>Runnable Java 17 example: combine two calls</h3>
+<p>Save as <code>AsyncCallsDemo.java</code>. The suppliers stand in for two independent API calls so the result is deterministic; replace them with timeout-configured clients in a service.</p>
+<pre><code>import java.util.concurrent.*;
+
+public class AsyncCallsDemo {
+    public static void main(String[] args) {
+        ExecutorService pool = Executors.newFixedThreadPool(2);
+        try {
+            CompletableFuture&lt;String&gt; user =
+                CompletableFuture.supplyAsync(() -&gt; "Maya", pool);
+            CompletableFuture&lt;Integer&gt; orders =
+                CompletableFuture.supplyAsync(() -&gt; 3, pool);
+            String result = user.thenCombine(orders,
+                (name, count) -&gt; name + " has " + count + " orders")
+                .orTimeout(2, TimeUnit.SECONDS)
+                .exceptionally(error -&gt; "profile unavailable")
+                .join();
+            System.out.println(result);
+        } finally {
+            pool.shutdown();
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>Maya has 3 orders</code>. Completion order may vary; <code>thenCombine</code> runs only when both results are available. In a real API, define whether partial success is acceptable and cancel/ignore late work after a deadline.</p>
+
+<h3>Real-world edge cases</h3>
+<p><code>@Async</code> needs async support, a named bounded executor, and calls through a Spring proxy. Its thread does not automatically inherit a caller's transaction or thread-local security context. <code>CompletableFuture.get()</code>/<code>join()</code> block the caller. A non-blocking <code>WebClient</code> call loses much of its scaling benefit if repeatedly <code>block()</code>ed in an event-loop path. Configure connection pooling, connect/read/overall timeouts, idempotent retries with jitter, and tracing for every client. Feign is convenient for stable service contracts, but generated clients still need operational tuning.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Does <code>@Async</code> work on <code>this.method()</code>?</strong> No, the internal call bypasses proxy advice.</li>
+  <li><strong>Does <code>CompletableFuture</code> start a new thread by itself?</strong> Only methods such as <code>supplyAsync</code> schedule work; ordinary stages may run in a completing thread.</li>
+  <li><strong>When choose WebClient?</strong> When a non-blocking pipeline and high concurrency justify its reactive programming model.</li>
+  <li><strong>Can remote calls share a Spring transaction?</strong> A local transaction does not make a remote call atomic.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I separate execution from transport: <code>@Async</code> moves a Spring method onto an executor, <code>CompletableFuture</code> composes results, and RestTemplate/RestClient, WebClient, or Feign perform HTTP calls with different programming styles. I choose based on blocking needs and team complexity, then set bounded concurrency, timeouts, retries, and observability. An async wrapper around a blocking call is still blocking on its worker thread.</blockquote>

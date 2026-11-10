@@ -1,1 +1,47 @@
+<h3>Question: How would you scale a microservices application to handle a sudden 10x traffic spike using load balancing, autoscaling, caching, rate limiting, messaging, and performance testing?</h3>
+<h3>Short answer</h3>
+<p>Measure the baseline bottleneck and protect the system before simply adding replicas. A load balancer spreads traffic, autoscaling adds stateless capacity, caching removes repeated safe reads, rate limits and admission control keep overload explicit, and messaging buffers work that can be processed asynchronously. Database connections, external APIs, and Kafka partitions may remain bottlenecks even when application pods scale.</p>
 
+<h3>Step-by-step plan</h3>
+<ol>
+  <li>Define a target RPS, p95/p99 latency, error budget, and traffic shape. Load-test a baseline and find the first saturated resource.</li>
+  <li>Make services stateless where possible; put sessions in a suitable shared store or tokens. Use health-aware load balancing and multiple availability zones.</li>
+  <li>Cache frequently read, slowly changing data with TTL, size bounds, and invalidation. Protect cache misses from stampedes and measure hit rate.</li>
+  <li>Rate-limit per client/tenant and cap in-flight work. Return 429/503 with retry guidance when capacity is exhausted instead of allowing queues to grow without bound.</li>
+  <li>Move deferrable work to a durable queue/Kafka with idempotent consumers. Scale consumers within partition and downstream DB/API capacity.</li>
+  <li>Autoscale on useful signals such as request concurrency, latency, and queue lag; CPU alone misses IO bottlenecks. Test the scale-out delay, failure recovery, and cost.</li>
+</ol>
+
+<h3>Runnable Java 17 admission-control example</h3>
+<p>Save as <code>AdmissionDemo.java</code>. A semaphore gives an explicit concurrency limit.</p>
+<pre><code>import java.util.concurrent.Semaphore;
+
+public class AdmissionDemo {
+    public static void main(String[] args) {
+        Semaphore capacity = new Semaphore(2);
+        boolean first = capacity.tryAcquire();
+        boolean second = capacity.tryAcquire();
+        boolean third = capacity.tryAcquire();
+        System.out.println("accepted=" + ((first ? 1 : 0)
+            + (second ? 1 : 0) + (third ? 1 : 0)));
+        System.out.println("rejected=" + (third ? 0 : 1));
+        if (first) capacity.release();
+        if (second) capacity.release();
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>accepted=2
+rejected=1</code></pre>
+<p>In a service, acquire with a short timeout and release in <code>finally</code>. A per-instance semaphore needs a separate distributed policy if the limit must be global.</p>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p>Ten replicas with 20 DB connections each can overwhelm a database limited to 100 connections. Cache misses during a spike can create a thundering herd. Autoscaling takes time and may be limited by quotas or node capacity, so reserve headroom for bursts. Avoid queueing synchronous requests indefinitely; use 202 and a job status API only when the business workflow permits asynchronous completion.</p>
+<ul>
+  <li><strong>Why not scale only on CPU?</strong> IO waits and connection-pool saturation can cause high latency with low CPU.</li>
+  <li><strong>What if more consumers do not reduce Kafka lag?</strong> Check partition count and downstream processing capacity.</li>
+  <li><strong>Can caching hurt?</strong> Yes; stale data, cache stampedes, and invalidation bugs can affect correctness.</li>
+  <li><strong>What should a load test include?</strong> Arrival bursts, realistic payloads, dependency limits, failure injection, p99 latency, and recovery.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I first identify the bottleneck under a realistic 10x load. I spread stateless traffic across replicas, autoscale on concurrency and lag, cache safe hot reads, and use rate limits and bounded queues for overload. Deferrable work goes through durable messaging with idempotent consumers. I verify database, provider, partition, and node limits so scaling one tier does not simply move the outage elsewhere.</blockquote>

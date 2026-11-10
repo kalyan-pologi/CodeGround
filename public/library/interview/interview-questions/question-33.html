@@ -1,1 +1,45 @@
+<h3>Question: How would you handle database schema migrations, versioning, backward compatibility, and data consistency during zero-downtime deployments?</h3>
+<h3>Short answer</h3>
+<p>Use versioned migrations and an <em>expand → migrate → contract</em> rollout. First make an additive schema change that both old and new application versions can tolerate. Deploy code that can read old/new representations and write consistently, backfill data safely, switch reads, and only later remove the old column/constraint. Keep migration history in source control and test upgrades against production-like data.</p>
 
+<h3>Rollout, step by step</h3>
+<ol>
+  <li><strong>Expand:</strong> add a nullable/new column or table and indexes with online/concurrent techniques supported by the database. Do not rename/drop a column while old pods still use it.</li>
+  <li><strong>Bridge:</strong> deploy code that reads the new value when present and falls back to old data; dual-write or use a controlled database mechanism while both versions run.</li>
+  <li><strong>Backfill:</strong> process rows in small resumable batches, record progress, and throttle against database load. Make each batch idempotent.</li>
+  <li><strong>Switch:</strong> verify counts and business invariants, move reads to the new shape, stop old writes, and monitor error/lag metrics.</li>
+  <li><strong>Contract:</strong> after all old versions and rollback windows are gone, enforce <code>NOT NULL</code> or uniqueness and drop old schema in a later migration.</li>
+</ol>
+
+<h3>Runnable Java 17 compatibility example</h3>
+<p>Save as <code>SchemaBridgeDemo.java</code>. It illustrates how a reader can handle rows before and after a backfill.</p>
+<pre><code>public class SchemaBridgeDemo {
+    record Row(String oldName, String newName) {}
+
+    static String displayName(Row row) {
+        return row.newName() != null ? row.newName() : row.oldName();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(displayName(new Row("Maya", null)));
+        System.out.println(displayName(new Row("Maya", "Maya P.")));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>Maya
+Maya P.</code></pre>
+<p>In practice, put numbered Flyway/Liquibase migrations in source control and test each application version against the transitional schema. A sample additive SQL migration is <code>ALTER TABLE users ADD COLUMN display_name text;</code>; a later version can backfill and eventually enforce a constraint.</p>
+
+<h3>Real-world edge cases</h3>
+<p>DDL locking and transaction behavior vary by database; a seemingly small <code>ALTER TABLE</code> can block writes. Build large indexes with the database's online option where supported. Dual-write can fail halfway, so define reconciliation and monitoring. Rollback of code after a destructive migration may be impossible, which is why contract happens later. Unique constraints should be introduced only after duplicates are resolved. Do not run expensive backfills synchronously in every pod's startup path.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why not rename a column in one deploy?</strong> Old and new pods may run simultaneously and expect different names.</li>
+  <li><strong>What makes a backfill safe?</strong> Small, restartable, idempotent batches with progress and load limits.</li>
+  <li><strong>Can every schema migration be rolled back?</strong> No; data loss or a long backfill can make reversal impractical. Design forward fixes.</li>
+  <li><strong>When add <code>NOT NULL</code>?</strong> After every row is populated and all writers guarantee the new field.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I use versioned migrations and an expand–migrate–contract sequence. I add compatible schema first, deploy code that tolerates both shapes, backfill in resumable batches, verify invariants, switch reads, and drop old schema only after older application versions are gone. I test mixed-version deployment and rollback behavior, because zero downtime is mainly a compatibility problem.</blockquote>

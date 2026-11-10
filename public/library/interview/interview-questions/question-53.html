@@ -1,1 +1,75 @@
+<h3>Question: Write a Java program demonstrating a race condition and fix it using synchronized and AtomicInteger. Explain the expected output and internal working.</h3>
+<h3>Short answer</h3>
+<p><code>count++</code> is a read, increment, and write. Two threads can read the same old value and overwrite one another, so a plain counter can lose updates. A <code>synchronized</code> method makes the entire increment a critical section and publishes updates when the monitor is released. <code>AtomicInteger.incrementAndGet()</code> performs an atomic read-modify-write operation, typically using compare-and-set machinery.</p>
 
+<h3>Runnable Java 17 program</h3>
+<p>Save as <code>RaceFixDemo.java</code>. The latches force both unsafe threads to read zero before either writes, making the lost update deterministic.</p>
+<pre><code>import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class RaceFixDemo {
+    static int unsafe;
+    static int guarded;
+    static final AtomicInteger atomic = new AtomicInteger();
+
+    static synchronized void incrementGuarded() { guarded++; }
+
+    static void await(CountDownLatch latch) {
+        try { latch.await(); }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch bothRead = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        Runnable unsafeIncrement = () -&gt; {
+            int old = unsafe;
+            bothRead.countDown();
+            await(release);
+            unsafe = old + 1;
+        };
+        Thread a = new Thread(unsafeIncrement);
+        Thread b = new Thread(unsafeIncrement);
+        a.start();
+        b.start();
+        bothRead.await();
+        release.countDown();
+        a.join();
+        b.join();
+
+        Runnable safeIncrement = () -&gt; {
+            incrementGuarded();
+            atomic.incrementAndGet();
+        };
+        Thread c = new Thread(safeIncrement);
+        Thread d = new Thread(safeIncrement);
+        c.start();
+        d.start();
+        c.join();
+        d.join();
+        System.out.println("unsafe=" + unsafe);
+        System.out.println("synchronized=" + guarded);
+        System.out.println("atomic=" + atomic.get());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>unsafe=1
+synchronized=2
+atomic=2</code></pre>
+
+<h3>Internal working and real-world meaning</h3>
+<p>The unsafe threads each read <code>0</code> and write <code>1</code>. The monitor on the class serializes calls to the static synchronized method, so the guarded counter reaches 2. <code>AtomicInteger</code> retries a conflicting update so both increments count. A normal race may sometimes appear correct; forcing an interleaving is why this demonstration is reliable. Use the same lock for every guarded read and write. An atomic counter is good for metrics, while a multi-field invariant such as debit plus ledger entry needs a larger critical section or database transaction.</p>
+
+<h3>Edge cases and follow-up questions</h3>
+<ul>
+  <li><strong>Would <code>volatile int unsafe</code> fix it?</strong> No; visibility does not make <code>++</code> indivisible.</li>
+  <li><strong>Does synchronization require the same monitor?</strong> Yes. Different lock objects do not coordinate access to the same state.</li>
+  <li><strong>Can <code>AtomicInteger</code> overflow?</strong> Yes; it uses 32-bit integer arithmetic. Use a wider type/checks if required.</li>
+  <li><strong>Which is faster?</strong> Depends on contention and workload; measure. Correctness comes first.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>A race happens because <code>count++</code> is read–modify–write, so two threads can read the same value and lose an increment. I use <code>synchronized</code> to serialize the whole critical section or <code>AtomicInteger.incrementAndGet()</code> for a single independent counter. <code>volatile</code> alone does not solve it. For several related fields or cross-instance state, I use a lock or database transaction protecting the full invariant.</blockquote>

@@ -1,1 +1,70 @@
+<h3>Question: Implement a producer-consumer system using BlockingQueue with multiple producers and consumers.</h3>
+<h3>Short answer</h3>
+<p>Use a bounded <code>BlockingQueue</code> to hand off items safely. Producers block on <code>put()</code> when the queue is full, giving backpressure; consumers block on <code>take()</code> when empty. After all producers finish, enqueue one poison pill for each consumer, or use another explicit shutdown protocol. The queue handles synchronization and visibility, but not durability across process crashes.</p>
 
+<h3>Runnable Java 17 program</h3>
+<p>Save as <code>MultiProducerConsumer.java</code>.</p>
+<pre><code>import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class MultiProducerConsumer {
+    private static final int STOP = -1;
+
+    public static void main(String[] args) throws InterruptedException {
+        BlockingQueue&lt;Integer&gt; work = new ArrayBlockingQueue&lt;&gt;(4);
+        AtomicInteger processed = new AtomicInteger();
+        AtomicInteger total = new AtomicInteger();
+        Thread[] producers = new Thread[2];
+        Thread[] consumers = new Thread[2];
+
+        for (int p = 0; p &lt; producers.length; p++) {
+            final int start = p * 5 + 1;
+            producers[p] = new Thread(() -&gt; {
+                try {
+                    for (int n = start; n &lt; start + 5; n++) work.put(n);
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+        for (int c = 0; c &lt; consumers.length; c++) {
+            consumers[c] = new Thread(() -&gt; {
+                try {
+                    while (true) {
+                        int item = work.take();
+                        if (item == STOP) return;
+                        processed.incrementAndGet();
+                        total.addAndGet(item);
+                    }
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                }
+            });
+        }
+        for (Thread consumer : consumers) consumer.start();
+        for (Thread producer : producers) producer.start();
+        for (Thread producer : producers) producer.join();
+        for (int i = 0; i &lt; consumers.length; i++) work.put(STOP);
+        for (Thread consumer : consumers) consumer.join();
+        System.out.println("processed=" + processed.get());
+        System.out.println("sum=" + total.get());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>processed=10
+sum=55</code></pre>
+<p>The order in which workers process individual items is nondeterministic; the final count and sum are deterministic.</p>
+
+<h3>Internal working and real-world edge cases</h3>
+<p><code>ArrayBlockingQueue</code> has a fixed capacity and coordinates producers and consumers internally. <code>put</code>/<code>take</code> establish the handoff; no extra lock is needed around the queue. Poison pills are inserted only after every producer joins, so a consumer cannot stop before all real work is published. There is one pill per consumer. In production, choose a sentinel that cannot be valid data, propagate worker failures to a supervisor, enforce shutdown timeouts, and use a durable broker if items must survive a crash. Monitor queue depth and processing lag.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why bounded queue?</strong> It bounds memory and forces producers to slow down when consumers cannot keep up.</li>
+  <li><strong>What does <code>offer()</code> change?</strong> It can return false or time out instead of blocking indefinitely.</li>
+  <li><strong>Why one poison pill per consumer?</strong> Each consumer removes only one; all consumers need their own stop signal.</li>
+  <li><strong>Does <code>BlockingQueue</code> guarantee processing exactly once?</strong> It coordinates one in-process handoff, not durable recovery after crashes.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I use a bounded <code>BlockingQueue</code> with multiple producers calling <code>put</code> and consumers calling <code>take</code>. The queue supplies thread-safe handoff and backpressure. Once producers finish, I send one stop marker per consumer, wait for them to join, and verify processed counts. For durable or cross-instance work I use a broker and idempotent consumers instead of an in-memory queue.</blockquote>

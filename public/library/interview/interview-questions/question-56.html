@@ -1,1 +1,83 @@
+<h3>Question: Write a Java program to demonstrate deadlock and explain how to prevent it using lock ordering or tryLock().</h3>
+<h3>Short answer</h3>
+<p>Deadlock occurs when two threads each hold a lock the other needs. A stable global lock order removes the circular wait. <code>ReentrantLock.tryLock(timeout)</code> can also let a thread abandon/retry instead of waiting forever, but both acquired locks must be released correctly. The program below deliberately deadlocks daemon threads, detects them, and then shows a safe ordered operation; daemon threads let the demonstration exit.</p>
 
+<h3>Runnable Java 17 program</h3>
+<p>Save as <code>DeadlockDemo.java</code>.</p>
+<pre><code>import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
+import java.util.concurrent.CountDownLatch;
+
+public class DeadlockDemo {
+    static void await(CountDownLatch latch) {
+        try { latch.await(); }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+    static void takeOppositeLocks(Object first, Object second,
+                                  CountDownLatch bothHolding) {
+        synchronized (first) {
+            bothHolding.countDown();
+            await(bothHolding);
+            synchronized (second) { /* unreachable after deadlock */ }
+        }
+    }
+    static void ordered(Object low, Object high) {
+        synchronized (low) {
+            synchronized (high) { /* safe shared work */ }
+        }
+    }
+    public static void main(String[] args) throws InterruptedException {
+        Object a = new Object();
+        Object b = new Object();
+        CountDownLatch bothHolding = new CountDownLatch(2);
+        Thread one = new Thread(() -&gt; takeOppositeLocks(a, b, bothHolding));
+        Thread two = new Thread(() -&gt; takeOppositeLocks(b, a, bothHolding));
+        one.setDaemon(true);
+        two.setDaemon(true);
+        one.start();
+        two.start();
+        bothHolding.await();
+
+        ThreadMXBean monitor = ManagementFactory.getThreadMXBean();
+        boolean detected = false;
+        for (int i = 0; i &lt; 100; i++) {
+            if (monitor.findDeadlockedThreads() != null) {
+                detected = true;
+                break;
+            }
+            Thread.sleep(10);
+        }
+        System.out.println("deadlockDetected=" + detected);
+
+        Object low = new Object();
+        Object high = new Object();
+        Thread safe1 = new Thread(() -&gt; ordered(low, high));
+        Thread safe2 = new Thread(() -&gt; ordered(low, high));
+        safe1.start();
+        safe2.start();
+        safe1.join();
+        safe2.join();
+        System.out.println("orderedCompleted=true");
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>deadlockDetected=true
+orderedCompleted=true</code></pre>
+<p>The detector normally sees the forced monitor cycle within the polling window. On an unusually stalled system, the first line could be <code>false</code> because diagnosis is time-bound; the deadlocked daemon threads still demonstrate the lock cycle.</p>
+
+<h3>Internal working and prevention</h3>
+<p>Thread one owns A and waits for B; thread two owns B and waits for A. Both have already passed the latch, so neither can proceed. The safe threads always acquire <code>low</code> before <code>high</code>, eliminating circular wait. For real entities, order by a unique immutable ID and use a tie-breaker when IDs can be equal. With <code>tryLock</code>, acquire the first lock, try the second for a bounded time, release the first in <code>finally</code> if the second fails, and retry with backoff. Avoid slow IO inside locks.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>How diagnose production deadlock?</strong> Capture thread dumps or use <code>ThreadMXBean.findDeadlockedThreads()</code> to see owners and waiting locks.</li>
+  <li><strong>Does <code>tryLock</code> guarantee progress?</strong> Not alone; repeated collisions can livelock without backoff or fairness.</li>
+  <li><strong>What if locks are on different object instances?</strong> They do not coordinate shared state unless every path uses the same locks.</li>
+  <li><strong>Can DB transactions deadlock too?</strong> Yes; database row locks also need consistent ordering and retry handling.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>Deadlock is circular waiting: each thread holds one lock and waits for the other. I prevent it by imposing one global lock acquisition order, keeping critical sections short, and using timed <code>tryLock</code> with safe release/retry when ordering is impractical. In production I inspect thread dumps or deadlock detection to identify the exact lock cycle.</blockquote>

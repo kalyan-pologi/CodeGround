@@ -1,1 +1,43 @@
+<h3>Question: How would you design communication and observability across microservices using REST, gRPC, Kafka, API Gateway, service discovery, correlation IDs, and distributed tracing?</h3>
+<h3>Short answer</h3>
+<p>Choose communication by contract: REST for broadly interoperable synchronous APIs, gRPC for strongly typed low-latency service calls, and Kafka for durable asynchronous events. Put cross-cutting edge concerns at an API Gateway, use service discovery/load balancing for changing instances, and carry a trace context and correlation ID through every hop. Logs, metrics, and traces together explain a request's path and failures.</p>
 
+<h3>Internal flow, step by step</h3>
+<ol>
+  <li>The gateway authenticates, rate-limits, routes, and assigns or forwards trace context; it should not own every service's business logic.</li>
+  <li>A service calls another over REST/gRPC with a deadline, retries only when safe, and propagates the trace headers. Discovery resolves a logical service name to healthy instances.</li>
+  <li>For decoupled work, publish an event with stable ID, schema version, aggregate key, timestamp, and trace context. Kafka consumers process and acknowledge according to their delivery policy.</li>
+  <li>Emit structured logs with trace/span IDs and business-safe identifiers, request/dependency latency metrics, and spans for HTTP, DB, and messaging steps.</li>
+</ol>
+
+<h3>Runnable Java 17 header-propagation example</h3>
+<p>Save as <code>TraceHeaderDemo.java</code>. This constructs a request without sending it; real services use an OpenTelemetry/W3C trace-context library rather than hand-making trace IDs.</p>
+<pre><code>import java.net.URI;
+import java.net.http.HttpRequest;
+
+public class TraceHeaderDemo {
+    public static void main(String[] args) {
+        HttpRequest request = HttpRequest.newBuilder(
+                URI.create("https://orders.example/api/orders/7"))
+            .header("X-Correlation-ID", "req-123")
+            .GET()
+            .build();
+        System.out.println(request.headers()
+            .firstValue("X-Correlation-ID").orElse("missing"));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>req-123</code>. In production, propagate standard <code>traceparent</code> and baggage carefully, and do not put secrets in tracing headers or logs.</p>
+
+<h3>Real-world trade-offs and edge cases</h3>
+<p>REST/gRPC failures are visible to the caller but create temporal coupling; use deadlines and bounded retries. Kafka decouples producers and consumers but brings eventual consistency, replay, schema compatibility, and duplicate handling. gRPC needs schema/version governance and client/server timeouts. A correlation ID groups business logs; a distributed trace additionally records parent-child spans and timing. Sampling may omit traces, so metrics and logs must still support diagnosis. Service discovery may be Kubernetes DNS plus a Service rather than a separate registry.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>When prefer Kafka over REST?</strong> When the producer need not wait for a result and durable decoupled processing is useful.</li>
+  <li><strong>Does a gateway replace service authorization?</strong> No. Services still enforce resource-level authorization.</li>
+  <li><strong>What is a trace ID versus span ID?</strong> The trace ID identifies the whole request path; span IDs identify individual operations.</li>
+  <li><strong>How do traces cross Kafka?</strong> Put trace context in message headers and start a consumer span linked to the processing operation.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I use REST or gRPC for synchronous contracts and Kafka for durable asynchronous events. The gateway handles edge authentication/routing, while discovery reaches healthy instances. Every call and event carries standard trace context and a safe correlation ID. I combine structured logs, latency/error metrics, and distributed spans so I can see where time was spent and which dependency failed.</blockquote>

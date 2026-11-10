@@ -1,1 +1,52 @@
+<h3>Question: How do database transactions and ACID properties work, and how does Spring manage commits, rollbacks, isolation levels, propagation, and connection pooling?</h3>
+<h3>Short answer</h3>
+<p>A transaction groups database operations into a unit that either commits or rolls back. ACID means atomicity, consistency with declared invariants, isolation from concurrent transactions, and durability after commit. Spring's transaction interceptor obtains a connection/entity manager from a pool, binds it to the current thread, and commits or rolls back at the method boundary. Propagation decides how nested service calls share transactions; isolation controls concurrent visibility as implemented by the database.</p>
 
+<h3>Internal working and trade-offs</h3>
+<ol>
+  <li>Acquire a connection, begin a transaction (often by disabling auto-commit), and run statements on that same connection.</li>
+  <li>Commit on success; roll back on a qualifying exception. Spring's default declarative rollback is for unchecked exceptions and <code>Error</code>.</li>
+  <li><code>REQUIRED</code> joins an existing transaction; <code>REQUIRES_NEW</code> suspends it and needs an independent connection; <code>NESTED</code> uses savepoints when supported.</li>
+  <li>Isolation such as read committed, repeatable read, or serializable trades anomalies against locks, retries, and throughput. The actual guarantees depend on the database.</li>
+</ol>
+
+<h3>Runnable Java 17 + H2 example</h3>
+<p>With H2 on the classpath, save as <code>RollbackDemo.java</code>. It demonstrates JDBC rollback, the operation Spring delegates to a transaction manager.</p>
+<pre><code>import java.sql.*;
+
+public class RollbackDemo {
+    public static void main(String[] args) throws Exception {
+        try (Connection db = DriverManager.getConnection("jdbc:h2:mem:tx")) {
+            db.createStatement().execute(
+                "create table ledger(id int primary key, amount int)");
+            db.setAutoCommit(false);
+            try {
+                db.createStatement().execute("insert into ledger values(1, 50)");
+                throw new IllegalStateException("simulate failure");
+            } catch (IllegalStateException e) {
+                db.rollback();
+            }
+            db.setAutoCommit(true);
+            try (ResultSet rows = db.createStatement().executeQuery(
+                    "select count(*) from ledger")) {
+                rows.next();
+                System.out.println("rows=" + rows.getInt(1));
+            }
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>rows=0</code>. A transaction requires all participating statements to use its managed connection; opening a separate connection may escape it.</p>
+
+<h3>Real-world edge cases</h3>
+<p>Keep transactions short and do not hold DB connections while waiting on slow remote services. <code>REQUIRES_NEW</code> can exhaust a small pool when outer transactions hold connections. A local DB transaction does not atomically commit Kafka or another microservice's database; use an outbox/saga where needed. Strong isolation does not replace unique constraints or business invariants. Retries after serialization failure must rerun the whole transaction and avoid duplicate external effects.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>What is atomicity?</strong> All changes in the transaction commit together or are rolled back together.</li>
+  <li><strong>Does Spring choose the isolation behavior?</strong> It requests an isolation level; the database enforces it.</li>
+  <li><strong>Why can a caught exception still commit?</strong> The transaction proxy sees normal return unless code marks rollback-only.</li>
+  <li><strong>Is a connection pool a transaction manager?</strong> No. The pool lends connections; the manager controls transaction boundaries.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>ACID transactions commit a consistent group of database changes or roll them back. Spring wraps externally invoked transactional methods, binds a pooled connection to the thread, and decides commit/rollback by its rules. I choose propagation and isolation based on the business invariant and database behavior, keep transactions short, size the pool for concurrency, and use an outbox/saga for work outside one database.</blockquote>

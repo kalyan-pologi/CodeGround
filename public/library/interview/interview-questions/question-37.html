@@ -1,1 +1,55 @@
+<h3>Question: How would you prevent duplicate payment processing across multiple microservice instances using idempotency keys, unique constraints, conditional updates, and retry handling?</h3>
+<h3>Short answer</h3>
+<p>A client sends a stable idempotency key for one logical payment. Every instance uses the same database uniqueness constraint, scoped to merchant/account, to claim that key. Store the request fingerprint, payment state, and eventual response; duplicates with the same payload return the original result, while the same key with a different payload is rejected. Use conditional state transitions and the payment provider's idempotency support so network retries cannot charge twice.</p>
 
+<h3>Internal working, step by step</h3>
+<ol>
+  <li>Validate the key and canonical request payload. Compute a fingerprint over merchant, amount, currency, and recipient.</li>
+  <li>In a transaction, attempt to insert <code>(merchant_id, key)</code> with a unique constraint. A concurrent insert on another instance loses at the database, not merely in local memory.</li>
+  <li>The winner creates a <code>PENDING</code> payment and outbox command; losers read the existing row. If fingerprints differ, return a conflict rather than replaying a different payment.</li>
+  <li>Workers claim a legal state transition with a conditional update such as <code>WHERE status='PENDING'</code>. Call the provider with the same stable provider key.</li>
+  <li>Persist final result and return it to all retries. If a provider call times out, query/reconcile before retrying; a timeout does not prove no charge occurred.</li>
+</ol>
+
+<h3>Runnable Java 17 + H2 uniqueness example</h3>
+<p>With H2 on the classpath, save as <code>IdempotencyDemo.java</code>.</p>
+<pre><code>import java.sql.*;
+
+public class IdempotencyDemo {
+    public static void main(String[] args) throws Exception {
+        try (Connection db = DriverManager.getConnection("jdbc:h2:mem:payments")) {
+            db.createStatement().execute("create table requests("
+                + "merchant varchar(30), idem_key varchar(30), payment_id varchar(30),"
+                + "constraint uq_request unique(merchant, idem_key))");
+            String insert = "insert into requests values(?,?,?)";
+            for (int attempt = 1; attempt &lt;= 2; attempt++) {
+                try (PreparedStatement statement = db.prepareStatement(insert)) {
+                    statement.setString(1, "shop");
+                    statement.setString(2, "req-123");
+                    statement.setString(3, "pay-1");
+                    statement.executeUpdate();
+                } catch (SQLException duplicate) {
+                    if (!"23505".equals(duplicate.getSQLState())) throw duplicate;
+                }
+            }
+            try (ResultSet rows = db.createStatement().executeQuery(
+                    "select payment_id from requests")) {
+                rows.next();
+                System.out.println("payment=" + rows.getString(1));
+            }
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>payment=pay-1</code>. The unique constraint is the cross-instance guarantee. A production implementation also compares request fingerprints, persists a response, and handles an insert still waiting on another transaction.</p>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p>Do not use a local <code>ConcurrentHashMap</code> as the sole deduplication store. Define key retention, retry windows, and behavior for in-progress requests (for example, return 202 with payment ID). Never generate a new provider key on retry. Keep conditional transitions in one DB statement and record provider webhook IDs to deduplicate callbacks. A successful charge followed by response loss must still return the original charge on retry.</p>
+<ul>
+  <li><strong>Is a unique constraint enough?</strong> It prevents duplicate claims, but you must also return the original result and deduplicate provider calls.</li>
+  <li><strong>What if the same key has different amount?</strong> Reject it as a conflict; do not treat it as the original request.</li>
+  <li><strong>What if two instances race?</strong> The database serializes the unique-key claim; one wins and the other reads the winner's row.</li>
+  <li><strong>Can a retry run forever?</strong> No; bound attempts and reconcile uncertain provider outcomes.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I require a client idempotency key and enforce a unique merchant/key constraint in the shared database. I store the request fingerprint and payment result, return the original response for identical retries, reject mismatched payloads, and guard state transitions with conditional updates. I reuse the same idempotency key at the provider and reconcile timeouts before retrying, so multiple app instances cannot create duplicate charges.</blockquote>

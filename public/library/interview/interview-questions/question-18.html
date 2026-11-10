@@ -1,1 +1,53 @@
+<h3>Question: A Java application crashes with OutOfMemoryError after running for several days. How would you identify memory leaks using heap dumps, GC logs, and profiling tools?</h3>
+<h3>Short answer</h3>
+<p>First identify the exact failure: <code>Java heap space</code>, metaspace, direct buffer/native memory, or an OS/container kill. A heap that rises after each full collection suggests retained objects, but a large live set or a traffic spike is not automatically a leak. Capture a heap dump and GC/JFR evidence, compare retained objects and paths to GC roots, then fix the code that keeps them reachable.</p>
 
+<h3>Diagnosis, step by step</h3>
+<ol>
+  <li>Preserve the exception message, process/container memory graph, heap usage after GC, allocation rate, thread count, and deployment timeline.</li>
+  <li>Configure <code>-XX:+HeapDumpOnOutOfMemoryError</code> and a protected <code>-XX:HeapDumpPath</code> with enough disk space; enable <code>-Xlog:gc*</code> and a bounded Java Flight Recorder recording. Dumps may contain secrets and personal data.</li>
+  <li>Open the dump in a heap analyzer. Sort by <em>retained size</em>, not just shallow object count; inspect dominator tree and paths to GC roots. Compare an early and late dump to identify growing owners.</li>
+  <li>Typical roots are static maps, caches without eviction, unclosed listeners, thread locals in long-lived pools, queues with producers faster than consumers, class loaders, and accidental ORM result accumulation.</li>
+  <li>If heap is stable but resident memory grows, inspect direct buffers, thread stacks, metaspace, JNI/native allocations, and container limits. Native Memory Tracking can help for JVM-native allocations when enabled at startup.</li>
+</ol>
+
+<h3>Runnable Java 17 example: bound retained objects</h3>
+<p>Save as <code>BoundedCacheDemo.java</code>. A cache without an eviction rule would retain every entry as long as it remains reachable.</p>
+<pre><code>import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class BoundedCacheDemo {
+    public static void main(String[] args) {
+        Map&lt;Integer, byte[]&gt; cache = new LinkedHashMap&lt;&gt;(16, 0.75f, true) {
+            protected boolean removeEldestEntry(Map.Entry&lt;Integer, byte[]&gt; eldest) {
+                return size() &gt; 3;
+            }
+        };
+        for (int i = 1; i &lt;= 10; i++) cache.put(i, new byte[1_024]);
+        System.out.println("entries=" + cache.size());
+        System.out.println("oldestPresent=" + cache.containsKey(1));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>entries=3
+oldestPresent=false</code></pre>
+<p>This is a local illustration. A production cache also needs concurrency behavior, expiry, metrics, and sizing by bytes rather than merely entry count.</p>
+
+<h3>Useful commands and edge cases</h3>
+<pre><code>jcmd &lt;pid&gt; GC.heap_dump /secure/path/heap.hprof
+jcmd &lt;pid&gt; Thread.print
+jcmd &lt;pid&gt; VM.native_memory summary
+# JVM startup examples:
+-XX:+HeapDumpOnOutOfMemoryError -Xlog:gc*:file=/logs/gc.log:time,level,tags</code></pre>
+<p>A heap dump can pause the process and be very large; capture safely and restrict access. A single heap dump does not prove growth over time. Repeated full GCs with little memory reclaimed are evidence of pressure, not proof of a particular leak. Increasing <code>-Xmx</code> may delay failure but does not fix unbounded retention. A pod killed by the kernel may not produce a Java <code>OutOfMemoryError</code> or heap dump at all.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>What is retained size?</strong> Memory that could become collectible if a particular object and everything uniquely reachable through it were removed.</li>
+  <li><strong>What is a GC root?</strong> A starting reference such as a live thread stack, static field, or JVM handle that keeps an object reachable.</li>
+  <li><strong>Can Java leak memory despite GC?</strong> Yes. GC cannot collect objects still strongly reachable even if the application no longer needs them.</li>
+  <li><strong>What if heap usage is low?</strong> Investigate direct/native memory, thread stacks, metaspace, other processes, and container limits.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would classify the OOM first, compare post-GC live heap over time, and capture GC logs, JFR, and a protected heap dump. In the dump I would inspect dominators and paths to roots to find the owner retaining a growing collection, then reproduce and fix that retention. If the heap is stable, I would shift to native memory, threads, direct buffers, and container limits rather than assuming a heap leak.</blockquote>

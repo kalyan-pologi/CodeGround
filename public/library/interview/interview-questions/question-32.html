@@ -1,1 +1,49 @@
+<h3>Question: How would you design efficient pagination, composite indexing, partitioning, and sharding for a database table containing 100 million records?</h3>
+<h3>Short answer</h3>
+<p>Start with real access patterns, retention, and latency targets; 100 million rows alone does not require sharding. Use selective indexes aligned with filters and ordering, bounded pages, and keyset/cursor pagination for deep sequential browsing. Partition when pruning or maintenance by date/tenant genuinely helps. Shard only after one database cannot meet measured capacity or availability requirements, because cross-shard queries and transactions become much harder.</p>
 
+<h3>Design, step by step</h3>
+<ol>
+  <li>Identify common queries such as “recent orders for one tenant,” their selectivity, sort order, and expected page size.</li>
+  <li>For <code>WHERE tenant_id=? ORDER BY created_at DESC, id DESC</code>, test a composite B-tree index on <code>(tenant_id, created_at DESC, id DESC)</code>. The leading tenant column helps narrow the scan.</li>
+  <li>Use a unique tie-breaker (<code>id</code>) in the sort and cursor. Deep <code>OFFSET</code> can require scanning many skipped rows and can shift as rows are inserted.</li>
+  <li>Partition by a stable key such as time only if queries can prune partitions and operations benefit. Maintain indexes, retention, and statistics on each partition.</li>
+  <li>If sharding is necessary, choose a stable shard key (often tenant ID), plan rebalancing/hot-tenant handling, and define how global analytics and uniqueness work.</li>
+</ol>
+
+<h3>Runnable Java 17 cursor example</h3>
+<p>Save as <code>CursorDemo.java</code>. This in-memory example illustrates the “after last seen ID” idea; SQL performs the actual indexed scan.</p>
+<pre><code>import java.util.List;
+
+public class CursorDemo {
+    static List&lt;Integer&gt; page(List&lt;Integer&gt; descendingIds, int afterId, int size) {
+        return descendingIds.stream()
+            .filter(id -&gt; id &lt; afterId)
+            .limit(size)
+            .toList();
+    }
+
+    public static void main(String[] args) {
+        List&lt;Integer&gt; ids = List.of(105, 104, 103, 102, 101);
+        System.out.println(page(ids, Integer.MAX_VALUE, 2));
+        System.out.println(page(ids, 104, 2));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>[105, 104]
+[103, 102]</code></pre>
+<p>In SQL, use a tuple cursor such as <code>WHERE tenant_id=? AND (created_at,id) &lt; (?,?) ORDER BY created_at DESC,id DESC LIMIT 20</code> with matching index and consistent timestamp/ID types.</p>
+
+<h3>Real-world edge cases</h3>
+<p>Cursor tokens should be opaque or signed and include all filter/sort values. Inserts and deletes can still affect a live feed; define whether pages reflect a snapshot. A composite index is most effective when query predicates constrain its leading columns. Too many indexes slow writes. Partitioning is not automatic query speedup if predicates cannot prune; sharding adds routing, cross-shard joins, distributed uniqueness, and operational cost. Measure before introducing it.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why keyset over deep offset?</strong> It can seek from an indexed cursor instead of skipping millions of rows.</li>
+  <li><strong>Why include ID in ordering?</strong> Timestamps can tie; a unique tie-breaker prevents ambiguous page boundaries.</li>
+  <li><strong>Does partitioning replace indexes?</strong> No. Queries may still need indexes within selected partitions.</li>
+  <li><strong>What makes a shard key bad?</strong> Hotspots, frequent moves, or queries that require fan-out to all shards.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would design from actual query patterns, create composite indexes matching tenant/filter/order fields, cap page size, and use keyset pagination for deep browsing. I would partition only where pruning and lifecycle management help, and shard only after measuring a single database's limits. The shard key, rebalancing, global uniqueness, and cross-shard queries must be designed before distributing the data.</blockquote>

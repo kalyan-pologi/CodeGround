@@ -1,1 +1,43 @@
+<h3>Question: How would you investigate intermittent production failures using centralized logging, metrics, distributed tracing, root-cause analysis, and rollback strategies?</h3>
+<h3>Short answer</h3>
+<p>Intermittent failures require correlated evidence from the exact failing requests. Start with scope and impact, compare errors and latency against deploys and dependency changes, then use structured logs, metrics, and traces to find the failing hop. Preserve evidence before restarts, mitigate with rollback or traffic shift when needed, and validate the root cause with a reproducible mechanism—not merely the last error message.</p>
 
+<h3>Investigation, step by step</h3>
+<ol>
+  <li>Define the symptom: endpoint, tenant, region, error rate, time window, and whether retries eventually succeed. Check recent deploy/config/schema changes.</li>
+  <li>Use a request/trace ID to join gateway, service, Kafka, and database events. Structured logs should include safe context and exception type without secrets.</li>
+  <li>Compare RED metrics (rate, errors, duration) and resource metrics (CPU, memory, GC, pool wait, queue lag). Look for correlation with saturation or a specific instance/AZ.</li>
+  <li>Inspect a failing trace's spans for the slow/error boundary and compare a successful trace. Check thread dumps, DB locks, and downstream status for the same period.</li>
+  <li>Mitigate first when user impact is high: rollback the new artifact, disable a feature flag, or route around a bad dependency. Then reproduce, fix, test, deploy cautiously, and document prevention.</li>
+</ol>
+
+<h3>Runnable Java 17 correlation example</h3>
+<p>Save as <code>CorrelationDemo.java</code>. This shows how a stable ID ties two log lines together; a real service uses a structured logger and propagates trace context across threads and messages.</p>
+<pre><code>public class CorrelationDemo {
+    static void log(String requestId, String event) {
+        System.out.println("requestId=" + requestId + " event=" + event);
+    }
+
+    public static void main(String[] args) {
+        String id = "req-42";
+        log(id, "payment-start");
+        log(id, "provider-timeout");
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>requestId=req-42 event=payment-start
+requestId=req-42 event=provider-timeout</code></pre>
+
+<h3>Real-world edge cases</h3>
+<p>A trace sample may miss rare failures, so increase targeted sampling or use error-triggered capture where supported. Logs alone may show “timeout” but not the blocked connection pool that caused it. A rollback may fail if a database schema migration was destructive; use expand–contract rollout. Avoid changing many variables during an incident. A good RCA records timeline, triggering change, underlying weakness, detection gap, customer impact, and concrete follow-up actions without blaming an individual.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>What if only one pod fails?</strong> Compare its image, node, memory, connection state, and recent restarts with healthy pods.</li>
+  <li><strong>Does a rollback prove the code change caused it?</strong> It is strong evidence but still requires a mechanism and reproduction.</li>
+  <li><strong>Why traces and logs?</strong> Traces show timing/path; logs add detailed events and errors.</li>
+  <li><strong>What if an issue cannot be reproduced?</strong> Improve instrumentation and preserve representative failing request context without sensitive data.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I first measure impact and correlate failures by time, release, tenant, and trace ID. I compare failing and healthy traces, structured logs, latency/error metrics, pool/GC/queue metrics, and dependency health to find the responsible boundary. I mitigate with rollback or traffic shift when needed, then reproduce the mechanism, fix it, and document a blameless RCA with detection and prevention actions.</blockquote>

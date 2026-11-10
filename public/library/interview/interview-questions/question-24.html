@@ -1,1 +1,74 @@
+<h3>Question: How does @Transactional work internally in Spring, and why might transactions fail because of self-invocation, private methods, exception handling, propagation, or isolation?</h3>
+<h3>Short answer</h3>
+<p>In Spring's default proxy mode, an external call enters a transactional proxy. The proxy asks a transaction manager to begin or join a transaction, invokes the target method, then commits or rolls back according to the outcome. A call from one method to another on <code>this</code> bypasses the proxy. Private methods cannot be intercepted by the usual proxy call path. The default rollback rule is for unchecked exceptions and <code>Error</code>, not every checked exception.</p>
 
+<h3>Internal working, step by step</h3>
+<ol>
+  <li><code>@EnableTransactionManagement</code>/Boot infrastructure registers transaction advice and a transaction manager.</li>
+  <li>The proxy intercepts a call from another bean. With <code>REQUIRED</code> propagation, it joins an existing transaction or begins one using a connection/entity manager bound to the current thread.</li>
+  <li>The target executes database operations. On normal return, the manager commits; on a qualifying exception, it rolls back. Caught exceptions do not reach the proxy, so they do not automatically trigger rollback.</li>
+  <li>Isolation controls what concurrent transactions can observe; the database actually enforces it. A Spring transaction does not automatically span a remote HTTP call or another service's database.</li>
+</ol>
+
+<h3>Runnable Spring Boot example</h3>
+<p>Use a Spring Boot project with <code>spring-boot-starter-jdbc</code> and H2. Place this in <code>src/main/java/demo/TransactionDemo.java</code>. The service is a separate bean so the call crosses the proxy.</p>
+<pre><code>package demo;
+
+import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Bean;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+@SpringBootApplication
+public class TransactionDemo {
+    public static void main(String[] args) {
+        SpringApplication.run(TransactionDemo.class, args);
+    }
+
+    @Bean
+    ApplicationRunner demo(JdbcTemplate jdbc, PaymentService service) {
+        return args -&gt; {
+            jdbc.execute("create table payments (id int primary key)");
+            try { service.insertThenFail(); }
+            catch (IllegalStateException expected) { /* inspect rollback */ }
+            System.out.println("rows=" +
+                jdbc.queryForObject("select count(*) from payments", Integer.class));
+        };
+    }
+}
+
+@Service
+class PaymentService {
+    private final JdbcTemplate jdbc;
+    PaymentService(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+
+    @Transactional
+    public void insertThenFail() {
+        jdbc.update("insert into payments(id) values (1)");
+        throw new IllegalStateException("simulate failure");
+    }
+}</code></pre>
+<p><strong>Expected application output:</strong> <code>rows=0</code>. The unchecked exception leaves the proxy, so the insert rolls back. Run the demo against a fresh in-memory H2 database.</p>
+
+<h3>Propagation, isolation, and failure traps</h3>
+<ul>
+  <li><strong><code>REQUIRED</code>:</strong> join or create a transaction. <code>REQUIRES_NEW</code> suspends the outer one and uses another transaction; it may need another pool connection. <code>NESTED</code> uses savepoints when supported.</li>
+  <li><strong>Self-invocation/private methods:</strong> move the transactional operation to another bean or use <code>TransactionTemplate</code>; do not assume an internal call is advised.</li>
+  <li><strong>Exceptions:</strong> unchecked exceptions roll back by default; checked exceptions normally need <code>rollbackFor</code> unless the application changed the default. Swallowing an exception can cause commit.</li>
+  <li><strong>Isolation:</strong> database default varies. Higher isolation may prevent anomalies but adds locks/retries. Test behavior with the actual database.</li>
+  <li><strong>Async calls:</strong> thread-bound transactions do not automatically follow <code>@Async</code> work. Keep the transaction short and avoid network calls inside it.</li>
+</ul>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why does <code>this.save()</code> not start a transaction?</strong> It calls the target directly, bypassing the proxy.</li>
+  <li><strong>Will a checked exception roll back?</strong> Not by the usual default; configure the rollback rule if required.</li>
+  <li><strong>Can an inner <code>REQUIRES_NEW</code> commit while the outer rolls back?</strong> Yes; it is an independent transaction.</li>
+  <li><strong>Does <code>@Transactional</code> make a distributed transaction?</strong> No. Use an explicit distributed consistency pattern such as outbox or saga.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote><code>@Transactional</code> is usually implemented by a Spring proxy around an externally invoked bean method. The proxy obtains a transaction, calls the method, and commits or rolls back according to rollback rules. I watch for self-invocation, non-intercepted methods, caught or checked exceptions, propagation choices, and the database's actual isolation. I keep transactions short and verify rollback with an integration test.</blockquote>

@@ -1,1 +1,118 @@
+<h3>Question: Design and implement an idempotent payment REST API using Spring Boot, database transactions, and unique constraints to prevent duplicate charges.</h3>
+<h3>Short answer</h3>
+<p>Require a stable <code>Idempotency-Key</code> per logical payment and scope it to the authenticated merchant. In one database transaction, claim that key with a unique constraint, store a fingerprint of the amount/currency, create one <code>PENDING</code> payment, and write one outbox command. An identical retry returns the same payment ID/status; reusing the key with different details returns 409. A worker later calls the payment provider with the same stable provider-side key and reconciles uncertain outcomes.</p>
 
+<h3>Request flow, step by step</h3>
+<ol>
+  <li>Authenticate the merchant and validate key length, positive amount in minor units, supported currency, and request size. Do not accept merchant identity from an untrusted header.</li>
+  <li>Try an atomic insert into a table with primary key <code>(merchant_id, idem_key)</code>. Concurrent app instances race at the shared database; only one insert wins.</li>
+  <li>Read the stored fingerprint/payment ID. If the fingerprint differs, reject with 409; otherwise return the stored result.</li>
+  <li>Only the winner inserts an outbox event in the same transaction. A relay publishes it; a worker uses the payment ID as the provider idempotency key.</li>
+  <li>Record provider result and serve stable responses. If a network timeout occurs, query the provider by key before retrying; timeout is not proof of failure.</li>
+</ol>
+
+<h3>Project-ready Spring Boot + PostgreSQL example</h3>
+<p>Use Spring Boot Web, Validation, JDBC, Security/OAuth2 resource-server, and PostgreSQL. Configure authentication so <code>Principal.getName()</code> is the merchant ID. Apply this schema with a versioned migration:</p>
+<pre><code>CREATE TABLE payment_requests (
+  merchant_id text NOT NULL,
+  idem_key text NOT NULL,
+  fingerprint text NOT NULL,
+  payment_id text NOT NULL UNIQUE,
+  status text NOT NULL,
+  PRIMARY KEY (merchant_id, idem_key)
+);
+CREATE TABLE payment_outbox (
+  event_id text PRIMARY KEY,
+  payment_id text NOT NULL,
+  event_type text NOT NULL
+);</code></pre>
+<p>Save the following in <code>src/main/java/demo/PaymentApi.java</code>:</p>
+<pre><code>package demo;
+
+import java.security.Principal;
+import java.util.Locale;
+import java.util.UUID;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Positive;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+
+@SpringBootApplication
+public class PaymentApi {
+    public static void main(String[] args) { SpringApplication.run(PaymentApi.class, args); }
+}
+
+record ChargeRequest(@Positive long cents, @NotBlank String currency) {}
+record ChargeResult(String paymentId, String status) {}
+record StoredPayment(String fingerprint, String paymentId, String status) {}
+
+@RestController
+@RequestMapping("/api/payments")
+class PaymentController {
+    private final PaymentService service;
+    PaymentController(PaymentService service) { this.service = service; }
+
+    @PostMapping
+    ResponseEntity&lt;ChargeResult&gt; create(
+            @RequestHeader("Idempotency-Key") String key,
+            @Valid @RequestBody ChargeRequest request,
+            Principal principal) {
+        return ResponseEntity.accepted()
+            .body(service.create(principal.getName(), key, request));
+    }
+}
+
+@Service
+class PaymentService {
+    private final JdbcTemplate jdbc;
+    PaymentService(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+
+    @Transactional
+    public ChargeResult create(String merchant, String key, ChargeRequest request) {
+        if (key.isBlank() || key.length() &gt; 100)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "invalid key");
+        String currency = request.currency().toUpperCase(Locale.ROOT);
+        String fingerprint = request.cents() + "|" + currency;
+        String newId = UUID.randomUUID().toString();
+        int inserted = jdbc.update(
+            "insert into payment_requests(merchant_id, idem_key, fingerprint, payment_id, status) "
+          + "values(?,?,?,?,?) on conflict(merchant_id, idem_key) do nothing",
+            merchant, key, fingerprint, newId, "PENDING");
+        StoredPayment stored = jdbc.queryForObject(
+            "select fingerprint, payment_id, status from payment_requests "
+          + "where merchant_id=? and idem_key=?",
+            (rs, row) -&gt; new StoredPayment(rs.getString(1), rs.getString(2),
+                                           rs.getString(3)),
+            merchant, key);
+        if (!fingerprint.equals(stored.fingerprint()))
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                "key used for a different payment");
+        if (inserted == 1) {
+            jdbc.update("insert into payment_outbox(event_id, payment_id, event_type) "
+                      + "values(?,?,?)",
+                UUID.randomUUID().toString(), stored.paymentId(), "PAYMENT_REQUESTED");
+        }
+        return new ChargeResult(stored.paymentId(), stored.status());
+    }
+}</code></pre>
+<p><strong>Expected HTTP behavior:</strong> the first valid POST returns 202 with <code>{"paymentId":"&lt;uuid&gt;","status":"PENDING"}</code>. A simultaneous or later identical POST by the same merchant/key returns the same payment ID and one outbox row exists. The same key with a different amount/currency returns 409. UUID values vary. A configured security filter must reject unauthenticated calls before the controller; the example assumes that configuration rather than inventing credentials.</p>
+
+<h3>Real-world edge cases and follow-up questions</h3>
+<p>Use a canonical request fingerprint including every charge-defining field, not just amount/currency in a real API. Keep the payment record longer than the client's retry window. Return a stable response for <code>PENDING</code>, <code>SUCCEEDED</code>, or <code>FAILED</code> as appropriate. Never make the provider call inside the DB transaction. The outbox relay may publish twice, so consumers and provider calls must also be idempotent. Add indexes and monitor conflict/duplicate rates.</p>
+<ul>
+  <li><strong>Why a DB unique constraint?</strong> It coordinates every service instance; a local lock or map does not.</li>
+  <li><strong>What if the first response is lost?</strong> Retry with the same key and receive the stored payment ID/result.</li>
+  <li><strong>What if a provider times out after charging?</strong> Reconcile using the stable provider key before retrying.</li>
+  <li><strong>Why outbox?</strong> It atomically records the payment claim and intent to process without a fragile DB-plus-broker dual write.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I authenticate the merchant, require an idempotency key, and enforce a unique merchant/key row in the database. The transaction stores a request fingerprint, one payment ID, and one outbox event; identical retries return the original result, while mismatched payloads get 409. A worker calls the provider with the same stable key, and uncertain timeouts are reconciled. This gives cross-instance duplicate protection without claiming a local lock makes a payment exactly-once.</blockquote>

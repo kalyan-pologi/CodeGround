@@ -1,1 +1,46 @@
+<h3>Question: How would you protect REST APIs against SQL injection, XSS, CSRF, IDOR/BOLA, unauthorized access, and sensitive data exposure?</h3>
+<h3>Short answer</h3>
+<p>Layer defenses at the boundary and the business object. Parameterize SQL, validate input, encode data in its output context, enforce authentication plus per-object authorization, choose CSRF protection based on browser credential handling, and minimize/redact sensitive data. A gateway or frontend check cannot replace authorization inside the service.</p>
 
+<h3>Threat-by-threat design</h3>
+<ul>
+  <li><strong>SQL injection:</strong> use prepared statements/ORM bind parameters. Never concatenate user data into SQL. Whitelist dynamic table/column names because identifiers cannot be bound as values.</li>
+  <li><strong>XSS:</strong> encode untrusted data for HTML/attribute/URL/JavaScript context at rendering time; avoid unsafe HTML injection and use a Content Security Policy. A JSON API can still feed an unsafe browser UI.</li>
+  <li><strong>CSRF:</strong> matters for browser requests where credentials such as cookies are sent automatically. Use CSRF tokens and suitable <code>SameSite</code> cookies; a stateless bearer-token API with no ambient cookie authentication has a different threat model.</li>
+  <li><strong>IDOR/BOLA:</strong> query or authorize each object under the caller's tenant/owner; changing <code>/orders/7</code> to <code>/orders/8</code> must not reveal another user's order.</li>
+  <li><strong>Exposure:</strong> return DTOs with only required fields, restrict logs/traces, encrypt sensitive data appropriately, rotate secrets, and rate-limit abusive calls.</li>
+</ul>
+
+<h3>Runnable Java 17 authorization illustration</h3>
+<p>Save as <code>ObjectAccessDemo.java</code>. A real service would load the order from the database with tenant scoping, not trust client-supplied ownership.</p>
+<pre><code>public class ObjectAccessDemo {
+    record Order(long id, String owner) {}
+
+    static int readStatus(String caller, Order order) {
+        return caller.equals(order.owner()) ? 200 : 403;
+    }
+
+    public static void main(String[] args) {
+        Order order = new Order(7, "alice");
+        System.out.println("alice=" + readStatus("alice", order));
+        System.out.println("bob=" + readStatus("bob", order));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>alice=200
+bob=403</code></pre>
+<p>A safe JDBC query similarly uses <code>PreparedStatement("select ... where id=? and owner_id=?")</code> and binds both values; no row means the caller cannot access that object.</p>
+
+<h3>Real-world edge cases</h3>
+<p>Validation is not a replacement for output encoding. Escaping HTML is not a fix for SQL injection. CORS does not authorize requests; it is a browser cross-origin policy. Avoid mass assignment by mapping allowed DTO fields explicitly. Do not expose stack traces, JWTs, passwords, or payment details in errors and logs. Test cross-tenant access for every read, update, and delete endpoint, including bulk/export paths.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Is an authenticated user allowed any resource ID?</strong> No; authorization must be checked on each object.</li>
+  <li><strong>Does a prepared statement prevent all injection?</strong> It protects bound values; dynamic SQL identifiers and unsafe string fragments still need whitelisting.</li>
+  <li><strong>Is CSRF relevant to JWT?</strong> It depends on transport. Automatically sent cookies can be CSRF targets; a bearer token added explicitly in a header differs.</li>
+  <li><strong>Does CORS stop malicious clients?</strong> No; non-browser clients are not constrained by CORS.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I use parameterized SQL, DTO-level input validation, context-aware output encoding, and explicit object-level authorization for every request. I apply CSRF defenses for cookie-authenticated browser flows, minimize sensitive data in responses and logs, and test cross-user/tenant access. I treat CORS and gateway authentication as supporting controls, not substitutes for service-side authorization.</blockquote>

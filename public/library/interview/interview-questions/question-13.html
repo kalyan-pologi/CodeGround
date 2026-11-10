@@ -1,1 +1,71 @@
+<h3>Question: How does the Java Memory Model work, and what are the differences between volatile, synchronized, atomicity, visibility, and happens-before relationships?</h3>
+<h3>Short answer</h3>
+<p>The Java Memory Model (JMM) defines which values one thread may observe from another and which operations may be reordered. A <em>happens-before</em> relationship gives a visibility and ordering guarantee. <code>volatile</code> establishes that guarantee for reads and writes of one field, while <code>synchronized</code> also provides mutual exclusion. Atomic classes combine indivisible updates with specified memory effects. Visibility alone does not make a compound operation atomic.</p>
 
+<h3>Start with the basics</h3>
+<p>Threads share heap objects but can execute using registers, caches, compiler optimizations, and CPU reordering. Without coordination, reading a shared field in one thread is a data race: another thread's latest write is not guaranteed to be observed. <strong>Visibility</strong> means seeing a published value; <strong>atomicity</strong> means an operation cannot be observed halfway through. An increment is conceptually read → add → write, so two increments can lose an update even when the field is volatile.</p>
+
+<h3>Internal working: happens-before rules</h3>
+<ol>
+  <li>Within one thread, earlier actions happen-before later actions in program order.</li>
+  <li>An unlock of a monitor happens-before a later lock of that <em>same</em> monitor. This is why both sides must synchronize on the same object.</li>
+  <li>A write to a volatile field happens-before a later read of that field. Writes before publishing a volatile “ready” flag become visible to a reader that observes it.</li>
+  <li>Calling <code>Thread.start()</code> happens-before actions in that thread; all actions in a thread happen-before another thread successfully returns from <code>join()</code>.</li>
+  <li>These rules are transitive. Correctly synchronized, data-race-free code can be reasoned about as if its operations were sequentially consistent.</li>
+</ol>
+<p><code>final</code> fields have special safe-publication guarantees when an object is properly constructed and does not escape its constructor. An atomic class such as <code>AtomicInteger</code> gives an atomic read-modify-write operation; a volatile field does not. A lock also protects multi-field invariants such as “balance plus reserved amount equals total.”</p>
+
+<h3>Runnable Java 17 example</h3>
+<p>Save as <code>MemoryModelDemo.java</code> and run with <code>javac MemoryModelDemo.java</code> and <code>java MemoryModelDemo</code>.</p>
+<pre><code>import java.util.concurrent.atomic.AtomicInteger;
+
+public class MemoryModelDemo {
+    static volatile boolean ready;
+    static int message; // Published by the volatile ready flag.
+
+    public static void main(String[] args) throws InterruptedException {
+        Thread writer = new Thread(() -&gt; {
+            message = 42;
+            ready = true;
+        });
+        writer.start();
+        while (!ready) Thread.onSpinWait();
+        System.out.println("message=" + message);
+        writer.join();
+
+        AtomicInteger count = new AtomicInteger();
+        Runnable increment = () -&gt; {
+            for (int i = 0; i &lt; 1_000; i++) count.incrementAndGet();
+        };
+        Thread a = new Thread(increment);
+        Thread b = new Thread(increment);
+        a.start();
+        b.start();
+        a.join();
+        b.join();
+        System.out.println("count=" + count.get());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>message=42
+count=2000</code></pre>
+<p>The volatile write publishes <code>message=42</code>; <code>incrementAndGet()</code> prevents lost increments. A busy spin is only for this small demonstration—production code normally uses a latch, future, queue, or blocking synchronization.</p>
+
+<h3>Real-world use and edge cases</h3>
+<ul>
+  <li>Use a volatile cancellation flag for one-way visibility, not for compound balance updates.</li>
+  <li>Use a lock when a decision and several fields must change together. Hold it only as long as needed; do not perform slow network calls while holding it.</li>
+  <li>Use atomics for independent counters and single-value state transitions. An atomic reference to a mutable object does not automatically protect that object's fields.</li>
+  <li>Publishing a reference without synchronization can expose stale fields. Use final fields, thread-safe containers, locks, volatile publication, or another documented safe-publication mechanism.</li>
+</ul>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Does <code>volatile</code> make <code>count++</code> atomic?</strong> No; two threads can read the same old count.</li>
+  <li><strong>Does <code>synchronized</code> guarantee visibility?</strong> Yes, when writes occur before unlocking and reads occur after locking the same monitor.</li>
+  <li><strong>Is <code>join()</code> just a wait?</strong> It also establishes happens-before from the completed thread's actions to the joining thread.</li>
+  <li><strong>Does happens-before mean an action ran earlier in wall-clock time?</strong> It is a formal ordering/visibility relationship, not simply a timestamp comparison.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>The JMM tells us when writes by one thread become visible to another and which reorderings are legal. I look for a happens-before edge: volatile write/read, unlock/lock on the same monitor, thread start/join, or a concurrent utility. Volatile gives visibility and ordering for a field but not atomic read-modify-write; synchronized adds mutual exclusion, and atomic classes provide indivisible single-value operations. For multi-field invariants I use a lock or a transactional store.</blockquote>

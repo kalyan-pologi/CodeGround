@@ -1,1 +1,64 @@
+<h3>Question: How would you design and configure a ThreadPoolExecutor to handle 10,000 incoming tasks, including thread-pool sizing, queue capacity, rejection policies, and backpressure?</h3>
+<h3>Short answer</h3>
+<p>Do not turn 10,000 incoming tasks into 10,000 threads or an unbounded queue. Measure task arrival rate, service time, CPU work, and downstream capacity; then choose a bounded worker count and queue. Decide explicitly what happens when both are full: reject, block upstream, or make the caller run work. Track queue depth, active threads, wait time, and rejection rate under load.</p>
 
+<h3>Start with the basics and internal working</h3>
+<p><code>ThreadPoolExecutor</code> owns worker threads and a task queue. On <code>execute(task)</code>, it generally creates workers until <code>corePoolSize</code> is reached, then queues tasks, then grows toward <code>maximumPoolSize</code> if the queue cannot accept more. After that it invokes the rejection handler. With an unbounded queue, the pool usually never grows beyond core size; with a bounded queue, both memory use and overload behavior are explicit.</p>
+<ol>
+  <li>Estimate CPU-bound workers near available CPU cores; for blocking work, measure wait time and cap concurrency to database/API limits.</li>
+  <li>Bound queue capacity by acceptable wait time and memory. Little's Law, <code>average in-flight ≈ arrival rate × response time</code>, is a useful estimate, not a substitute for load tests.</li>
+  <li>Choose overload behavior: <code>AbortPolicy</code> throws <code>RejectedExecutionException</code>; <code>CallerRunsPolicy</code> slows submitters; discard policies silently lose work and are inappropriate for payments.</li>
+  <li>Set thread names, timeouts, metrics, and a shutdown policy. Separate slow IO work from CPU work where one pool would starve the other.</li>
+</ol>
+
+<h3>Runnable Java 17 example</h3>
+<p>Save as <code>BoundedPoolDemo.java</code>. The first task occupies the only worker, the second fills the one-slot queue, and the third is predictably rejected.</p>
+<pre><code>import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+
+public class BoundedPoolDemo {
+    public static void main(String[] args) throws InterruptedException {
+        CountDownLatch started = new CountDownLatch(1);
+        CountDownLatch release = new CountDownLatch(1);
+        AtomicInteger completed = new AtomicInteger();
+        ThreadPoolExecutor pool = new ThreadPoolExecutor(
+            1, 1, 0, TimeUnit.SECONDS,
+            new ArrayBlockingQueue&lt;&gt;(1),
+            new ThreadPoolExecutor.AbortPolicy());
+
+        pool.execute(() -&gt; {
+            started.countDown();
+            try { release.await(); }
+            catch (InterruptedException e) { Thread.currentThread().interrupt(); }
+            completed.incrementAndGet();
+        });
+        started.await();
+        pool.execute(completed::incrementAndGet); // Queued.
+        int rejected = 0;
+        try { pool.execute(completed::incrementAndGet); }
+        catch (RejectedExecutionException e) { rejected++; }
+
+        release.countDown();
+        pool.shutdown();
+        if (!pool.awaitTermination(5, TimeUnit.SECONDS)) pool.shutdownNow();
+        System.out.println("completed=" + completed.get());
+        System.out.println("rejected=" + rejected);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>completed=2
+rejected=1</code></pre>
+
+<h3>Real-world use and edge cases</h3>
+<p>For an HTTP API, a full executor should become an explicit overload response such as 429/503 or upstream throttling—not an indefinitely growing queue. <code>CallerRunsPolicy</code> can provide backpressure for a dedicated producer but can unexpectedly block a request/event-loop thread. A large pool cannot increase a ten-connection database pool's capacity. Watch p95 queue wait and downstream saturation, not only CPU usage. Tasks that block forever still exhaust workers; use timeouts and cancellation. Catch exceptions from <code>Future</code>s and shut pools down on application stop.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why can <code>maximumPoolSize</code> appear ignored?</strong> An unbounded queue accepts new tasks before the pool grows past core size.</li>
+  <li><strong>How do you size a pool for blocking tasks?</strong> Measure blocking fraction and downstream limits; load-test rather than applying a single fixed formula.</li>
+  <li><strong>What does <code>CallerRunsPolicy</code> do?</strong> It runs rejected tasks on the submitting thread while the pool is running, slowing the producer.</li>
+  <li><strong>What happens at shutdown?</strong> <code>shutdown()</code> rejects new tasks but drains queued tasks; <code>shutdownNow()</code> interrupts workers and returns tasks that never started.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would use a bounded <code>ThreadPoolExecutor</code> sized from measured CPU, blocking time, and downstream capacity. I would keep the queue small enough to meet a wait-time target, choose an explicit rejection/backpressure policy, put timeouts around blocking calls, and monitor active workers, queue depth, latency, and rejections. Ten thousand arrivals are an overload scenario to control, not a reason to create ten thousand threads.</blockquote>

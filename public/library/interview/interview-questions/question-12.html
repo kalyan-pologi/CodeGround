@@ -1,1 +1,144 @@
+<h3>Question: Two threads update the same bank account balance simultaneously. How do race conditions occur, and how would you fix them using synchronized, ReentrantLock, AtomicInteger, and CAS?</h3>
+<h3>Short answer</h3>
+<p>A withdrawal is a read, a check, a calculation, and a write—not one indivisible operation. If two threads read the same old balance, one update can overwrite the other. Protect the entire check-and-update operation with one shared lock, or represent the balance with an atomic value and retry a compare-and-set (CAS) when another thread wins. For real money, use integer minor units or <code>BigDecimal</code>, and enforce the balance rule in the database too.</p>
 
+<h3>Start with the basics: the lost-update race</h3>
+<p>Suppose the balance is 100 and two threads each withdraw 10. Both can read 100, each compute 90, and both write 90. The correct result is 80; 90 means one withdrawal was lost. Even <code>volatile int balance</code> does not fix this: it makes individual reads and writes visible, but does not combine them into an atomic transaction.</p>
+<ol>
+  <li>Thread A reads 100; thread B reads 100.</li>
+  <li>Both pass the “enough money?” check and compute 90.</li>
+  <li>A writes 90; B writes 90, overwriting A's result.</li>
+</ol>
+
+<h3>Four ways to coordinate updates</h3>
+<ul>
+  <li><strong><code>synchronized</code>:</strong> a thread acquires the account object's monitor before entering the method. Only one thread at a time can run the guarded check and write. Exiting the monitor also publishes prior writes to the next acquirer.</li>
+  <li><strong><code>ReentrantLock</code>:</strong> offers the same basic mutual exclusion with explicit <code>lock()</code>/<code>unlock()</code>, plus <code>tryLock</code>, interruptible acquisition, fairness options, and conditions. Always unlock in <code>finally</code>.</li>
+  <li><strong><code>AtomicInteger</code>:</strong> provides atomic operations on one integer, such as <code>addAndGet</code>. A separate <code>get()</code> followed by <code>addAndGet()</code> is still not an atomic balance check.</li>
+  <li><strong>CAS:</strong> read the current value, calculate the new value, and call <code>compareAndSet(old, new)</code>. If another thread changed it, CAS fails and the loop reads again. This is suitable for a single-value invariant; under high contention it may retry repeatedly.</li>
+</ul>
+
+<h3>Runnable Java 17 example</h3>
+<p>Save as <code>AccountRaceDemo.java</code>, then run <code>javac AccountRaceDemo.java</code> and <code>java AccountRaceDemo</code>. The latches deliberately force the unsafe race so its output is repeatable.</p>
+<pre><code>import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
+
+public class AccountRaceDemo {
+    static void await(CountDownLatch latch) {
+        try { latch.await(); }
+        catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new IllegalStateException(e);
+        }
+    }
+
+    static void runTwo(Runnable action) throws InterruptedException {
+        Thread a = new Thread(action);
+        Thread b = new Thread(action);
+        a.start();
+        b.start();
+        a.join();
+        b.join();
+    }
+
+    static final class SynchronizedAccount {
+        private int cents = 100;
+        synchronized void withdraw(int amount) {
+            if (cents &lt; amount) throw new IllegalStateException("insufficient funds");
+            cents -= amount;
+        }
+        synchronized int balance() { return cents; }
+    }
+
+    static final class LockAccount {
+        private int cents = 100;
+        private final ReentrantLock lock = new ReentrantLock();
+        void withdraw(int amount) {
+            lock.lock();
+            try {
+                if (cents &lt; amount) throw new IllegalStateException("insufficient funds");
+                cents -= amount;
+            } finally {
+                lock.unlock();
+            }
+        }
+        int balance() {
+            lock.lock();
+            try { return cents; }
+            finally { lock.unlock(); }
+        }
+    }
+
+    static final class CasAccount {
+        private final AtomicInteger cents = new AtomicInteger(100);
+        boolean withdraw(int amount) {
+            for (;;) {
+                int old = cents.get();
+                if (old &lt; amount) return false;
+                if (cents.compareAndSet(old, old - amount)) return true;
+            }
+        }
+        int balance() { return cents.get(); }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        class Unsafe { volatile int cents = 100; }
+        Unsafe unsafe = new Unsafe();
+        CountDownLatch bothRead = new CountDownLatch(2);
+        CountDownLatch release = new CountDownLatch(1);
+        Runnable racingWithdrawal = () -&gt; {
+            int old = unsafe.cents;
+            bothRead.countDown();
+            await(release);
+            unsafe.cents = old - 10;
+        };
+        Thread a = new Thread(racingWithdrawal);
+        Thread b = new Thread(racingWithdrawal);
+        a.start();
+        b.start();
+        bothRead.await();
+        release.countDown();
+        a.join();
+        b.join();
+        System.out.println("unsafe=" + unsafe.cents);
+
+        SynchronizedAccount monitor = new SynchronizedAccount();
+        runTwo(() -&gt; monitor.withdraw(10));
+        System.out.println("synchronized=" + monitor.balance());
+
+        LockAccount locked = new LockAccount();
+        runTwo(() -&gt; locked.withdraw(10));
+        System.out.println("lock=" + locked.balance());
+
+        AtomicInteger atomic = new AtomicInteger(100);
+        runTwo(() -&gt; atomic.addAndGet(-10));
+        System.out.println("atomic=" + atomic.get());
+
+        CasAccount cas = new CasAccount();
+        runTwo(() -&gt; cas.withdraw(10));
+        System.out.println("CAS=" + cas.balance());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>unsafe=90
+synchronized=80
+lock=80
+atomic=80
+CAS=80</code></pre>
+
+<h3>Real-world choice and edge cases</h3>
+<p>For one in-process account object, <code>synchronized</code> is usually the simplest correct choice. Choose <code>ReentrantLock</code> when timed or interruptible acquisition is genuinely needed. Use an atomic counter for independent metrics; use a CAS loop when a single atomic balance must be checked before updating. Validate positive amounts, prevent integer overflow, and keep all reads of mutable state under the same synchronization policy. A transfer across two accounts must coordinate both accounts in a fixed lock order to prevent deadlock.</p>
+<p>None of these JVM-local mechanisms coordinates different service instances or makes a database write durable. In a payment service, use a database transaction with a conditional update or row lock, verify one row changed, and use an idempotency key so retries cannot charge twice.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Does <code>volatile</code> make <code>balance++</code> safe?</strong> No. Increment is a read-modify-write sequence; threads can still overwrite each other's result.</li>
+  <li><strong>Is <code>AtomicInteger</code> always lock-free?</strong> Its atomic update methods use atomic primitives, but a larger operation involving several values still needs coordination. CAS loops can retry under contention.</li>
+  <li><strong>What is the ABA problem?</strong> A value changes A → B → A, so CAS sees A again and cannot detect the intervening change. Use a version/stamp when that history matters.</li>
+  <li><strong>Can <code>synchronized</code> protect two different account instances?</strong> Not if each thread locks a different object. All threads must coordinate on the same lock for the same shared state.</li>
+  <li><strong>How do you prevent overdraft with CAS?</strong> Read the balance, reject if it is too low, and CAS the reduced balance; retry the entire check after a failed CAS.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>A race occurs because withdrawing is a check-and-update sequence, so two threads can read the same balance and lose one update. I protect the whole operation with <code>synchronized</code> or <code>ReentrantLock</code>, or use an <code>AtomicInteger</code> CAS loop that retries the balance check when another writer wins. <code>volatile</code> alone is insufficient. For real payments I also enforce the invariant and idempotency in the database, because an in-memory lock does not work across service instances.</blockquote>

@@ -1,1 +1,42 @@
+<h3>Question: A Spring Boot API becomes slow under high traffic even though CPU utilization is low. How would you investigate thread contention, connection pools, blocking calls, and resource exhaustion?</h3>
+<h3>Short answer</h3>
+<p>Low CPU with high latency usually means requests are waiting rather than computing. Check where the time goes: servlet worker queue, locks, database connection acquisition, SQL execution, downstream HTTP calls, and retry storms. Correlate request traces with pool utilization, thread dumps, and p95/p99 latency before increasing thread counts.</p>
 
+<h3>Step-by-step investigation</h3>
+<ol>
+  <li>Compare traffic, errors, p95/p99 latency, active requests, and throughput before and after the regression. Separate endpoint and dependency latency.</li>
+  <li>Inspect repeated thread dumps. Many <code>WAITING</code> threads on a pool indicate resource scarcity; many <code>BLOCKED</code> threads on one monitor indicate contention.</li>
+  <li>Inspect JDBC pool active/idle/pending metrics, acquisition time, slow-query logs, database locks, and connection leaks. A 10-connection pool can bottleneck 200 request workers.</li>
+  <li>Inspect outbound HTTP timeouts, DNS/TLS time, retry counts, Kafka lag, and external rate limits. A missing timeout can hold a worker indefinitely.</li>
+  <li>Apply one targeted fix: optimize SQL, bound concurrency, adjust a correctly sized pool, remove a coarse lock, add a timeout, or return controlled overload. Load-test the result.</li>
+</ol>
+
+<h3>Runnable Java 17 example: a scarce downstream resource</h3>
+<p>Save as <code>DownstreamLimitDemo.java</code>. A semaphore models a one-connection dependency. The second request cannot acquire it while the first holds it.</p>
+<pre><code>import java.util.concurrent.Semaphore;
+
+public class DownstreamLimitDemo {
+    public static void main(String[] args) {
+        Semaphore connections = new Semaphore(1);
+        boolean first = connections.tryAcquire();
+        boolean second = connections.tryAcquire();
+        System.out.println("first=" + first + ", second=" + second);
+        if (first) connections.release();
+        System.out.println("retry=" + connections.tryAcquire());
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>first=true, second=false</code> followed by <code>retry=true</code>. A real service should use timed acquisition and release in <code>finally</code>; a leaked permit resembles a leaked connection.</p>
+
+<h3>Real-world fixes and edge cases</h3>
+<p>Expose secured Spring Boot Actuator health and metrics, trace a request across DB and HTTP dependencies, and record pool wait separately from SQL time. Increasing Tomcat threads may make latency worse if the database is already saturated. Virtual threads may reduce thread cost while waiting but do not expand the DB pool. Cache only when consistency and invalidation are defined. Keep circuit breakers and bounded retries around remote calls; retrying every request against a failing service magnifies overload.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why low CPU?</strong> Threads may be blocked on IO, locks, pool acquisition, or rate limits rather than running on cores.</li>
+  <li><strong>Would more request threads help?</strong> Only if the bottleneck is worker availability and downstream capacity can serve more concurrent work.</li>
+  <li><strong>Which pool metric matters most?</strong> Active/idle, pending borrowers, acquisition time, and timeouts together reveal pressure.</li>
+  <li><strong>What is the fastest diagnostic?</strong> A trace plus a thread dump during the slow period often narrows the waiting point quickly.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would treat low CPU and high latency as a waiting problem. I would trace requests, inspect thread dumps, JDBC pool pending/acquisition metrics, slow SQL, locks, and outbound-call timeouts. Then I would fix the saturated dependency or contention point and enforce backpressure, rather than blindly increasing threads. I would verify the change with production-like load and p99 latency.</blockquote>

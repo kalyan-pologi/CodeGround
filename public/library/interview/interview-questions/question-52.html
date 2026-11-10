@@ -1,1 +1,37 @@
+<h3>Question: How would you design scalable and highly available AWS infrastructure using EC2, EKS, ALB, RDS, DynamoDB, S3, IAM, VPC, and autoscaling?</h3>
+<h3>Short answer</h3>
+<p>Place public entry points behind an ALB across availability zones, run stateless application capacity on EKS or EC2 Auto Scaling across private subnets, and use managed multi-AZ data services. RDS serves relational transactions, DynamoDB fits access-pattern-driven key/value workloads, and S3 stores durable objects/static assets. IAM grants least privilege; the VPC, subnets, routing, and security groups define network boundaries. Scale each tier according to its own bottleneck.</p>
 
+<h3>Architecture, step by step</h3>
+<ol>
+  <li>Create a VPC with public ALB subnets and private application/database subnets in at least two AZs. Restrict inbound traffic with security groups and use private endpoints where appropriate.</li>
+  <li>Route HTTPS through ALB to healthy EKS Pods or EC2 targets. Use readiness checks, rolling deploys, and autoscaling based on request/CPU/lag metrics.</li>
+  <li>Use RDS multi-AZ for transactional availability, backups, and tested recovery. Read replicas can help reads but are not a substitute for the primary's write capacity.</li>
+  <li>Use DynamoDB only when partition keys and access patterns are designed to avoid hot partitions; choose consistency mode based on business needs.</li>
+  <li>Store files in S3 with encryption, lifecycle policy, versioning where useful, and tightly scoped bucket policies. Give Pods IAM permissions through workload identity rather than embedded keys.</li>
+  <li>Observe latency, errors, saturation, cost, backups, failover, and recovery time. Test an AZ failure and database failover, not just normal traffic.</li>
+</ol>
+
+<h3>Runnable Java 17 environment check</h3>
+<p>Save as <code>RegionConfigDemo.java</code>. In an AWS workload, region/configuration should be injected, not hardcoded into every request path.</p>
+<pre><code>public class RegionConfigDemo {
+    public static void main(String[] args) {
+        String region = System.getenv().getOrDefault("AWS_REGION", "local");
+        System.out.println("region=" + region);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> with <code>AWS_REGION=us-east-1</code>, prints <code>region=us-east-1</code>; without it, prints <code>region=local</code>. AWS SDK credential resolution should use the default provider chain and workload identity, not a hardcoded key.</p>
+
+<h3>Real-world edge cases</h3>
+<p>Multi-AZ is not multi-region disaster recovery. More EKS replicas cannot fix a saturated single RDS primary or bad SQL. An ALB routes only to healthy targets, so readiness must reflect safe serving behavior. NAT gateways, cross-AZ transfer, and always-on capacity affect cost. IAM roles, security groups, and encryption protect different layers; none replaces application authorization. Backups need restore drills and defined RPO/RTO.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>RDS multi-AZ versus read replica?</strong> Multi-AZ improves availability/failover; replicas primarily scale reads and may lag.</li>
+  <li><strong>When use DynamoDB?</strong> When key-based access patterns and scaling model fit the workload; not merely because a table is large.</li>
+  <li><strong>What is an ALB doing?</strong> TLS termination/routing and health-aware distribution to targets.</li>
+  <li><strong>How protect AWS credentials in EKS?</strong> Associate a least-privilege IAM role with the workload's service account.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I would use a multi-AZ VPC with public ALB entry and private EKS/EC2 application capacity, backed by managed RDS for transactions, DynamoDB for suitable key-based workloads, and S3 for objects. I scale each tier from metrics, use readiness and autoscaling, least-privilege IAM/workload identity, backups, and tested failover. I also plan for DB write limits, network costs, and recovery objectives rather than assuming replicas alone provide high availability.</blockquote>

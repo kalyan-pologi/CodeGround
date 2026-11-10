@@ -1,1 +1,61 @@
+<h3>Question: Write Java Streams code to find the second-highest distinct salary in each department, group employees by department, and handle duplicate salaries.</h3>
+<h3>Short answer</h3>
+<p>First group employees by department. Within each group, extract salary, remove duplicates, sort descending, skip the highest distinct value, and take the next one. Define behavior for a department with fewer than two distinct salaries: return an empty <code>Optional</code> or a clear “none,” not an exception. Duplicates must not count as the second-highest salary.</p>
 
+<h3>Runnable Java 17 program</h3>
+<p>Save as <code>SecondSalaryByDepartment.java</code>.</p>
+<pre><code>import java.util.*;
+import java.util.stream.Collectors;
+
+public class SecondSalaryByDepartment {
+    record Employee(String name, String department, int salary) {}
+
+    static Optional&lt;Integer&gt; secondHighest(List&lt;Employee&gt; employees) {
+        return employees.stream()
+            .map(Employee::salary)
+            .distinct()
+            .sorted(Comparator.reverseOrder())
+            .skip(1)
+            .findFirst();
+    }
+
+    public static void main(String[] args) {
+        List&lt;Employee&gt; employees = List.of(
+            new Employee("A", "Engineering", 130),
+            new Employee("B", "Engineering", 130),
+            new Employee("C", "Engineering", 110),
+            new Employee("D", "Sales", 90),
+            new Employee("E", "Sales", 80),
+            new Employee("F", "Sales", 80),
+            new Employee("G", "HR", 70));
+
+        Map&lt;String, List&lt;Employee&gt;&gt; byDepartment = employees.stream()
+            .collect(Collectors.groupingBy(Employee::department, TreeMap::new,
+                Collectors.toList()));
+
+        byDepartment.forEach((department, members) -&gt;
+            System.out.println(department + ": count=" + members.size()
+                + ", second=" + secondHighest(members)
+                    .map(String::valueOf).orElse("none")));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>Engineering: count=3, second=110
+HR: count=1, second=none
+Sales: count=3, second=80</code></pre>
+<p><code>TreeMap</code> makes department output order deterministic; a regular <code>HashMap</code> would not guarantee that order.</p>
+
+<h3>Internal working and complexity</h3>
+<p><code>groupingBy</code> makes one list per department. For each list, <code>distinct()</code> removes duplicate salary values, descending sort orders them, and <code>skip(1)</code> ignores the highest. Sorting all salaries costs roughly O(n log n) per department and stores values. For very large streams, keep only the top two distinct values in one pass or let the database calculate a rank/window function; do not load millions of employees just for a report.</p>
+
+<h3>Real-world edge cases and follow-ups</h3>
+<p>Specify whether salary is an exact annual amount, cents, or decimal currency; avoid <code>double</code> for money. Handle null department/salary according to a stated policy before grouping. A tie at the highest salary remains one distinct value. Empty departments are absent from the grouping unless seeded separately. Parallel streams rarely help for small groups and complicate ordering/performance.</p>
+<ul>
+  <li><strong>Why <code>distinct()</code> before <code>skip(1)</code>?</strong> Two employees tied for top salary must not make that salary “second.”</li>
+  <li><strong>What if all salaries are equal?</strong> There is no second distinct salary; return empty/none.</li>
+  <li><strong>How do you get employees earning the second salary?</strong> Compute the value, then filter the department's employees by that salary.</li>
+  <li><strong>Could SQL be better?</strong> Yes, a ranked query can avoid moving a large dataset into Java.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I group employees by department, map each group to salaries, remove duplicates, sort descending, skip the maximum, and take the next value as an <code>Optional</code>. This handles tied top salaries and departments with fewer than two distinct salaries. For large datasets I would use a one-pass top-two collector or a database window function instead of sorting everything in memory.</blockquote>

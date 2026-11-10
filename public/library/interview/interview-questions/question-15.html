@@ -1,1 +1,60 @@
+<h3>Question: What are deadlock, livelock, and starvation, and how would you detect, troubleshoot, and prevent them in production?</h3>
+<h3>Short answer</h3>
+<p>In a <strong>deadlock</strong>, threads wait forever for resources held by each other. In a <strong>livelock</strong>, threads keep reacting and changing state but make no useful progress. In <strong>starvation</strong>, one task waits indefinitely while others repeatedly get service. Diagnose with thread dumps, lock ownership, queue/latency metrics, and workload traces; prevent with consistent lock ordering, short lock holds, bounded retries, and fair scheduling where necessary.</p>
 
+<h3>How a deadlock forms</h3>
+<p>Imagine transfer A → B locking A then B, while transfer B → A locks B then A. Each thread holds one lock and waits for the other. The classic necessary conditions are mutual exclusion, hold-and-wait, no forced preemption, and circular wait. Eliminating circular wait by always acquiring account locks in a stable order is often the simplest fix.</p>
+
+<h3>Runnable Java 17 example: ordered locks</h3>
+<p>Save as <code>OrderedTransferDemo.java</code>. Both transfers acquire account 1 before account 2, regardless of direction.</p>
+<pre><code>public class OrderedTransferDemo {
+    static final class Account {
+        final int id;
+        int balance = 100;
+        Account(int id) { this.id = id; }
+    }
+
+    static void transfer(Account from, Account to, int amount) {
+        Account first = from.id &lt; to.id ? from : to;
+        Account second = from.id &lt; to.id ? to : from;
+        synchronized (first) {
+            synchronized (second) {
+                if (from.balance &lt; amount) throw new IllegalStateException();
+                from.balance -= amount;
+                to.balance += amount;
+            }
+        }
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Account a = new Account(1);
+        Account b = new Account(2);
+        Thread one = new Thread(() -&gt; transfer(a, b, 10));
+        Thread two = new Thread(() -&gt; transfer(b, a, 20));
+        one.start();
+        two.start();
+        one.join();
+        two.join();
+        System.out.println("A=" + a.balance + ", B=" + b.balance);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>A=110, B=90</code>. The same lock-order rule must apply to every code path. Real transfers spanning processes need a database transaction, not JVM monitors.</p>
+
+<h3>Detection and prevention in production</h3>
+<ul>
+  <li><strong>Deadlock:</strong> capture repeated <code>jstack</code>/<code>jcmd Thread.print</code> dumps, inspect <code>BLOCKED</code> threads and “waiting to lock”/“locked” lines, or use <code>ThreadMXBean.findDeadlockedThreads()</code>. Database deadlocks require database lock-wait and deadlock reports.</li>
+  <li><strong>Livelock:</strong> CPU or retry activity continues, but completed work stops. Add jittered backoff and a retry budget; inspect repeated state transitions.</li>
+  <li><strong>Starvation:</strong> long-tail queue wait increases for some tasks even while others finish. Avoid holding locks during IO, monopolizing a shared executor, or scheduling all work at one priority. Fair locks can help but may reduce throughput.</li>
+  <li><strong>Lock timeouts:</strong> <code>ReentrantLock.tryLock(timeout)</code> enables recovery, but both acquired locks must be released in <code>finally</code>. A timeout diagnoses contention; it does not replace a consistent design.</li>
+</ul>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Can <code>synchronized</code> deadlock?</strong> Yes, when threads acquire multiple monitors in inconsistent orders.</li>
+  <li><strong>Is high CPU typical of deadlock?</strong> Usually blocked threads consume little CPU; high CPU with no progress may indicate livelock or spinning.</li>
+  <li><strong>Does a fair lock guarantee no starvation?</strong> It improves acquisition fairness for that lock, but scheduling, queues, and other resources can still starve work.</li>
+  <li><strong>What if two accounts have the same order key?</strong> Use a unique immutable ID or a global tie-break lock so the ordering remains total.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>Deadlock is circular waiting, livelock is activity without progress, and starvation is unfair indefinite waiting. I would inspect thread dumps and lock owners, correlate them with queue and completion metrics, then fix the resource-ordering or scheduling cause. For multi-lock operations I impose one global acquisition order; I also keep critical sections short, bound retries, and use timeouts where recovery is possible.</blockquote>

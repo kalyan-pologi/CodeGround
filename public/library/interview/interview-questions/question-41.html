@@ -1,1 +1,49 @@
+<h3>Question: How would you prevent message loss and duplicate processing in Kafka using producer acknowledgments, idempotent producers, transactions, offset management, and delivery guarantees?</h3>
+<h3>Short answer</h3>
+<p>Choose guarantees for each boundary. Configure durable topics and producer <code>acks=all</code> with idempotence so producer retries do not duplicate writes within Kafka's supported scope. Commit consumer offsets only after successful processing. Kafka transactions can atomically publish to Kafka and commit consumed offsets for Kafka-to-Kafka flows, but they do not automatically make an external database or payment provider part of the transaction. Use an outbox and idempotent consumers for those side effects.</p>
 
+<h3>Internal working and delivery modes</h3>
+<ul>
+  <li><strong>At-most-once:</strong> commit/advance before processing; a crash may lose work.</li>
+  <li><strong>At-least-once:</strong> process then commit; a crash between the two can replay a record, so duplicates are possible.</li>
+  <li><strong>Kafka exactly-once processing:</strong> transactional producer writes output records and consumed offsets atomically within Kafka. External systems still need their own atomic/deduplication design.</li>
+</ul>
+<p>Idempotent producer sequencing lets the broker recognize retried batches from the same producer session. Acknowledgments and replication reduce loss risk; configuration must be consistent with desired durability. A committed offset records where the consumer will resume, not proof that every external side effect succeeded.</p>
+
+<h3>Runnable Java 17 configuration illustration</h3>
+<p>Save as <code>KafkaConfigDemo.java</code>. It prints a safe producer configuration; actual publishing requires the Kafka client dependency and a running cluster.</p>
+<pre><code>import java.util.Properties;
+
+public class KafkaConfigDemo {
+    public static void main(String[] args) {
+        Properties producer = new Properties();
+        producer.setProperty("acks", "all");
+        producer.setProperty("enable.idempotence", "true");
+        producer.setProperty("retries", "10");
+        System.out.println("acks=" + producer.getProperty("acks"));
+        System.out.println("idempotent=" +
+            producer.getProperty("enable.idempotence"));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong></p>
+<pre><code>acks=all
+idempotent=true</code></pre>
+
+<h3>Real-world processing sequence and edge cases</h3>
+<ol>
+  <li>Producer persists a business change and outbox event in one database transaction; relay sends with a stable event ID.</li>
+  <li>Consumer begins its DB transaction, inserts <code>(consumer_group,event_id)</code> under a unique constraint, applies the business change, and commits.</li>
+  <li>Only after DB success does it commit the Kafka offset. If it crashes before offset commit, replay is harmless because the DB dedupe row already exists.</li>
+</ol>
+<p>Handle poison messages with bounded retries and a dead-letter path. Monitor under-replicated partitions, producer errors, lag, and dedupe rates. Kafka transactions need careful configuration and can be fenced on producer ownership changes. Never claim end-to-end exactly-once across Kafka, SQL, and an external provider without a specific cross-system protocol.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Does <code>acks=all</code> prevent duplicates?</strong> No; it is about acknowledgment durability. Producer idempotence and consumer deduplication address duplicates.</li>
+  <li><strong>Why process before offset commit?</strong> A premature commit could skip unprocessed work after a crash.</li>
+  <li><strong>Can a message still be replayed?</strong> Yes, especially after a consumer crash or rebalance; business side effects must tolerate it.</li>
+  <li><strong>What does a transactional producer cover?</strong> Kafka records and consumed offsets participating in that Kafka transaction, not arbitrary database changes.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I configure replicated topics, <code>acks=all</code>, and an idempotent producer for durable Kafka writes. Consumers process before committing offsets and make external side effects idempotent with event IDs and database uniqueness. Kafka transactions can give exactly-once Kafka-to-Kafka processing, but I use outbox plus deduplication when a database or provider is involved. I monitor errors, lag, and replay.</blockquote>

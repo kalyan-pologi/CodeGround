@@ -1,1 +1,76 @@
+<h3>Question: How would you design production-ready REST APIs using Spring Boot, including request validation, exception handling, DTOs, pagination, API versioning, and response standardization?</h3>
+<h3>Short answer</h3>
+<p>Define a clear resource contract first: URLs, methods, request/response DTOs, status codes, and error shape. Validate at the boundary, keep persistence entities out of public responses, centralize exception mapping, bound pagination, version only when compatibility requires it, and document the API with examples and tests. Security, idempotency, timeouts, and observability are part of “production-ready,” not optional extras.</p>
 
+<h3>Design, step by step</h3>
+<ol>
+  <li>Use resource-oriented paths such as <code>/api/v1/users</code>; <code>POST</code> creates, <code>GET</code> reads, <code>PUT</code> replaces, <code>PATCH</code> partially changes, and <code>DELETE</code> removes.</li>
+  <li>Use DTOs to keep API shape independent of database entities. Apply Bean Validation (<code>@Valid</code>, <code>@NotBlank</code>, etc.) and domain validation in the service.</li>
+  <li>Return meaningful HTTP statuses and a consistent error body, for example Spring <code>ProblemDetail</code> with a stable application error code. Do not return stack traces or secrets.</li>
+  <li>Require bounded <code>size</code>, deterministic ordering, and a stable cursor or page number. Offset pagination can degrade for large pages and shift under concurrent inserts.</li>
+  <li>Use additive backward-compatible changes when possible; version breaking contracts deliberately and publish a deprecation plan.</li>
+</ol>
+
+<h3>Runnable Spring Boot example</h3>
+<p>In a Spring Boot project with <code>spring-boot-starter-web</code> and <code>spring-boot-starter-validation</code>, place this in <code>src/main/java/demo/UserApi.java</code>. It uses in-memory data only to demonstrate the HTTP contract.</p>
+<pre><code>package demo;
+
+import java.net.URI;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicLong;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@SpringBootApplication
+public class UserApi {
+    public static void main(String[] args) { SpringApplication.run(UserApi.class, args); }
+}
+
+record CreateUser(@NotBlank String name) {}
+record UserDto(long id, String name) {}
+
+@RestController
+@RequestMapping("/api/v1/users")
+class UserController {
+    private final AtomicLong ids = new AtomicLong();
+    private final List&lt;UserDto&gt; users = new CopyOnWriteArrayList&lt;&gt;();
+
+    @PostMapping
+    ResponseEntity&lt;UserDto&gt; create(@Valid @RequestBody CreateUser request) {
+        UserDto created = new UserDto(ids.incrementAndGet(), request.name());
+        users.add(created);
+        return ResponseEntity.created(URI.create("/api/v1/users/" + created.id()))
+            .body(created);
+    }
+
+    @GetMapping
+    List&lt;UserDto&gt; list(@RequestParam(defaultValue = "0") int page,
+                        @RequestParam(defaultValue = "20") int size) {
+        if (page &lt; 0 || size &lt; 1 || size &gt; 100)
+            throw new IllegalArgumentException("invalid page or size");
+        long start = (long) page * size;
+        if (start &gt;= users.size()) return List.of();
+        return users.subList((int) start, (int) Math.min(start + size, users.size()));
+    }
+}</code></pre>
+<p><strong>Expected response:</strong> <code>POST /api/v1/users</code> with <code>{"name":"Maya"}</code> returns HTTP 201, <code>Location: /api/v1/users/1</code>, and <code>{"id":1,"name":"Maya"}</code>; <code>GET /api/v1/users?page=0&amp;size=20</code> returns a one-item JSON array. Framework log lines vary.</p>
+<p>For production, move state to a service/database, add <code>@RestControllerAdvice</code> for validation and domain errors, and use a stable sortable field or cursor. A real <code>GET /{id}</code> should return 404 when absent.</p>
+
+<h3>Edge cases and real-world concerns</h3>
+<p>Do not trust client-supplied IDs or authorization claims. Validate maximum string length and pagination size to prevent resource abuse. Use idempotency keys for non-repeatable payment-like POSTs. Avoid exposing ORM entities because lazy fields, cycles, and internal columns can leak. Add request IDs, metrics, tracing, rate limits, OpenAPI documentation, and integration tests for error responses. Choose versioning via path/header/media type consistently, and avoid breaking old clients without a migration window.</p>
+
+<h3>Common follow-up interview questions and answers</h3>
+<ul>
+  <li><strong>Why DTOs?</strong> They stabilize the public contract and prevent persistence/internal fields from leaking.</li>
+  <li><strong>Which status for a created resource?</strong> Usually 201 with a <code>Location</code> header.</li>
+  <li><strong>Offset versus cursor pagination?</strong> Offset is simple; cursor/keyset is often better for large changing datasets when backed by a suitable index.</li>
+  <li><strong>Where does validation live?</strong> Boundary validation checks shape; the service enforces business rules and authorization.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I design the API contract before coding: resource paths, method semantics, DTOs, validation, statuses, and a consistent error format. In Spring Boot I validate requests at the controller, keep business rules and authorization in services, centralize exceptions, cap pagination, and version breaking changes deliberately. I test success and error cases, document the contract, and add observability and idempotency where retries matter.</blockquote>
