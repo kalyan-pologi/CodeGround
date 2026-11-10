@@ -7,7 +7,8 @@
   {
     "repo": "interview",
     "file": "public/library/interview/assets/app.js",
-    "sha256": "7849d395eb4393fb4ad7661dcc9660c2a6a3bcc1e04149657a7097989578822b"
+    "sha256": "7849d395eb4393fb4ad7661dcc9660c2a6a3bcc1e04149657a7097989578822b",
+    "adaptedSha256": "ebe612798a2ae5810de59b08a190c9bdd6938a371d1ba067c04c4d5f68c13c02"
   },
   {
     "repo": "interview",
