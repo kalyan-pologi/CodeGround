@@ -1,0 +1,102 @@
+<h3>Question: How do <code>CompletableFuture</code>, <code>Future</code>, and <code>ExecutorService</code> differ, and how would you execute and combine multiple asynchronous API calls with timeout and exception handling?</h3>
+<h3>Short answer</h3>
+<p><code>ExecutorService</code> owns and schedules tasks. <code>Future</code> represents one submitted result but is mainly a blocking handle. <code>CompletableFuture</code> is both a result and a composable pipeline: it supports transformations, combination, timeout, and recovery without blocking every step.</p>
+<pre><code>import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+
+public class CompletableFutureDemo {
+    public static void main(String[] args) {
+        try (var pool = Executors.newFixedThreadPool(4)) {
+            CompletableFuture&lt;String&gt; profile = CompletableFuture
+                    .supplyAsync(() -&gt; "profile", pool);
+            CompletableFuture&lt;String&gt; balance = CompletableFuture
+                    .supplyAsync(() -&gt; "balance", pool);
+
+            String result = profile.thenCombine(balance,
+                            (p, b) -&gt; p + "+" + b)
+                    .orTimeout(2, java.util.concurrent.TimeUnit.SECONDS)
+                    .exceptionally(error -&gt; "fallback")
+                    .join();
+
+            System.out.println(result);
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>profile+balance</code>. If either operation fails or exceeds two seconds, the result becomes <code>fallback</code>.</p>
+<h3>Internal working and production rules</h3>
+<ul>
+  <li><code>supplyAsync</code> runs a value-producing task; <code>runAsync</code> runs a task with no result.</li>
+  <li><code>thenApply</code> transforms a result; <code>thenCompose</code> flattens a dependent asynchronous call; <code>thenCombine</code> joins independent calls.</li>
+  <li>Use an application-owned executor for blocking or isolated work. The default common pool is not automatically safe for every workload.</li>
+  <li><code>orTimeout</code> completes exceptionally after a deadline; it does not necessarily interrupt the underlying remote HTTP call. Configure the HTTP client timeout too.</li>
+  <li>Use <code>handle</code>, <code>exceptionally</code>, or <code>exceptionallyCompose</code> for recovery, and preserve enough context for logging and tracing.</li>
+</ul>
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Does <code>Future.get()</code> make work asynchronous?</strong> Submission may be asynchronous, but <code>get</code> blocks the caller. <code>CompletableFuture</code> enables non-blocking composition.</li>
+  <li><strong>When use <code>allOf</code>?</strong> When many independent futures must all finish. It returns <code>CompletableFuture&lt;Void&gt;</code>, so collect the individual results separately.</li>
+  <li><strong>How do you avoid resource leaks?</strong> Bound the executor, shut it down, configure client timeouts, and avoid creating an unbounded executor per request.</li>
+</ul>
+<h3>Interview-ready answer</h3>
+<blockquote>ExecutorService schedules work, Future exposes a mostly blocking handle, and CompletableFuture composes asynchronous stages. I use an explicit bounded executor, start independent API calls concurrently, combine them with thenCombine or allOf, set both future and client timeouts, and recover or propagate failures deliberately.</blockquote>
+
+<h3>Step-by-step orchestration</h3>
+<p>Imagine an order endpoint that needs customer, inventory, and pricing data. Customer and inventory are independent, so start them together. Pricing may depend on the customer tier, so compose it after the customer future. This avoids blocking the request thread while each remote call is waiting.</p>
+<pre><code>import java.util.concurrent.*;
+
+public class ApiCompositionDemo {
+    static CompletableFuture&lt;String&gt; call(String name, Executor executor) {
+        return CompletableFuture.supplyAsync(() -&gt; name, executor);
+    }
+
+    public static void main(String[] args) {
+        ExecutorService pool = Executors.newFixedThreadPool(4);
+        try {
+            CompletableFuture&lt;String&gt; customer = call("customer", pool);
+            CompletableFuture&lt;String&gt; inventory = call("inventory", pool);
+
+            CompletableFuture&lt;String&gt; response = customer
+                    .thenCombine(inventory, (c, i) -&gt; c + "+" + i)
+                    .orTimeout(1, TimeUnit.SECONDS)
+                    .handle((value, error) -&gt; error == null
+                            ? value : "degraded-response");
+
+            System.out.println(response.join());
+        } finally {
+            pool.shutdown();
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>customer+inventory</code>. If a stage fails or exceeds the timeout, the handler prints <code>degraded-response</code>.</p>
+
+<h3>Future versus CompletableFuture</h3>
+<table>
+  <thead><tr><th>Type</th><th>What it provides</th><th>Limitation</th></tr></thead>
+  <tbody>
+    <tr><td><code>ExecutorService</code></td><td>Task submission, scheduling, pooling, shutdown</td><td>Must size and operate the executor correctly</td></tr>
+    <tr><td><code>Future</code></td><td>Cancellation, completion check, blocking <code>get</code></td><td>Hard to compose several results without blocking</td></tr>
+    <tr><td><code>CompletableFuture</code></td><td>Non-blocking transformations, combination, timeout, recovery</td><td>Chains can become difficult to debug; executor choice still matters</td></tr>
+  </tbody>
+</table>
+<p><code>thenApply</code> maps a completed value, <code>thenCompose</code> chains a dependent future, <code>thenCombine</code> joins two independent futures, and <code>allOf</code> waits for many. The <code>Async</code> variants schedule the continuation asynchronously; the non-async variants may run it on the thread that completes the previous stage.</p>
+
+<h3>Timeout, cancellation, and exception behavior</h3>
+<ul>
+  <li><code>orTimeout</code> completes the future exceptionally; it does not guarantee that a remote socket call is interrupted.</li>
+  <li><code>completeOnTimeout</code> supplies a fallback value, which is appropriate only when degraded data is safe.</li>
+  <li><code>exceptionally</code> handles failures and returns a replacement value; <code>handle</code> receives either a value or error.</li>
+  <li><code>join</code> throws an unchecked <code>CompletionException</code>; <code>get</code> throws checked exceptions and can be interrupted.</li>
+  <li>Cancellation is cooperative. Configure timeouts in the HTTP client, database driver, and load balancer as well as in the future.</li>
+</ul>
+
+<h3>Executor sizing and real-world safeguards</h3>
+<p>Use a bounded executor or a well-understood virtual-thread strategy. For CPU-bound work, start near the number of available processors. For blocking I/O, the pool can be larger, but it must be bounded by downstream capacity, connection pools, rate limits, and memory. Add correlation IDs, metrics for queue time and remote latency, retries only for transient errors, and a circuit breaker for unhealthy dependencies.</p>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>What is the difference between <code>thenCompose</code> and <code>thenCombine</code>?</strong> Compose is for a dependent second future; combine is for two futures that can run independently.</li>
+  <li><strong>How do you collect results from <code>allOf</code>?</strong> Keep the typed futures, await <code>allOf</code>, then call <code>join</code> on each completed future.</li>
+  <li><strong>Should every failure be retried?</strong> No. Retry only transient failures, use exponential backoff and jitter, and avoid retrying validation or authorization errors.</li>
+  <li><strong>Why can async code still block?</strong> Calling <code>join</code> or <code>get</code> blocks the caller, and the task itself may block on I/O. Async composition does not make a blocking dependency non-blocking.</li>
+</ul>

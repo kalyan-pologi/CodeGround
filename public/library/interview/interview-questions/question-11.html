@@ -1,0 +1,103 @@
+<h3>Question: What are the important Java 17 and Java 21 features, including records, sealed classes, pattern matching, switch expressions, and virtual threads?</h3>
+<h3>Short answer</h3>
+<p>Java 17 is an LTS release with records, sealed classes, pattern matching for <code>instanceof</code>, text blocks, and modernized APIs. Java 21 is an LTS release that finalizes pattern matching for <code>switch</code>, record patterns, sequenced collections, and virtual threads. These features reduce boilerplate and improve concurrency, but they do not remove the need to manage blocking calls, memory, and service limits.</p>
+<pre><code>public class ModernJavaDemo {
+    record User(String name, int age) {}
+
+    sealed interface Result permits Success, Failure {}
+    record Success(String value) implements Result {}
+    record Failure(String message) implements Result {}
+
+    static String describe(Result result) {
+        return switch (result) {
+            case Success success -&gt; "value=" + success.value();
+            case Failure failure -&gt; "error=" + failure.message();
+        };
+    }
+
+    public static void main(String[] args) throws Exception {
+        User user = new User("Maya", 30);
+        if (user instanceof User(String name, int age) &amp;&amp; age &gt;= 18) {
+            System.out.println(name + " is an adult");
+        }
+        System.out.println(describe(new Success("ok")));
+        try (var executor = java.util.concurrent.Executors.newVirtualThreadPerTaskExecutor()) {
+            executor.submit(() -&gt; System.out.println("virtual thread" )).get();
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>Maya is an adult</code>, <code>value=ok</code>, and <code>virtual thread</code> (the last line may appear in a different scheduling context).</p>
+<h3>Feature details and limitations</h3>
+<ul>
+  <li><strong>Records:</strong> concise immutable data carriers with generated accessors, constructor, <code>equals</code>, <code>hashCode</code>, and <code>toString</code>. A record is shallowly immutable; mutable fields still need defensive copies.</li>
+  <li><strong>Sealed classes:</strong> restrict permitted subtypes and let the compiler reason about an exhaustive hierarchy.</li>
+  <li><strong>Pattern matching:</strong> combines type checks, casts, record destructuring, and switch expressions in a safer form.</li>
+  <li><strong>Virtual threads:</strong> are lightweight threads suited to large numbers of mostly blocking tasks. They improve concurrency, not CPU capacity, and should not be used to hide unbounded downstream calls.</li>
+  <li><strong>Migration:</strong> verify library compatibility, compiler release settings, reflection behavior, container images, monitoring, and framework support before changing the runtime.</li>
+</ul>
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Are virtual threads faster than platform threads for CPU work?</strong> No. They mainly reduce the cost of waiting and allow many concurrent blocking tasks.</li>
+  <li><strong>Can a record extend a class?</strong> No, records implicitly extend <code>java.lang.Record</code>, but they can implement interfaces.</li>
+  <li><strong>Why use a sealed hierarchy?</strong> It makes domain states explicit and allows exhaustive pattern matching, which helps catch missing cases at compile time.</li>
+</ul>
+<h3>Interview-ready answer</h3>
+<blockquote>Java 17 and 21 add concise data modeling and safer control flow through records, sealed classes, pattern matching, and switch expressions. Java 21 virtual threads make high-concurrency blocking workloads cheaper, but they do not make CPU work faster or remove database and downstream limits. I evaluate runtime, libraries, observability, and workload characteristics when adopting them.</blockquote>
+
+<h3>Java 17 feature details</h3>
+<ul>
+  <li><strong>Records:</strong> concise nominal data carriers with final components, generated accessors, equality, hash code, and a canonical constructor.</li>
+  <li><strong>Sealed classes:</strong> explicitly define permitted subclasses and make domain state transitions easier to review.</li>
+  <li><strong>Pattern matching for <code>instanceof</code>:</strong> combines the type test and cast, reducing repeated boilerplate.</li>
+  <li><strong>Text blocks:</strong> make multiline JSON, SQL, and templates easier to read.</li>
+  <li><strong>Helpful NullPointerException messages:</strong> improve diagnosis by identifying the null expression in many cases.</li>
+</ul>
+<p>A record is not deeply immutable. A record component such as <code>List&lt;String&gt;</code> still needs <code>List.copyOf</code> if callers must not mutate it. A compact constructor is useful for validation and normalization.</p>
+<pre><code>record Money(String currency, long cents) {
+    Money {
+        if (cents &lt; 0) throw new IllegalArgumentException("negative amount");
+        currency = currency.toUpperCase();
+    }
+}</code></pre>
+
+<h3>Java 21 feature details</h3>
+<ul>
+  <li><strong>Pattern matching for switch:</strong> switch over types and values with compiler-checked exhaustiveness.</li>
+  <li><strong>Record patterns:</strong> destructure record components in conditions and switch cases.</li>
+  <li><strong>Sequenced collections:</strong> common first, last, and reversed operations across ordered collections.</li>
+  <li><strong>Virtual threads:</strong> lightweight threads scheduled by the JVM and designed for very high numbers of mostly waiting tasks.</li>
+  <li><strong>Scoped values and structured concurrency:</strong> important modern concurrency ideas; check the exact JDK release and preview status before production adoption.</li>
+</ul>
+<p>Virtual threads are cheap to create, but a request that waits on a database still consumes a database connection. They improve thread scalability around blocking waits; they do not increase CPU cores, database capacity, or external API limits. Avoid pinning virtual threads with long synchronized or native sections, and measure with production-like load.</p>
+
+<h3>Virtual-thread example</h3>
+<pre><code>import java.util.concurrent.Executors;
+
+public class VirtualThreadDemo {
+    public static void main(String[] args) throws Exception {
+        try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            var first = executor.submit(() -&gt; "order-1");
+            var second = executor.submit(() -&gt; "order-2");
+            System.out.println(first.get() + "," + second.get());
+        }
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>order-1,order-2</code>. The executor creates a virtual thread per submitted task and closes after all tasks finish. It is still important to bound calls to scarce resources with connection pools, semaphores, or rate limiters.</p>
+
+<h3>Migration and compatibility checklist</h3>
+<ol>
+  <li>Compile with the intended <code>--release</code> and run the same major JDK in local, CI, and production environments.</li>
+  <li>Check Spring Boot, JDBC drivers, agents, serializers, bytecode tools, and monitoring libraries for supported JDK versions.</li>
+  <li>Test reflection, serialization, native libraries, and module access; newer JDKs may expose illegal assumptions.</li>
+  <li>Load-test virtual threads with real downstream limits and inspect thread dumps, blocked tasks, heap, and connection pools.</li>
+  <li>Use preview features only with an explicit rollout decision because syntax or behavior can change before finalization.</li>
+</ol>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>Are records immutable?</strong> Their components are final, but referenced mutable objects are not automatically copied.</li>
+  <li><strong>Can a record extend another class?</strong> No. It implicitly extends <code>Record</code>, but it can implement interfaces.</li>
+  <li><strong>When should virtual threads be avoided?</strong> For CPU-bound work where a bounded platform-thread pool is clearer, or when downstream systems cannot handle more concurrent requests.</li>
+  <li><strong>What does exhaustive switch checking provide?</strong> The compiler can identify a missing permitted subtype or enum case, reducing runtime default-case surprises.</li>
+  <li><strong>Do newer Java features change garbage collection?</strong> They change language and concurrency capabilities; GC selection and tuning remain workload and runtime concerns.</li>
+</ul>

@@ -1,0 +1,107 @@
+<h3>Question: How do functional interfaces, lambda expressions, method references, and <code>Optional</code> work in Java 8?</h3>
+<h3>Short answer</h3>
+<p>A functional interface has exactly one abstract method, such as <code>Predicate</code>, <code>Function</code>, <code>Consumer</code>, or <code>Supplier</code>. A lambda supplies the implementation, and a method reference is shorter syntax for a compatible existing method. <code>Optional</code> models a possibly absent return value; it is not a replacement for every nullable field or parameter.</p>
+<pre><code>import java.util.Optional;
+import java.util.function.Function;
+
+public class FunctionalDemo {
+    @FunctionalInterface
+    interface Discount { int apply(int price); }
+
+    public static void main(String[] args) {
+        Discount tenPercent = price -&gt; price * 90 / 100;
+        Function&lt;String, String&gt; normalize = String::trim;
+
+        String name = Optional.ofNullable("  Ada  ")
+                .map(normalize)
+                .filter(value -&gt; !value.isEmpty())
+                .orElse("unknown");
+
+        System.out.println(tenPercent.apply(100));
+        System.out.println(name);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>90</code> and <code>Ada</code>.</p>
+<h3>Internal working and pitfalls</h3>
+<p>The compiler converts a lambda to a functional-interface instance, commonly through <code>invokedynamic</code>; it is not literally a new named method in source. Lambdas can capture only final or effectively final local variables. Method references still obey the target functional interface signature. <code>Optional.map</code> transforms a present value, <code>flatMap</code> avoids nested optionals, and <code>orElseGet</code> evaluates its fallback lazily while <code>orElse</code> evaluates it immediately.</p>
+<ul>
+  <li>Use <code>Optional</code> mainly for return values where absence is expected.</li>
+  <li>Do not call <code>get()</code> without checking; prefer <code>orElseThrow</code> or a transformation chain.</li>
+  <li>Do not put <code>Optional</code> in JPA entities or serialize it casually without understanding the framework contract.</li>
+  <li>Keep lambdas small and side-effect free, especially inside streams.</li>
+</ul>
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Can an interface have default methods?</strong> Yes. It may have many default or static methods, but only one abstract method to remain functional.</li>
+  <li><strong>What is the difference between <code>Predicate</code> and <code>Function</code>?</strong> A predicate returns boolean; a function maps a value to another value.</li>
+  <li><strong>Why is <code>orElseGet</code> often preferred?</strong> Its supplier runs only when the optional is empty, avoiding unnecessary work.</li>
+</ul>
+<h3>Interview-ready answer</h3>
+<blockquote>A functional interface has one abstract method. Lambdas and method references provide implementations that the compiler targets to that interface, while Optional represents an absent-or-present return value. I use these features for clear transformations, avoid side effects and Optional.get, and choose orElseGet when fallback creation is expensive.</blockquote>
+
+<h3>Functional interfaces in detail</h3>
+<table>
+  <thead><tr><th>Interface</th><th>Method</th><th>Example use</th></tr></thead>
+  <tbody>
+    <tr><td><code>Predicate&lt;T&gt;</code></td><td><code>boolean test(T)</code></td><td>Filtering or validation</td></tr>
+    <tr><td><code>Function&lt;T,R&gt;</code></td><td><code>R apply(T)</code></td><td>Mapping one type to another</td></tr>
+    <tr><td><code>Consumer&lt;T&gt;</code></td><td><code>void accept(T)</code></td><td>Side effects such as logging</td></tr>
+    <tr><td><code>Supplier&lt;T&gt;</code></td><td><code>T get()</code></td><td>Lazy creation or fallback computation</td></tr>
+    <tr><td><code>UnaryOperator&lt;T&gt;</code></td><td><code>T apply(T)</code></td><td>Transforming a value into the same type</td></tr>
+  </tbody>
+</table>
+<p><code>@FunctionalInterface</code> asks the compiler to enforce the one-abstract-method rule. Default and static methods do not count as abstract methods. A lambda is compatible with a target type, so the same lambda syntax can mean different things depending on the expected interface.</p>
+
+<h3>Lambda capture and method references</h3>
+<pre><code>import java.util.function.*;
+
+public class LambdaDetailsDemo {
+    static String clean(String value) { return value.trim().toUpperCase(); }
+
+    public static void main(String[] args) {
+        String prefix = "ID-"; // effectively final
+        Function&lt;String, String&gt; lambda = value -&gt; prefix + clean(value);
+        Function&lt;String, String&gt; reference = LambdaDetailsDemo::clean;
+
+        System.out.println(lambda.apply("  a1  "));
+        System.out.println(reference.apply("  hello  "));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>ID-A1</code> and <code>HELLO</code>. A local variable captured by a lambda must be final or effectively final; otherwise its changing stack lifetime would not match the lambda's lifetime.</p>
+<p>The compiler typically implements lambdas with <code>invokedynamic</code>. This is an implementation mechanism, not a reason to rely on a particular generated class name. Captured values are stored in the lambda object, so capturing large objects can unintentionally extend their lifetime.</p>
+
+<h3>Optional operations and common mistakes</h3>
+<pre><code>import java.util.Optional;
+
+public class OptionalDemo {
+    static String city(String input) {
+        return Optional.ofNullable(input)
+                .map(String::trim)
+                .filter(value -&gt; !value.isEmpty())
+                .orElseGet(() -&gt; "unknown");
+    }
+
+    public static void main(String[] args) {
+        System.out.println(city("  Chicago  "));
+        System.out.println(city("   "));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>Chicago</code> and <code>unknown</code>. <code>map</code> converts a present value and turns a null mapper result into empty; <code>flatMap</code> is used when the mapper already returns an Optional. <code>orElse</code> evaluates its argument immediately, while <code>orElseGet</code> invokes the supplier only when needed.</p>
+<ul>
+  <li>Do not use <code>Optional.get()</code> as a disguised null check.</li>
+  <li>Do not use Optional for every field, setter, or method parameter unless the API convention explicitly requires it.</li>
+  <li>Be careful with <code>orElse</code> when the fallback performs I/O, allocates, or has side effects.</li>
+  <li>Use primitive variants such as <code>OptionalInt</code> when appropriate to avoid boxing.</li>
+  <li>A lambda can throw unchecked exceptions, but checked exceptions need handling or an adapter.</li>
+</ul>
+
+<h3>Real-world use</h3>
+<p>Use predicates for validation rules, functions for DTO mapping, consumers for metrics or audit events, suppliers for lazy defaults, and Optional for repository methods such as <code>findById</code>. Keep business side effects outside long transformation chains so failures and debugging remain clear.</p>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>Why are lambdas useful in streams?</strong> They represent behavior as values, allowing operations such as filtering and mapping to be composed.</li>
+  <li><strong>Can a lambda modify a captured local variable?</strong> It cannot reassign a captured local variable, but it can mutate a referenced mutable object—which should be avoided in parallel pipelines.</li>
+  <li><strong>What is the difference between a method reference and a lambda?</strong> A method reference is shorthand when an existing method already matches the target signature; both create behavior for a functional interface.</li>
+  <li><strong>How is Optional different from null?</strong> Optional makes absence explicit in an API return type, but it does not eliminate all nulls or replace validation.</li>
+</ul>

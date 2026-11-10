@@ -1,0 +1,125 @@
+<h2>Question: How do equals(), hashCode(), ==, and compareTo() differ, and what happens when they are implemented incorrectly?</h2>
+
+<h2>Short answer</h2>
+<p><code>==</code> compares primitive values or object references. <code>equals</code> compares logical equality when a class overrides it. <code>hashCode</code> supplies a hash used by hash-based collections and must agree with <code>equals</code>. <code>compareTo</code> defines ordering for <code>Comparable</code>. Breaking these contracts causes duplicate set entries, failed map lookups, incorrect sorting, or inconsistent tree-based collections.</p>
+
+<h3>How the operations differ</h3>
+<table>
+  <thead><tr><th>Operation</th><th>Purpose</th><th>Typical use</th></tr></thead>
+  <tbody>
+    <tr><td><code>==</code></td><td>Primitive value or reference identity</td><td>Check whether two references point to the same object</td></tr>
+    <tr><td><code>equals</code></td><td>Logical equality</td><td>Compare business values such as two account IDs</td></tr>
+    <tr><td><code>hashCode</code></td><td>Hash bucket selection</td><td><code>HashMap</code>, <code>HashSet</code>, and related collections</td></tr>
+    <tr><td><code>compareTo</code></td><td>Relative ordering: negative, zero, or positive</td><td><code>TreeMap</code>, <code>TreeSet</code>, and sorting</td></tr>
+  </tbody>
+</table>
+
+<h3>Runnable example</h3>
+<pre><code>import java.util.*;
+
+record EmployeeId(String value) implements Comparable&lt;EmployeeId&gt; {
+    @Override
+    public int compareTo(EmployeeId other) {
+        return value.compareTo(other.value);
+    }
+}
+
+public class EqualityDemo {
+    public static void main(String[] args) {
+        String first = new String("java");
+        String second = new String("java");
+
+        System.out.println(first == second);
+        System.out.println(first.equals(second));
+        System.out.println(first.hashCode() == second.hashCode());
+        System.out.println(new EmployeeId("E2").compareTo(new EmployeeId("E10")) &gt; 0);
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>false
+true
+true
+true</code></pre>
+<p>The last result is <code>true</code> because lexicographical string ordering compares the first character that differs; it is not numeric ordering. If numeric ordering is needed, compare parsed numbers or use a numeric field.</p>
+
+<h3>Internal working</h3>
+<ol>
+  <li><code>HashMap</code> first uses <code>hashCode</code> to select a bucket.</li>
+  <li>It then uses <code>equals</code> to identify the exact key inside that bucket.</li>
+  <li><code>HashSet</code> uses the same rules because it is backed by a map.</li>
+  <li><code>TreeMap</code> and <code>TreeSet</code> use ordering, usually <code>compareTo</code> or a supplied <code>Comparator</code>, instead of hash lookup.</li>
+</ol>
+
+<h3>What goes wrong when contracts are broken?</h3>
+<ul>
+  <li>Override <code>equals</code> without <code>hashCode</code>: equal objects can enter different hash buckets, so <code>contains</code> or <code>get</code> may fail.</li>
+  <li>Use mutable fields in equality: changing a key after insertion can make the entry unreachable.</li>
+  <li>Make <code>compareTo</code> inconsistent with equality: a <code>TreeSet</code> can treat two unequal objects as duplicates when comparison returns zero.</li>
+  <li>Use subtraction such as <code>this.age - other.age</code>: integer overflow can produce the wrong ordering. Use <code>Integer.compare</code>.</li>
+</ul>
+
+<h3>Real-world example</h3>
+<p>A payment service may identify a request with <code>PaymentId</code>. Its equality should use the stable payment ID, not mutable status or display fields. That makes idempotency maps, database entity lookups, and deduplication predictable.</p>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Should equal objects always have the same hash code?</strong> Yes. The reverse is not required; collisions are allowed.</li>
+  <li><strong>Can compareTo return any negative or positive number?</strong> Yes. Only the sign matters, although zero must mean equivalent ordering.</li>
+  <li><strong>Why is BigDecimal a common interview edge case?</strong> Its <code>equals</code> considers scale while <code>compareTo</code> does not, so <code>new BigDecimal("1.0")</code> and <code>new BigDecimal("1.00")</code> compare as equal by ordering but not by <code>equals</code>.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote><code>==</code> checks primitive values or reference identity, while <code>equals</code> checks logical equality. Hash-based collections use <code>hashCode</code> to find a bucket and <code>equals</code> to find the exact key, so equal objects must have equal hashes. <code>compareTo</code> defines ordering for sorted collections. Breaking these contracts causes failed lookups, duplicate set entries, or incorrect tree ordering.</blockquote>
+
+<h3>Equality contract step by step</h3>
+<p>A correct <code>equals</code> implementation is reflexive, symmetric, transitive, consistent, and returns false for null. The hash contract adds that equal objects must have equal hash codes. It does not require unequal objects to have different hashes. <code>compareTo</code> must be antisymmetric, transitive, and consistent enough for the sorted collection's intended equality.</p>
+<pre><code>import java.util.*;
+
+final class AccountId {
+    private final String value;
+    AccountId(String value) { this.value = Objects.requireNonNull(value); }
+
+    @Override public boolean equals(Object other) {
+        return other instanceof AccountId id &amp;&amp; value.equals(id.value);
+    }
+    @Override public int hashCode() { return value.hashCode(); }
+}
+
+public class EqualityContractDemo {
+    public static void main(String[] args) {
+        Set&lt;AccountId&gt; ids = new HashSet&lt;&gt;();
+        ids.add(new AccountId("A-1"));
+        System.out.println(ids.contains(new AccountId("A-1")));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>true</code>. The second object is a different reference, but it is logically equal and has the same hash.</p>
+
+<h3>Sorted collection trap</h3>
+<p>A <code>TreeSet</code> uses comparison to decide whether a value is already present. If <code>compareTo</code> returns zero for two objects whose <code>equals</code> returns false, the second object is discarded by the tree set. This is legal for some domain types, but it surprises developers when sorted and hash-based collections are expected to agree.</p>
+<pre><code>record Product(String code, String description)
+        implements Comparable&lt;Product&gt; {
+    @Override public int compareTo(Product other) {
+        return code.compareTo(other.code); // ordering identity is code
+    }
+}
+
+var products = new java.util.TreeSet&lt;Product&gt;();
+products.add(new Product("P1", "First"));
+products.add(new Product("P1", "Updated description"));
+System.out.println(products.size()); // 1</code></pre>
+
+<h3>Practical rules</h3>
+<ul>
+  <li>Base equality on stable identity or value fields, never mutable display state.</li>
+  <li>Use <code>Objects.equals</code> and <code>Objects.hash</code> to handle nulls consistently.</li>
+  <li>Use <code>Integer.compare</code>, <code>Long.compare</code>, or a comparator instead of subtraction.</li>
+  <li>Document whether natural ordering is consistent with equality.</li>
+  <li>Test equality with a matrix: same reference, equal values, different values, null, subclass, and changed fields.</li>
+</ul>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>Why does String pooling make <code>==</code> confusing?</strong> String literals may share an interned instance, so identity can appear to work. Always use <code>equals</code> for string content.</li>
+  <li><strong>Should subclasses participate in equality?</strong> Carefully. Class-based equality can preserve symmetry; an <code>instanceof</code> design must account for subclass state.</li>
+  <li><strong>What is BigDecimal's inconsistency?</strong> <code>equals</code> considers scale while <code>compareTo</code> considers numeric value, so 1.0 and 1.00 behave differently in hash and sorted collections.</li>
+</ul>

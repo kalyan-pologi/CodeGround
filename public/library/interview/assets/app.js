@@ -68,6 +68,10 @@ async function loadNote(id) {
 /* Route from the URL hash (e.g. #java-topics) */
 function router() {
   const id = location.hash.slice(1) || DEFAULT_NOTE;
+  if (id === 'java-interview-questions') {
+    location.replace('../../#practice/interview/java-interview-questions');
+    return;
+  }
   loadNote(id);
 }
 

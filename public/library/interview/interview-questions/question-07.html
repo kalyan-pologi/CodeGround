@@ -1,0 +1,121 @@
+<h2>2. Java 8+, Streams &amp; Asynchronous Programming</h2>
+
+<h3>Question: How do Java Streams work internally, and when can <code>parallelStream()</code> reduce performance compared to sequential streams?</h3>
+<h3>Short answer</h3>
+<p>A Stream is a lazy pipeline over a data source. Intermediate operations such as <code>filter</code> and <code>map</code> describe work; a terminal operation such as <code>collect</code>, <code>count</code>, or <code>reduce</code> starts traversal. A sequential stream normally processes one element at a time. A parallel stream splits a splittable source, runs pieces in the common <code>ForkJoinPool</code>, and combines the results.</p>
+
+<h3>Internal working</h3>
+<ol>
+  <li><strong>Source:</strong> an array, collection, generator, file, or custom <code>Spliterator</code>.</li>
+  <li><strong>Pipeline:</strong> each intermediate operation adds a stage but usually does not execute immediately.</li>
+  <li><strong>Traversal:</strong> the terminal operation pulls elements through the stages. Stateless operations can be fused into one pass.</li>
+  <li><strong>Parallel execution:</strong> a <code>Spliterator</code> repeatedly splits the source. worker tasks process partitions and a combiner merges partial results.</li>
+</ol>
+<pre><code>import java.util.List;
+import java.util.stream.Collectors;
+
+public class StreamPipelineDemo {
+    public static void main(String[] args) {
+        List&lt;String&gt; names = List.of("ana", "bob", "luis", "maria");
+
+        List&lt;String&gt; result = names.stream()
+                .filter(name -&gt; name.length() &gt; 3)
+                .map(String::toUpperCase)
+                .sorted()
+                .collect(Collectors.toList());
+
+        int total = List.of(2, 4, 6, 8).stream()
+                .mapToInt(Integer::intValue)
+                .sum();
+
+        System.out.println(result);
+        System.out.println(total);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>[LUIS, MARIA]</code> followed by <code>20</code>. Nothing in the first pipeline runs until <code>collect</code> is called.</p>
+
+<h3>When parallel streams hurt</h3>
+<ul>
+  <li>The input is small, so splitting and merging cost more than the work.</li>
+  <li>The operation is cheap, sequential, or difficult to split, such as a linked list traversal.</li>
+  <li>The lambda performs blocking I/O. The common pool is not an appropriate general-purpose I/O pool.</li>
+  <li>The pipeline mutates shared state, causing locks, races, or contention.</li>
+  <li>The terminal operation needs ordering or an expensive merge.</li>
+  <li>Other application code is already using the common pool.</li>
+</ul>
+<p>Use parallelism for sufficiently large, CPU-bound, independent work with a cheap combiner. Measure both modes with realistic data; never assume that more threads means more throughput.</p>
+
+<h3>Real-world example and edge cases</h3>
+<p>CPU-heavy image transformations over millions of independent images may benefit from controlled parallelism. Database calls inside <code>parallelStream()</code> commonly make latency and connection-pool pressure worse. Also avoid side effects such as adding to a non-thread-safe <code>ArrayList</code>; prefer collectors designed for parallel reduction or an explicit executor.</p>
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Are streams reusable?</strong> No. A stream is consumed after a terminal operation; create a new stream from the source.</li>
+  <li><strong>What is the difference between <code>map</code> and <code>flatMap</code>?</strong> <code>map</code> transforms one item into one item; <code>flatMap</code> transforms one item into a stream and flattens the nested streams.</li>
+  <li><strong>Are intermediate operations always lazy?</strong> They are generally lazy, although stateful operations such as <code>sorted</code> may buffer elements when the terminal operation runs.</li>
+</ul>
+<h3>Interview-ready answer</h3>
+<blockquote>Streams build a lazy pipeline over a source. A terminal operation triggers traversal, and the implementation can fuse stages into one pass. A parallel stream splits the source with a Spliterator and combines worker results. It can be slower for small inputs, cheap operations, blocking I/O, ordered pipelines, poor splitters, or shared mutable state, so I benchmark the real workload before using it.</blockquote>
+
+<h3>Step-by-step pipeline example</h3>
+<p>Suppose the source contains orders. <code>filter</code> rejects cancelled orders, <code>map</code> changes an order into its amount, and <code>sum</code> consumes the pipeline. The stream does not create an intermediate list unless the code explicitly asks it to.</p>
+<pre><code>import java.util.List;
+
+record Order(String id, String status, int amount) {}
+
+public class StreamOrderDemo {
+    public static void main(String[] args) {
+        List&lt;Order&gt; orders = List.of(
+                new Order("A", "PAID", 40),
+                new Order("B", "CANCELLED", 100),
+                new Order("C", "PAID", 60));
+
+        int total = orders.stream()
+                .filter(order -&gt; "PAID".equals(order.status()))
+                .mapToInt(Order::amount)
+                .sum();
+
+        System.out.println(total);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>100</code>. Each order flows through the stages only when the terminal operation requests the next result.</p>
+
+<h3>Spliterator and parallel execution</h3>
+<p>A <code>Spliterator</code> exposes elements through <code>tryAdvance</code> and can divide work through <code>trySplit</code>. An <code>ArrayList</code> splits cheaply because it has indexed storage. A source that cannot split evenly gives parallel workers less useful work. The parallel implementation creates fork/join tasks, processes partitions, and combines partial results according to the collector or reduction operation.</p>
+<pre><code>List&lt;Integer&gt; values = java.util.stream.IntStream.rangeClosed(1, 100)
+        .boxed()
+        .parallel()
+        .filter(number -&gt; number % 2 == 0)
+        .toList();
+
+// The result is correct, but the order guarantee and merge cost still matter.</code></pre>
+<p>For ordered streams, preserving encounter order can require buffering and coordination. An unordered source or <code>unordered()</code> may improve throughput only when the business result does not depend on order.</p>
+
+<h3>Reduction and collector correctness</h3>
+<p>A parallel reduction must be associative and compatible with its identity. Addition is safe because <code>(a + b) + c</code> equals <code>a + (b + c)</code>. String concatenation may be correct but can be expensive. A mutable accumulator must not be shared unsafely between workers; use a proper collector rather than mutating an external list.</p>
+<pre><code>// Safe reduction: identity 0 and associative addition.
+int sum = java.util.stream.IntStream.of(1, 2, 3, 4)
+        .parallel()
+        .reduce(0, Integer::sum);
+
+// Dangerous pattern: shared mutable state.
+var output = new java.util.ArrayList&lt;Integer&gt;();
+java.util.stream.IntStream.range(0, 10_000)
+        .parallel()
+        .forEach(output::add); // race and lost updates are possible</code></pre>
+
+<h3>Production decision checklist</h3>
+<ul>
+  <li>Measure sequential and parallel versions with representative data, warm-up, and realistic hardware.</li>
+  <li>Check CPU saturation, allocation rate, garbage collection, and downstream latency—not only elapsed time.</li>
+  <li>Use a dedicated executor when the work needs isolation or has blocking behavior; do not overload the common pool.</li>
+  <li>Keep lambdas stateless and avoid network, database, file, or lock waits inside a parallel stream.</li>
+  <li>Prefer a normal loop when it is clearer, easier to debug, and just as fast.</li>
+</ul>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>What is short-circuiting?</strong> Operations such as <code>findFirst</code>, <code>anyMatch</code>, and <code>limit</code> can stop traversal early, although ordered parallel execution may still need coordination.</li>
+  <li><strong>Why can <code>findAny</code> be faster than <code>findFirst</code>?</strong> <code>findAny</code> can return whichever worker finds a match first; <code>findFirst</code> must preserve encounter order.</li>
+  <li><strong>What is a stateful intermediate operation?</strong> Operations such as <code>sorted</code> and <code>distinct</code> need to remember or coordinate across elements and may require buffering.</li>
+  <li><strong>Can a stream be used twice?</strong> No. After a terminal operation it is closed; recreate it from the source.</li>
+</ul>

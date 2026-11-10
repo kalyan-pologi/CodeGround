@@ -1,0 +1,113 @@
+<h3>Question: How would you process millions of records efficiently using Java Streams, batching, and pagination without exhausting memory?</h3>
+<h3>Short answer</h3>
+<p>Do not load all records into a collection. Read a bounded page, process it, write or publish a bounded batch, release references, and continue from a stable cursor. Prefer keyset pagination such as <code>WHERE id &gt; :lastId ORDER BY id LIMIT :size</code> over large offsets.</p>
+<pre><code>import java.util.List;
+
+public class BatchDemo {
+    record Order(long id, String status) {}
+
+    static List&lt;Order&gt; fetchAfter(long lastId, int size) {
+        // In production this method executes a keyset-paginated SQL query.
+        return List.of();
+    }
+
+    public static void main(String[] args) {
+        long lastId = 0;
+        int pageSize = 500;
+        while (true) {
+            List&lt;Order&gt; page = fetchAfter(lastId, pageSize);
+            if (page.isEmpty()) break;
+
+            page.stream()
+                    .filter(order -&gt; "READY".equals(order.status()))
+                    .forEach(order -&gt; System.out.println("process " + order.id()));
+
+            lastId = page.get(page.size() - 1).id();
+        }
+    }
+}</code></pre>
+<h3>Important design points</h3>
+<ul>
+  <li><strong>Bound memory:</strong> keep page and batch sizes finite; do not call <code>collect(toList())</code> over an unbounded source.</li>
+  <li><strong>Stable ordering:</strong> use a unique, indexed cursor such as <code>(created_at, id)</code> so records are not skipped or repeated.</li>
+  <li><strong>Batch writes:</strong> use JDBC batching or a bulk API and commit at a controlled boundary.</li>
+  <li><strong>Backpressure:</strong> limit workers and queue capacity so a fast reader cannot overwhelm a slow database or downstream service.</li>
+  <li><strong>Restartability:</strong> checkpoint the last successful cursor and make processing idempotent.</li>
+</ul>
+<p>Offset pagination is simple but becomes slower as the offset grows and can shift when rows are inserted or deleted. Keyset pagination is usually faster and more stable. A database streaming cursor can also work, but configure fetch size, transaction scope, timeout, and driver behavior carefully.</p>
+<h3>Edge cases and follow-ups</h3>
+<ul>
+  <li>Handle a record that changes while paging; define whether the job uses a snapshot, an upper-bound ID, or an eventually consistent view.</li>
+  <li>Retry failed batches without duplicating side effects. Use an idempotency key or a durable processing table.</li>
+  <li>Do not parallelize database reads blindly; connection pools and database locks are finite.</li>
+  <li>For a file, use <code>Files.lines(path)</code> with try-with-resources and process one bounded batch at a time.</li>
+</ul>
+<h3>Interview-ready answer</h3>
+<blockquote>I process a bounded page at a time, use keyset pagination on an indexed stable key, transform the page with a stream, write in batches, and release references before reading the next page. I add backpressure, checkpoint the last successful cursor, and make retries idempotent. That keeps memory, database load, and recovery behavior predictable.</blockquote>
+
+<h3>Why pagination strategy matters</h3>
+<p>With offset pagination, the database may scan or discard many rows before reaching a large offset. Inserts and deletes can also shift later pages. Keyset pagination starts from the last value already seen and uses an index:</p>
+<pre><code>SELECT id, status, amount
+FROM orders
+WHERE (created_at, id) &gt; (:lastCreatedAt, :lastId)
+ORDER BY created_at, id
+LIMIT :pageSize;</code></pre>
+<p>The second column makes the cursor unique when multiple records have the same timestamp. The cursor must be saved only after the corresponding batch has completed successfully.</p>
+
+<h3>Batching without retaining data</h3>
+<pre><code>import java.util.ArrayList;
+import java.util.List;
+
+public class StreamingBatchDemo {
+    static void writeBatch(List&lt;String&gt; batch) {
+        System.out.println("write " + batch);
+    }
+
+    public static void main(String[] args) {
+        List&lt;String&gt; batch = new ArrayList&lt;&gt;(3);
+        for (int id = 1; id &lt;= 8; id++) {
+            batch.add("record-" + id);
+            if (batch.size() == 3) {
+                writeBatch(batch);
+                batch.clear();
+            }
+        }
+        if (!batch.isEmpty()) writeBatch(batch);
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>write [record-1, record-2, record-3]</code>, then <code>record-4</code> through <code>record-6</code>, then <code>record-7</code> and <code>record-8</code>. Only the current batch is retained.</p>
+
+<h3>Transactions, checkpoints, and retries</h3>
+<ol>
+  <li>Read a page after the saved cursor.</li>
+  <li>Validate and transform records without keeping the entire dataset.</li>
+  <li>Write the batch in one bounded transaction or downstream request.</li>
+  <li>Commit the side effect and checkpoint together when possible.</li>
+  <li>Advance the cursor and continue.</li>
+</ol>
+<p>If the process fails after writing but before checkpointing, the page may be retried. Therefore writes need an idempotency key, a unique constraint, an upsert, or a durable processed-record table. Increasing the page size improves throughput only until database locks, transaction logs, network payloads, or memory become the bottleneck.</p>
+
+<h3>Streams, cursors, and resource ownership</h3>
+<p>A stream backed by a database cursor owns an external resource. Always close it:</p>
+<pre><code>try (var rows = repository.streamOrders()) {
+    rows.filter(Order::isReady)
+        .forEach(this::process);
+}</code></pre>
+<p>Do not return a lazy stream after its transaction or connection has closed. Also avoid opening one transaction for millions of records; use a deliberate transaction boundary and understand the consistency requirement.</p>
+
+<h3>Production edge cases</h3>
+<ul>
+  <li>Records inserted during the job can be included twice or missed unless the job uses a snapshot, an upper-bound cursor, or a defined consistency policy.</li>
+  <li>A record deleted between page reads should be treated as a normal missing record or logged according to business rules.</li>
+  <li>Large text or binary columns can exhaust memory even with small row counts; select only required columns.</li>
+  <li>Parallel workers require bounded queues and separate connection limits. More workers can reduce performance by exhausting the database pool.</li>
+  <li>Monitor page latency, batch latency, cursor progress, retry count, memory, queue depth, and downstream errors.</li>
+</ul>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>What page size should you choose?</strong> Start with a measured value such as 100–1,000, then tune using memory, transaction duration, database latency, and payload size.</li>
+  <li><strong>When is offset pagination acceptable?</strong> Small administrative screens or stable, small datasets where simplicity is more valuable than deep-page performance.</li>
+  <li><strong>How do you provide progress?</strong> Track the stable cursor, processed count, failed count, and estimated upper bound; do not use only page number when rows can change.</li>
+  <li><strong>How do you prevent a failed record from blocking the entire job?</strong> Isolate bad records into a quarantine or dead-letter table while preserving an auditable retry path.</li>
+</ul>

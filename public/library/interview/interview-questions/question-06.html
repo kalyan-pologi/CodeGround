@@ -1,0 +1,138 @@
+<h2>Question: How would you choose between HashMap, ConcurrentHashMap, Hashtable, CopyOnWriteArrayList, and TreeMap for different real-world applications?</h2>
+
+<h2>Short answer</h2>
+<p>Choose based on ordering, concurrency, read/write ratio, null policy, and required operations. Use <code>HashMap</code> for ordinary single-threaded or externally synchronized key-value access, <code>ConcurrentHashMap</code> for concurrent map operations, <code>TreeMap</code> for sorted keys and range queries, and <code>CopyOnWriteArrayList</code> for many reads with very rare writes. Avoid new uses of legacy <code>Hashtable</code> unless compatibility requires it.</p>
+
+<h3>Comparison table</h3>
+<table>
+  <thead><tr><th>Collection</th><th>Best fit</th><th>Important trade-off</th></tr></thead>
+  <tbody>
+    <tr><td><code>HashMap</code></td><td>Fast general lookup, no ordering</td><td>Not safe for concurrent mutation; allows null</td></tr>
+    <tr><td><code>ConcurrentHashMap</code></td><td>Shared mutable map with concurrent reads and updates</td><td>No null keys or values; compound actions need atomic methods</td></tr>
+    <tr><td><code>Hashtable</code></td><td>Legacy synchronized API compatibility</td><td>Coarse synchronization and legacy design</td></tr>
+    <tr><td><code>CopyOnWriteArrayList</code></td><td>Small list with many reads and very rare writes</td><td>Every write copies the array; poor for large or write-heavy lists</td></tr>
+    <tr><td><code>TreeMap</code></td><td>Sorted keys, first/last/range queries</td><td>O(log n), ordering rules must be consistent</td></tr>
+  </tbody>
+</table>
+
+<h3>Runnable selection example</h3>
+<pre><code>import java.util.*;
+import java.util.concurrent.*;
+
+public class CollectionChoiceDemo {
+    public static void main(String[] args) {
+        Map&lt;String, Integer&gt; fastLookup = new HashMap&lt;&gt;();
+        Map&lt;String, Integer&gt; sharedCounts = new ConcurrentHashMap&lt;&gt;();
+        Map&lt;Integer, String&gt; sorted = new TreeMap&lt;&gt;();
+        List&lt;String&gt; listeners = new CopyOnWriteArrayList&lt;&gt;();
+
+        fastLookup.put("order-1", 100);
+        sharedCounts.merge("success", 1, Integer::sum);
+        sorted.put(2, "medium");
+        sorted.put(1, "low");
+        listeners.add("audit-listener");
+
+        System.out.println(fastLookup.get("order-1"));
+        System.out.println(sharedCounts.get("success"));
+        System.out.println(sorted.firstKey());
+        System.out.println(listeners);
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>100
+1
+1
+[audit-listener]</code></pre>
+
+<h3>Concurrency details</h3>
+<p><code>ConcurrentHashMap</code> makes individual operations and methods such as <code>putIfAbsent</code>, <code>compute</code>, and <code>merge</code> safe for concurrent use. A sequence such as “check then put” is not automatically atomic; use one of those compound operations. Its iterators are weakly consistent rather than fail-fast.</p>
+<p><code>Hashtable</code> synchronizes individual methods, but a sequence of calls still needs external coordination. <code>CopyOnWriteArrayList</code> gives readers a stable snapshot-like array and is useful for listener registries, configuration observers, or routing tables with rare changes.</p>
+
+<h3>Real-world decision examples</h3>
+<ul>
+  <li>Per-request local lookup: <code>HashMap</code>.</li>
+  <li>Application-wide counters or a token registry: <code>ConcurrentHashMap</code> with <code>merge</code> or <code>compute</code>.</li>
+  <li>Time windows, sorted IDs, or range queries: <code>TreeMap</code>.</li>
+  <li>Event listeners read on every request but changed only during startup: <code>CopyOnWriteArrayList</code>.</li>
+  <li>Old library contract requiring a synchronized map: <code>Hashtable</code>, preferably behind a compatibility boundary.</li>
+</ul>
+
+<h3>Edge cases and common mistakes</h3>
+<ul>
+  <li>Do not use <code>CopyOnWriteArrayList</code> for a high-volume queue or frequently updated collection.</li>
+  <li>Do not assume <code>ConcurrentHashMap</code> makes the values themselves thread-safe.</li>
+  <li>Do not use <code>TreeMap</code> when you only need lookup and do not need ordering.</li>
+  <li>Do not use a synchronized wrapper as a replacement for understanding iteration and compound-operation locking.</li>
+  <li>Do not select a collection only by benchmark numbers; measure the actual workload, memory pressure, and contention.</li>
+</ul>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Why does ConcurrentHashMap reject null?</strong> A null result can clearly mean “no mapping” during concurrent operations, so allowing null would make APIs such as <code>get</code> ambiguous.</li>
+  <li><strong>When is LinkedHashMap a better choice?</strong> When insertion or access order matters, such as a simple LRU-style structure.</li>
+  <li><strong>What if I need a thread-safe sorted map?</strong> Consider <code>ConcurrentSkipListMap</code>, external synchronization, or a design that avoids shared mutation.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>I choose <code>HashMap</code> for ordinary unsynchronized lookup, <code>ConcurrentHashMap</code> for shared concurrent map updates, <code>TreeMap</code> for sorted keys and ranges, and <code>CopyOnWriteArrayList</code> for read-heavy lists with very rare writes. <code>Hashtable</code> is mainly a legacy compatibility choice. I also check whether compound operations need atomic methods such as <code>compute</code> or <code>merge</code>.</blockquote>
+
+<h3>Selection by workload</h3>
+<p>Start with the operation the application needs rather than the collection name. If the key is arbitrary and lookup dominates, a hash map is usually appropriate. If users ask for “all records between these two keys,” a sorted map is a better fit. If readers greatly outnumber writes and readers must not block while a small list changes, copy-on-write can be ideal.</p>
+<pre><code>import java.util.*;
+import java.util.concurrent.*;
+
+public class CollectionWorkloadDemo {
+    public static void main(String[] args) {
+        Map&lt;String, String&gt; cache = new HashMap&lt;&gt;();
+        NavigableMap&lt;Integer, String&gt; byPriority = new TreeMap&lt;&gt;();
+        ConcurrentMap&lt;String, Long&gt; counters = new ConcurrentHashMap&lt;&gt;();
+        List&lt;Runnable&gt; listeners = new CopyOnWriteArrayList&lt;&gt;();
+
+        cache.put("token", "abc");
+        byPriority.put(10, "normal");
+        byPriority.put(1, "urgent");
+        counters.merge("requests", 1L, Long::sum);
+        listeners.add(() -&gt; { });
+
+        System.out.println(byPriority.firstEntry().getValue());
+        System.out.println(counters.get("requests"));
+    }
+}</code></pre>
+<p><strong>Expected output:</strong> <code>urgent</code> and <code>1</code>.</p>
+
+<h3>Concurrency and atomicity</h3>
+<p>Thread safety of a collection does not automatically make a multi-step business operation atomic. This is unsafe even with a concurrent map:</p>
+<pre><code>if (!map.containsKey(key)) {
+    map.put(key, value); // another thread can win between the two calls
+}</code></pre>
+<p>Use <code>putIfAbsent</code>, <code>computeIfAbsent</code>, <code>compute</code>, or <code>merge</code> when the operation matches their semantics. Keep mapping functions short and do not recursively modify the same map from inside them.</p>
+
+<h3>Ordering and comparator correctness</h3>
+<p><code>TreeMap</code> uses natural ordering or a comparator for placement and equality. The comparator must be transitive and consistent with the domain. A comparator that returns zero for distinct keys causes one value to replace or hide another. Null keys are generally not accepted by natural ordering, though a comparator can explicitly define a null policy.</p>
+<p><code>CopyOnWriteArrayList</code> iterators observe a snapshot of the backing array. A write copies the array, so reads are cheap and stable while writes are O(n) and allocate. It is excellent for listener lists and poor for queues, counters, or frequently changing collections.</p>
+
+<h3>Memory and performance trade-offs</h3>
+<ul>
+  <li><code>HashMap</code> uses extra bucket and node memory and has good average lookup, but iteration cost depends on capacity as well as size.</li>
+  <li><code>ConcurrentHashMap</code> supports concurrent access without one global lock for normal operations, but contention can still occur on hot keys.</li>
+  <li><code>Hashtable</code> synchronizes methods with a legacy coarse-grained model and rejects nulls; it is rarely the best new design.</li>
+  <li><code>TreeMap</code> provides O(log n) operations and range views such as <code>subMap</code>, <code>headMap</code>, and <code>tailMap</code>.</li>
+  <li><code>CopyOnWriteArrayList</code> can consume substantial memory during writes because old and new arrays coexist briefly.</li>
+</ul>
+
+<h3>Real-world decision examples</h3>
+<ul>
+  <li>Per-request variables: local <code>HashMap</code>.</li>
+  <li>Feature flags read on every request and changed only by refresh events: immutable snapshot or <code>CopyOnWriteArrayList</code> for listeners.</li>
+  <li>Rate-limit counters shared by request threads: <code>ConcurrentHashMap</code> with atomic updates, or a distributed store for multiple instances.</li>
+  <li>Time-based scheduling and range lookup: <code>TreeMap</code> or a specialized queue.</li>
+  <li>Cross-process session state: none of these alone; use a database, Redis, or another shared system.</li>
+</ul>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>Why not use Hashtable for all thread-safe maps?</strong> Its coarse synchronization and legacy API are usually less suitable than ConcurrentHashMap.</li>
+  <li><strong>When use a synchronized wrapper?</strong> When a simple legacy map needs synchronized individual operations and the caller can synchronize during iteration and compound actions.</li>
+  <li><strong>What if sorted concurrent access is required?</strong> Consider <code>ConcurrentSkipListMap</code>, which provides sorted concurrent operations with different performance characteristics.</li>
+  <li><strong>Why is a cache not just a HashMap?</strong> A production cache needs expiration, size bounds, concurrency behavior, eviction, metrics, and often cross-instance consistency.</li>
+</ul>

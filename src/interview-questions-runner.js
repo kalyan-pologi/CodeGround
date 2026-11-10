@@ -1,3 +1,5 @@
+import { fetchText } from './note-content.js';
+
 function addStyle(doc) {
   const href = new URL(`${import.meta.env.BASE_URL}interview-questions.css`, location.href).href;
   if (doc.querySelector(`link[href="${href}"]`)) return;
@@ -70,98 +72,71 @@ const interviewQuestions = [
   'Design a Kafka-based order processing workflow with retries, dead-letter topics, idempotent consumers, and database consistency.'
 ];
 
-function questionEntries(doc) {
-  return interviewQuestions.map((title, index) => ({ id: `interview-question-${index + 1}`, title }));
+function questionEntries() {
+  return interviewQuestions.map((title, index) => ({
+    id: `interview-question-${index + 1}`,
+    title,
+    file: `library/interview/interview-questions/question-${String(index + 1).padStart(2, '0')}.html`
+  }));
 }
 
-function mountQuestionAccordion(doc) {
+function mountSingleQuestionReader(doc, entries) {
   const body = doc.querySelector('.note-body');
-  if (!body || body.dataset.questionAccordion) return;
-  const headings = [...body.querySelectorAll('h2, h3')]
-    .filter(heading => heading.textContent.trim().startsWith('Question:'));
-  if (!headings.length) return;
+  if (!body) return null;
 
-  let nextBoundary = null;
-  [...headings].reverse().forEach((heading, reverseIndex) => {
-    const details = doc.createElement('details');
-    details.className = 'interview-question-card';
-    const questionNumber = headings.length - reverseIndex;
-    details.id = `interview-question-${questionNumber}`;
-    details.open = questionNumber === 1;
-
-    const summary = doc.createElement('summary');
-    summary.append(...heading.childNodes);
-    details.append(summary);
-
-    let node = heading.nextSibling;
-    while (node && node !== nextBoundary) {
-      const next = node.nextSibling;
-      details.append(node);
-      node = next;
-    }
-
-    heading.replaceWith(details);
-    nextBoundary = details;
-  });
-
-  [...body.querySelectorAll('.interview-question-card')].forEach((card, index) => {
-    card.open = index === 0;
-  });
-  body.dataset.questionAccordion = 'true';
-}
-
-function mountSingleQuestionReader(doc) {
-  const body = doc.querySelector('.note-body');
-  const cards = body ? [...body.querySelectorAll('.interview-question-card')] : [];
-  if (!body || !cards.length) return null;
-
-  const isSectionHeading = (node) =>
-    node.tagName === 'H2' && /^\d+\.\s/.test(node.textContent.trim());
-  const questions = cards.map((card, index) => {
-    const previousSection = index > 0
-      ? [...cards[index - 1].children].find(isSectionHeading)
-      : null;
-    const answerNodes = [...card.children]
-      .filter(child => child.tagName !== 'SUMMARY' && !isSectionHeading(child))
-      .map(child => child.cloneNode(true));
-    if (previousSection) answerNodes.unshift(previousSection.cloneNode(true));
-    return {
-      title: card.querySelector('summary')?.textContent.replace(/\s+/g, ' ').trim() || '',
-      answerNodes
-    };
-  });
   const reader = doc.createElement('main');
   reader.className = 'interview-question-reader';
   body.replaceChildren(reader);
+  let selection = 0;
 
   const select = (index, shouldScroll = true) => {
-    const question = questions[index];
+    const question = entries[index];
     if (!question) return false;
+    const currentSelection = ++selection;
     const scrollTop = doc.defaultView?.scrollY || doc.documentElement.scrollTop || 0;
-    reader.replaceChildren();
     const panel = doc.createElement('article');
     panel.className = 'interview-question-answer';
-    panel.id = `interview-question-${index + 1}`;
+    panel.id = question.id;
     const title = doc.createElement('h1');
-    title.textContent = question.title;
-    panel.append(title, ...question.answerNodes.map(node => node.cloneNode(true)));
-    reader.append(panel);
+    title.textContent = `Question: ${question.title}`;
+    const status = doc.createElement('p');
+    status.setAttribute('role', 'status');
+    status.textContent = 'Loading answer…';
+    panel.append(title, status);
+    reader.replaceChildren(panel);
     if (shouldScroll) doc.defaultView?.scrollTo(0, scrollTop);
+
+    fetchText(question.file).then(html => {
+      if (currentSelection !== selection || !panel.isConnected) return;
+      if (!html.trim()) {
+        status.textContent = 'Answer not available yet.';
+        return;
+      }
+      const template = doc.createElement('template');
+      template.innerHTML = html;
+      const sourceTitle = [...template.content.querySelectorAll('h2, h3')]
+        .find(heading => heading.textContent.trim().startsWith('Question:'));
+      sourceTitle?.remove();
+      panel.replaceChildren(title, template.content);
+    }).catch(() => {
+      if (currentSelection === selection && panel.isConnected) {
+        status.textContent = 'Could not load this answer. Please try again.';
+      }
+    });
     return true;
   };
 
   select(0, false);
-  return { select, count: questions.length };
+  return { select, count: entries.length };
 }
 
 export function mountInterviewQuestionDrawer(doc) {
   if (doc.body.dataset.interviewQuestionDrawer) return;
-  const entries = questionEntries(doc);
+  const entries = questionEntries();
   if (!entries.length) return;
   doc.body.dataset.interviewQuestionDrawer = 'true';
   addStyle(doc);
-  mountQuestionAccordion(doc);
-  const questionReader = mountSingleQuestionReader(doc);
+  const questionReader = mountSingleQuestionReader(doc, entries);
 
   const toolbar = doc.createElement('div');
   toolbar.className = 'interview-question-toolbar';
@@ -173,7 +148,7 @@ export function mountInterviewQuestionDrawer(doc) {
     <strong>Java Interview Questions</strong>
     <button class="interview-question-nav" type="button" data-direction="previous" aria-label="Previous question">‹</button>
     <button class="interview-question-nav" type="button" data-direction="next" aria-label="Next question">›</button>
-    <span class="interview-question-count" aria-live="polite">1 / ${questionReader?.count || 6}</span>`;
+    <span class="interview-question-count" aria-live="polite">1 / ${entries.length}</span>`;
   doc.body.prepend(toolbar);
 
   const drawer = doc.createElement('dialog');

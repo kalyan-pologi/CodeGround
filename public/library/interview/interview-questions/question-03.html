@@ -1,0 +1,135 @@
+<h2>Question: How do you design an immutable Java class, and why does immutability help with thread safety?</h2>
+
+<h2>Short answer</h2>
+<p>An immutable object cannot change after construction. Make the class difficult or impossible to extend, keep fields private and final, initialize them in the constructor, provide no setters, validate inputs, and make defensive copies of mutable objects. Immutability removes shared state changes, so multiple threads can safely read the same object without locks.</p>
+
+<h3>Rules for an immutable class</h3>
+<ol>
+  <li>Declare the class <code>final</code>, or carefully control subclassing.</li>
+  <li>Make state <code>private final</code>.</li>
+  <li>Set every field during construction.</li>
+  <li>Do not expose setters or mutable internal state.</li>
+  <li>Defensively copy mutable input and output such as <code>Date</code>, arrays, and collections.</li>
+  <li>Validate invariants before publishing the object.</li>
+</ol>
+
+<h3>Runnable example</h3>
+<pre><code>import java.util.*;
+
+public final class UserProfile {
+    private final String name;
+    private final List&lt;String&gt; roles;
+
+    public UserProfile(String name, List&lt;String&gt; roles) {
+        this.name = Objects.requireNonNull(name);
+        this.roles = List.copyOf(roles);
+    }
+
+    public String name() { return name; }
+    public List&lt;String&gt; roles() { return roles; }
+}
+
+class ImmutableDemo {
+    public static void main(String[] args) {
+        List&lt;String&gt; input = new ArrayList&lt;&gt;(List.of("USER"));
+        UserProfile profile = new UserProfile("Maya", input);
+        input.add("ADMIN");
+
+        System.out.println(profile.name());
+        System.out.println(profile.roles());
+        try {
+            profile.roles().add("ADMIN");
+        } catch (UnsupportedOperationException ex) {
+            System.out.println("roles cannot be changed");
+        }
+    }
+}</code></pre>
+<p>Expected output:</p>
+<pre><code>Maya
+[USER]
+roles cannot be changed</code></pre>
+
+<h3>Internal working and thread safety</h3>
+<p>Threads can safely share an immutable object because its fields never change after construction. A properly constructed object also benefits from the Java Memory Model's final-field guarantees: other threads can reliably observe final fields after safe publication. Immutability does not automatically make referenced objects safe; the whole object graph must be immutable or safely wrapped.</p>
+
+<h3>Edge cases</h3>
+<ul>
+  <li><code>Collections.unmodifiableList</code> prevents mutation through that view but does not copy the original list. Changes to the original list may still be visible.</li>
+  <li>A final reference cannot be reassigned, but the referenced object can still be mutable.</li>
+  <li>Returning an internal array directly breaks immutability. Return a copy.</li>
+  <li>Lazy caching inside an immutable object needs safe publication or synchronization.</li>
+  <li>Serialization, reflection, and deserialization can bypass normal constructors, so sensitive classes may need extra protection.</li>
+</ul>
+
+<h3>Real-world examples</h3>
+<p>Value objects such as money, coordinates, configuration snapshots, request objects, cache keys, and Java records are good candidates. Immutable configuration can be shared by request threads without defensive locking.</p>
+
+<h3>Follow-up questions</h3>
+<ul>
+  <li><strong>Are records always immutable?</strong> No. A record's fields are final, but a field may refer to a mutable list or object. Use defensive copies.</li>
+  <li><strong>Why use a builder?</strong> A builder helps create complex immutable objects while keeping the final object itself unchangeable.</li>
+  <li><strong>Is immutability faster?</strong> It can reduce locking and simplify caching, but defensive copying may add allocation cost.</li>
+</ul>
+
+<h3>Interview-ready answer</h3>
+<blockquote>An immutable class is fully initialized in its constructor and never changes afterward. I use private final fields, no setters, validation, defensive copies, and controlled inheritance. Since threads only read stable state, immutable objects can be shared without locks, are safe as map keys, and are easier to reason about.</blockquote>
+
+<h3>Deep immutability and defensive copying</h3>
+<p>Immutability is a property of the reachable state, not just the top-level reference. A <code>final List&lt;String&gt;</code> prevents replacing the list reference, but it does not prevent callers from adding to the list. Copy mutable inputs on the way in and return an immutable copy or a copy on the way out.</p>
+<pre><code>import java.util.*;
+
+public final class Schedule {
+    private final Date start;
+    private final List&lt;String&gt; attendees;
+
+    public Schedule(Date start, List&lt;String&gt; attendees) {
+        this.start = new Date(start.getTime());
+        this.attendees = List.copyOf(attendees);
+    }
+
+    public Date start() { return new Date(start.getTime()); }
+    public List&lt;String&gt; attendees() { return attendees; }
+}</code></pre>
+<p><code>List.copyOf</code> also rejects null elements and returns an unmodifiable list. If elements themselves are mutable, copy or make those elements immutable too.</p>
+
+<h3>Safe publication and the Java Memory Model</h3>
+<p>Final fields receive special initialization guarantees when the constructor completes normally and the object is not allowed to escape during construction. For shared mutable objects, use a safe publication mechanism such as a final field of another safely published object, a volatile reference, a lock, a concurrent collection, or a static initialization boundary. Immutability reduces the number of visibility and race problems, but it does not fix unsafe publication of a partially constructed object.</p>
+
+<h3>Builder and validation example</h3>
+<pre><code>public final class ConnectionConfig {
+    private final String host;
+    private final int port;
+
+    private ConnectionConfig(Builder builder) {
+        if (builder.port &lt; 1 || builder.port &gt; 65535) {
+            throw new IllegalArgumentException("invalid port");
+        }
+        host = java.util.Objects.requireNonNull(builder.host);
+        port = builder.port;
+    }
+
+    public static class Builder {
+        private String host;
+        private int port = 443;
+        public Builder host(String value) { host = value; return this; }
+        public Builder port(int value) { port = value; return this; }
+        public ConnectionConfig build() { return new ConnectionConfig(this); }
+    }
+}</code></pre>
+<p>The builder is mutable while constructing the value; the resulting configuration is immutable after <code>build</code>. This is useful when there are many optional fields or cross-field validation rules.</p>
+
+<h3>Common advanced pitfalls</h3>
+<ul>
+  <li>Do not let <code>this</code> escape from a constructor through a listener, thread, callback, or overridable method.</li>
+  <li>Do not assume <code>Collections.unmodifiableList</code> is a snapshot; it can still reflect changes to the original list.</li>
+  <li>Do not use mutable objects as keys in a hash map unless their equality state is stable for the key's lifetime.</li>
+  <li>Lazy memoization changes internal state. Use a safe holder, volatile field, or synchronization if multiple threads can initialize it.</li>
+  <li>Serialization frameworks and reflection may bypass normal invariants; validate at deserialization boundaries.</li>
+</ul>
+
+<h3>Additional follow-up answers</h3>
+<ul>
+  <li><strong>Why does immutability help caching?</strong> A stable object can be safely reused and its hash code can remain stable for the lifetime of a map key.</li>
+  <li><strong>Is <code>StringBuilder</code> immutable?</strong> No; it is intentionally mutable and is not a thread-safe value object.</li>
+  <li><strong>Can an immutable object contain a cache?</strong> Yes, but the cache is internal mutable state and must be safely synchronized or made safely visible.</li>
+</ul>
