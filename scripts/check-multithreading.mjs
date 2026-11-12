@@ -6,7 +6,8 @@ import { threadProgram } from '../src/thread-runner.js';
 
 const html = readFileSync(new URL('../public/library/interview/notes/java-snippets.html', import.meta.url), 'utf8');
 const start = html.indexOf('<h2>Multithreading</h2>');
-const section = html.slice(start);
+const end = html.indexOf('<h2>Collections</h2>', start);
+const section = html.slice(start, end < 0 ? undefined : end);
 const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
 const snippets = [...section.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)].map(match => decode(match[1]));
 assert.equal(snippets.length, 20, 'Multithreading question count changed unexpectedly');

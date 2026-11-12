@@ -665,4 +665,73 @@ Runnable update = () -&gt; {
 Thread first = new Thread(update); Thread second = new Thread(update);
 first.start(); second.start(); first.join(); second.join();
 System.out.println("java = " + counts.get("java") + ", sql = " + counts.get("sql"));</code></pre>
+
+  <h2>Collections</h2>
+
+  <p><b>Q: Count duplicate values while preserving the order of first appearance.</b></p>
+  <pre><code>List&lt;String&gt; words = List.of("java", "sql", "java", "aws", "sql", "java");
+Map&lt;String, Long&gt; counts = new LinkedHashMap&lt;&gt;();
+for (String word : words) counts.merge(word, 1L, Long::sum);
+System.out.println(counts);</code></pre>
+
+  <p><b>Q: Keep the three highest scores with a PriorityQueue.</b></p>
+  <pre><code>PriorityQueue&lt;Integer&gt; top = new PriorityQueue&lt;&gt;();
+for (int score : List.of(40, 90, 70, 100, 80)) {
+    top.offer(score);
+    if (top.size() &gt; 3) top.poll();
+}
+List&lt;Integer&gt; result = new ArrayList&lt;&gt;(top);
+result.sort(Comparator.reverseOrder());
+System.out.println(result);</code></pre>
+
+  <p><b>Q: Create an immutable snapshot and prevent accidental collection changes.</b></p>
+  <pre><code>List&lt;String&gt; source = new ArrayList&lt;&gt;(List.of("Java", "SQL"));
+List&lt;String&gt; snapshot = List.copyOf(source);
+source.add("Cloud");
+System.out.println("snapshot = " + snapshot + ", source = " + source);</code></pre>
+
+  <h2>File Handling</h2>
+
+  <p><b>Q: Write UTF-8 text to a file, read it back, and clean up safely.</b></p>
+  <pre><code>Path file = Files.createTempFile("codeground-", ".txt");
+try {
+    Files.writeString(file, "Java file I/O", StandardCharsets.UTF_8);
+    String content = Files.readString(file, StandardCharsets.UTF_8);
+    System.out.println(content);
+} finally {
+    Files.deleteIfExists(file);
+}</code></pre>
+
+  <p><b>Q: List only regular Java files from a temporary directory.</b></p>
+  <pre><code>Path directory = Files.createTempDirectory("codeground-");
+try {
+    Files.writeString(directory.resolve("Main.java"), "class Main {}");
+    Files.writeString(directory.resolve("README.txt"), "notes");
+    try (Stream&lt;Path&gt; paths = Files.list(directory)) {
+        List&lt;String&gt; javaFiles = paths.filter(Files::isRegularFile)
+            .map(Path::getFileName).map(Path::toString)
+            .filter(name -&gt; name.endsWith(".java"))
+            .sorted().toList();
+        System.out.println(javaFiles);
+    }
+} finally {
+    Files.walk(directory).sorted(Comparator.reverseOrder()).forEach(path -&gt; {
+        try { Files.deleteIfExists(path); } catch (IOException error) { throw new UncheckedIOException(error); }
+    });
+}</code></pre>
+
+  <h2>Date &amp; Time</h2>
+
+  <p><b>Q: Parse a date, add one month, and format it for display.</b></p>
+  <pre><code>DateTimeFormatter input = DateTimeFormatter.ISO_LOCAL_DATE;
+DateTimeFormatter output = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ROOT);
+LocalDate date = LocalDate.parse("2026-01-15", input).plusMonths(1);
+System.out.println(date.format(output));</code></pre>
+
+  <p><b>Q: Calculate elapsed time between two timestamps in a specific time zone.</b></p>
+  <pre><code>ZoneId zone = ZoneId.of("America/Chicago");
+ZonedDateTime start = ZonedDateTime.of(2026, 3, 8, 1, 30, 0, 0, zone);
+ZonedDateTime end = start.plusHours(3);
+Duration elapsed = Duration.between(start, end);
+System.out.println("hours = " + elapsed.toHours() + ", end = " + end);</code></pre>
 </div>

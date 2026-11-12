@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import StreamLab from './StreamLab';
 import { futureProgram } from './future-runner';
 import { threadProgram } from './thread-runner';
+import { coreProgram } from './core-runner';
 
 export function streamProgram(model, snippet = '// TODO: Write your solution here.\n// Print the result with System.out.println(...).') {
   let body = snippet.trim();
@@ -51,7 +52,8 @@ export function mountStreamRunners(doc) {
     const runnable = true;
     const isFuture = category === 'CompletableFuture';
     const isThread = category === 'Multithreading';
-    const wrap = code => isFuture ? futureProgram(code) : isThread ? threadProgram(code) : streamProgram(model, code);
+    const isCore = ['Collections', 'File Handling', 'Date & Time'].includes(category);
+    const wrap = code => isFuture ? futureProgram(code) : isThread ? threadProgram(code) : isCore ? coreProgram(code) : streamProgram(model, code);
     const solutions = [{ title:'Main solution', code:primary.textContent, program:wrap(primary.textContent) }];
     for (const alternative of nodes.filter(element => element.classList.contains('stream-alternative'))) {
       const code = alternative.querySelector('code').textContent;

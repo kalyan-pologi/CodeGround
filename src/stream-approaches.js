@@ -322,7 +322,7 @@ function organizeStreamQuestions(doc) {
   const supplement = doc.querySelector('#stream-interview-additions');
   const keep = ['Imports & Model', 'Filtering & Sorting', 'Matching & Finding', 'Grouping',
     'Partitioning', 'Counting Frequencies', 'Aggregation & Statistics', 'Mapping & Collecting to Map',
-    'String Operations', 'CompletableFuture', 'Multithreading'];
+    'String Operations', 'CompletableFuture', 'Multithreading', 'Collections', 'File Handling', 'Date & Time'];
   const sections = [];
   const intro = [];
   let current;
