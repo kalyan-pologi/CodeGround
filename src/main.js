@@ -25,7 +25,7 @@ const groups = {
   web: [['Fundamentals', ['html', 'css', 'javascript', 'typescript', 'frontend-quickref']], ['Frameworks', ['react', 'redux', 'angular']]],
   home: [['Getting started', ['@overview', 'intro']], ['Project write-ups', ['proj-reidyai', 'proj-citibank', 'proj-accenture']], ['Project stories & questions', ['behavioral-stories', 'behavioral-questions']]]
 };
-const names = { '@overview': 'Overview', '@tasks': 'ReidyAI Project Tasks', '@workspace': 'Java Practice Exercises', '@debugging': 'Debugging', 'java-snippets': 'Java Stream Code' };
+const names = { '@overview': 'Overview', '@tasks': 'ReidyAI Project Tasks', '@workspace': 'Java Practice Exercises', '@debugging': 'Debugging', 'java-snippets': 'Java Core Practice' };
 const labels = { backend: 'Java, Spring Boot & design principles', practice: 'Build skills through project work', devops: 'Commands, containers & cloud', web: 'Frontend fundamentals & frameworks', sd: 'Architecture & distributed systems', genai: 'Models, retrieval & AI applications' };
 const escape = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const initials = email => {

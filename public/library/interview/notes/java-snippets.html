@@ -1,6 +1,6 @@
 <div class="section-header">
   <div class="tag">Tooling</div>
-  <h1>📄 Java Code Snippets</h1>
+  <h1>📄 Java Core Practice</h1>
   <p>Reusable Java stream and collector snippets, question by question.</p>
 </div>
 
@@ -499,4 +499,149 @@ any.thenAccept(result -> System.out.println("anyOf: " + result));</code></pre>
         TimeUnit.SECONDS.sleep(seconds);
     } catch (InterruptedException ignored) {}
 }</code></pre>
+
+  <h2>Multithreading</h2>
+  <p>These exercises cover the core Java concurrency tools used to create, coordinate, and safely stop work across multiple threads.</p>
+
+  <p><b>Q: Create and start a thread that prints a completion message.</b></p>
+  <pre><code>Thread worker = new Thread(() -&gt; System.out.println("Worker completed"));
+worker.start();
+worker.join();</code></pre>
+
+  <p><b>Q: Run a task using the Runnable interface.</b></p>
+  <pre><code>Runnable task = () -&gt; System.out.println("Runnable executed");
+Thread worker = new Thread(task);
+worker.start();
+worker.join();</code></pre>
+
+  <p><b>Q: Return a value from a background task with Callable and Future.</b></p>
+  <pre><code>ExecutorService executor = Executors.newSingleThreadExecutor();
+Future&lt;String&gt; result = executor.submit(() -&gt; "Callable result");
+System.out.println(result.get());
+executor.shutdown();</code></pre>
+
+  <p><b>Q: Execute three tasks with a fixed thread pool and wait for all of them.</b></p>
+  <pre><code>ExecutorService executor = Executors.newFixedThreadPool(3);
+List&lt;Future&lt;?&gt;&gt; tasks = new ArrayList&lt;&gt;();
+for (int i = 0; i &lt; 3; i++) tasks.add(executor.submit(() -&gt; {}));
+for (Future&lt;?&gt; task : tasks) task.get();
+System.out.println("tasks completed = " + tasks.size());
+executor.shutdown();</code></pre>
+
+  <p><b>Q: Safely increment a shared counter with a synchronized method.</b></p>
+  <pre><code>class Counter {
+    private int value;
+    synchronized void increment() { value++; }
+    synchronized int get() { return value; }
+}
+Counter counter = new Counter();
+Thread first = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.increment(); });
+Thread second = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.increment(); });
+first.start(); second.start(); first.join(); second.join();
+System.out.println("counter = " + counter.get());</code></pre>
+
+  <p><b>Q: Use AtomicInteger for a lock-free counter update.</b></p>
+  <pre><code>AtomicInteger counter = new AtomicInteger();
+Thread first = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.incrementAndGet(); });
+Thread second = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.incrementAndGet(); });
+first.start(); second.start(); first.join(); second.join();
+System.out.println("counter = " + counter.get());</code></pre>
+
+  <p><b>Q: Protect a shared update with a synchronized block.</b></p>
+  <pre><code>int[] counter = {0};
+Object lock = new Object();
+Runnable increment = () -&gt; { for (int i = 0; i &lt; 100; i++) synchronized (lock) { counter[0]++; } };
+Thread first = new Thread(increment); Thread second = new Thread(increment);
+first.start(); second.start(); first.join(); second.join();
+System.out.println("counter = " + counter[0]);</code></pre>
+
+  <p><b>Q: Use ReentrantLock to protect a critical section.</b></p>
+  <pre><code>java.util.concurrent.locks.Lock lock = new java.util.concurrent.locks.ReentrantLock();
+AtomicInteger counter = new AtomicInteger();
+Runnable increment = () -&gt; { for (int i = 0; i &lt; 100; i++) { lock.lock(); try { counter.incrementAndGet(); } finally { lock.unlock(); } } };
+Thread first = new Thread(increment); Thread second = new Thread(increment);
+first.start(); second.start(); first.join(); second.join();
+System.out.println("counter = " + counter.get());</code></pre>
+
+  <p><b>Q: Wait for three workers with CountDownLatch.</b></p>
+  <pre><code>CountDownLatch latch = new CountDownLatch(3);
+for (int i = 0; i &lt; 3; i++) new Thread(latch::countDown).start();
+latch.await();
+System.out.println("all workers finished");</code></pre>
+
+  <p><b>Q: Release two workers at the same point with CyclicBarrier.</b></p>
+  <pre><code>CyclicBarrier barrier = new CyclicBarrier(2, () -&gt; System.out.println("barrier opened"));
+Thread first = new Thread(() -&gt; await(barrier));
+Thread second = new Thread(() -&gt; await(barrier));
+first.start(); second.start(); first.join(); second.join();</code></pre>
+
+  <p><b>Q: Pass a value safely from a producer to a consumer with BlockingQueue.</b></p>
+  <pre><code>BlockingQueue&lt;String&gt; queue = new ArrayBlockingQueue&lt;&gt;(1);
+Thread producer = new Thread(() -&gt; put(queue, "message"));
+Thread consumer = new Thread(() -&gt; takeAndPrint(queue));
+producer.start(); consumer.start(); producer.join(); consumer.join();</code></pre>
+
+  <p><b>Q: Limit concurrent access with a Semaphore.</b></p>
+  <pre><code>Semaphore permits = new Semaphore(2);
+Thread first = new Thread(() -&gt; usePermit(permits));
+Thread second = new Thread(() -&gt; usePermit(permits));
+first.start(); second.start(); first.join(); second.join();
+System.out.println("permits available = " + permits.availablePermits());</code></pre>
+
+  <p><b>Q: Interrupt a sleeping thread and handle the interruption.</b></p>
+  <pre><code>Thread worker = new Thread(() -&gt; {
+    try { Thread.sleep(10_000); }
+    catch (InterruptedException error) { System.out.println("worker interrupted"); }
+});
+worker.start(); worker.interrupt(); worker.join();</code></pre>
+
+  <p><b>Q: Stop a worker cooperatively using a volatile flag.</b></p>
+  <pre><code>CountDownLatch started = new CountDownLatch(1);
+AtomicBoolean running = new AtomicBoolean(true);
+Thread worker = new Thread(() -&gt; { started.countDown(); while (running.get()) Thread.yield(); });
+worker.start(); started.await(); running.set(false); worker.join();
+System.out.println("worker stopped");</code></pre>
+
+  <p><b>Q: Run multiple Callable tasks with invokeAll and sum their results.</b></p>
+  <pre><code>ExecutorService executor = Executors.newFixedThreadPool(2);
+List&lt;Callable&lt;Integer&gt;&gt; tasks = List.of(() -&gt; 2, () -&gt; 3, () -&gt; 5);
+int total = executor.invokeAll(tasks).stream().mapToInt(thisFuture -&gt; getValue(thisFuture)).sum();
+System.out.println("total = " + total);
+executor.shutdown();</code></pre>
+
+  <p><b>Q: Schedule a task to run after a short delay.</b></p>
+  <pre><code>ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
+CountDownLatch done = new CountDownLatch(1);
+scheduler.schedule(() -&gt; { System.out.println("scheduled task"); done.countDown(); }, 10, TimeUnit.MILLISECONDS);
+done.await();
+scheduler.shutdown();</code></pre>
+
+  <p><b>Q: Coordinate two phases with Phaser.</b></p>
+  <pre><code>Phaser phaser = new Phaser(2);
+Thread first = new Thread(() -&gt; { phaser.arriveAndAwaitAdvance(); });
+Thread second = new Thread(() -&gt; { phaser.arriveAndAwaitAdvance(); });
+first.start(); second.start(); first.join(); second.join();
+System.out.println("phase completed");</code></pre>
+
+  <p><b>Q: Cancel a long-running Future and confirm cancellation.</b></p>
+  <pre><code>ExecutorService executor = Executors.newSingleThreadExecutor();
+Future&lt;String&gt; task = executor.submit(() -&gt; { Thread.sleep(10_000); return "done"; });
+task.cancel(true);
+System.out.println("cancelled = " + task.isCancelled());
+executor.shutdownNow();</code></pre>
+
+  <p><b>Q: Collect results from a CompletionService.</b></p>
+  <pre><code>ExecutorService executor = Executors.newFixedThreadPool(2);
+CompletionService&lt;Integer&gt; service = new ExecutorCompletionService&lt;&gt;(executor);
+service.submit(() -&gt; 4); service.submit(() -&gt; 6);
+int total = service.take().get() + service.take().get();
+System.out.println("total = " + total);
+executor.shutdown();</code></pre>
+
+  <p><b>Q: Exchange values between two threads with Exchanger.</b></p>
+  <pre><code>Exchanger&lt;String&gt; exchanger = new Exchanger&lt;&gt;();
+Thread first = new Thread(() -&gt; exchange(exchanger, "one"));
+Thread second = new Thread(() -&gt; exchange(exchanger, "two"));
+first.start(); second.start(); first.join(); second.join();
+System.out.println("exchange completed");</code></pre>
 </div>
