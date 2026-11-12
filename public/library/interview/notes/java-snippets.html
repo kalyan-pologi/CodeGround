@@ -421,77 +421,113 @@ int oddSum = sumByParity.get(false);</code></pre>
     interviews often ask "what's the difference between X and Y" for pairs like
     <code>thenApply</code>/<code>thenApplyAsync</code> or <code>thenCombine</code>/<code>thenCompose</code>.</p>
 
-  <p><b>Q: Run a task asynchronously and get its result later.</b></p>
+  <p><b>Q: Run an asynchronous task, derive a second value, and report both results after completion.</b></p>
   <pre><code>CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -> {
     sleep(1);
     return "Hello";
-});</code></pre>
+});
+CompletableFuture&lt;Integer&gt; length = future.thenApply(String::length);
+CompletableFuture.allOf(future, length).join();
+System.out.println("message = " + future.join());
+System.out.println("length = " + length.join());</code></pre>
 
-  <p><b>Q: Transform a future's result once it's available (thenApply runs on the same thread that
+  <p><b>Q: Transform, validate, and asynchronously format a future's result (thenApply runs on the same thread that
     completed the future, thenApplyAsync forces it onto a different thread from the pool).</b></p>
   <pre><code>CompletableFuture&lt;String&gt; transformed = future.thenApply(result -> result + " World");
 
 transformed.thenApplyAsync(data -> {
     sleep(1);
     return data.toUpperCase();
-}).thenAccept(result -> System.out.println("thenApplyAsync: " + result));</code></pre>
+}).thenApply(result -> "result=" + result)
+  .thenAccept(result -> System.out.println("pipeline: " + result));</code></pre>
 
-  <p><b>Q: Consume a future's result without returning anything.</b></p>
-  <pre><code>transformed.thenAccept(result -> System.out.println("thenAccept: " + result));</code></pre>
+  <p><b>Q: Consume a future's result, validate it, and record a side effect without returning a value.</b></p>
+  <pre><code>AtomicBoolean valid = new AtomicBoolean();
+transformed.thenAccept(result -> {
+    valid.set(result.contains("World"));
+    System.out.println("value = " + result);
+});
+transformed.join();
+System.out.println("valid = " + valid.get());</code></pre>
 
-  <p><b>Q: Run a follow-up action after a future completes, without needing its result.</b></p>
-  <pre><code>transformed.thenRun(() -> System.out.println("thenRun: Task completed"));</code></pre>
+  <p><b>Q: Run a follow-up action, record completion state, and wait for the callback.</b></p>
+  <pre><code>AtomicBoolean completed = new AtomicBoolean();
+CompletableFuture&lt;Void&gt; followUp = transformed.thenRun(() -> {
+    completed.set(true);
+    System.out.println("thenRun: Task completed");
+});
+followUp.join();
+System.out.println("completed = " + completed.get());</code></pre>
 
-  <p><b>Q: Combine the results of two independent futures once both are done.</b></p>
+  <p><b>Q: Combine two independent futures, validate the combined value, and publish a summary.</b></p>
   <pre><code>CompletableFuture&lt;String&gt; greeting = CompletableFuture.supplyAsync(() -> "Hi");
 CompletableFuture&lt;String&gt; name = CompletableFuture.supplyAsync(() -> "Shiva");
 
 greeting.thenCombine(name, (g, n) -> g + ", " + n + "!")
-    .thenAccept(result -> System.out.println("thenCombine: " + result));</code></pre>
+    .thenApply(result -> result.trim())
+    .thenAccept(result -> System.out.println("thenCombine: " + result))
+    .join();</code></pre>
 
-  <p><b>Q: Chain one async call that depends on the result of a previous one (thenCompose
+  <p><b>Q: Chain dependent async calls, flatten the nested future, and recover from a failed lookup (thenCompose
     flattens a future-of-a-future, thenApply would leave you with a nested one).</b></p>
   <pre><code>CompletableFuture&lt;String&gt; chained = greeting.thenCompose(g ->
     CompletableFuture.supplyAsync(() -> g + " again"));
 chained.thenAccept(result -> System.out.println("thenCompose: " + result));</code></pre>
+chained.exceptionally(error -> "fallback")
+    .thenAccept(result -> System.out.println("final = " + result))
+    .join();</code></pre>
 
-  <p><b>Q: Recover from an exception with a fallback value.</b></p>
+  <p><b>Q: Recover from an exception, transform the fallback, and return a successful future.</b></p>
   <pre><code>CompletableFuture&lt;String&gt; errorHandled = CompletableFuture.supplyAsync(() -> {
     throw new RuntimeException("Oops!");
 }).exceptionally(ex -> {
     System.out.println("exceptionally: " + ex.getMessage());
     return "Fallback";
-});</code></pre>
+}).thenApply(String::toUpperCase);
+System.out.println("recovered = " + errorHandled.join());</code></pre>
 
-  <p><b>Q: Handle both the success and failure case together in one callback (unlike
+  <p><b>Q: Handle both success and failure, then preserve a normalized result (unlike
     exceptionally, handle always runs, even on success).</b></p>
   <pre><code>CompletableFuture&lt;String&gt; handled = CompletableFuture.supplyAsync(() -> {
     throw new RuntimeException("Another Error");
 }).handle((result, ex) -> {
     if (ex != null) return "Handled error";
     return result;
-});</code></pre>
+}).thenApply(String::toLowerCase);
+System.out.println("handled = " + handled.join());</code></pre>
 
-  <p><b>Q: Run a side effect regardless of whether the future succeeded or failed, without
-    changing its result.</b></p>
-  <pre><code>CompletableFuture.supplyAsync(() -> "Done")
+  <p><b>Q: Run success and failure side effects with whenComplete without changing the result.</b></p>
+  <pre><code>AtomicInteger callbacks = new AtomicInteger();
+CompletableFuture&lt;String&gt; observed = CompletableFuture.supplyAsync(() -> "Done")
     .whenComplete((res, ex) -> {
-        if (ex == null) System.out.println("whenComplete: " + res);
-    });</code></pre>
+        callbacks.incrementAndGet();
+        System.out.println(ex == null ? "success: " + res : "failure");
+    });
+System.out.println("result = " + observed.join() + ", callbacks = " + callbacks.get());</code></pre>
 
-  <p><b>Q: Wait for several futures to all finish before continuing.</b></p>
+  <p><b>Q: Wait for several futures to finish, then combine their values after allOf completes.</b></p>
   <pre><code>CompletableFuture&lt;Void&gt; all = CompletableFuture.allOf(greeting, name, transformed);
-all.thenRun(() -> System.out.println("allOf: All tasks done"));</code></pre>
+all.thenRun(() -> System.out.println("allOf: All tasks done"));
+all.join();
+System.out.println("combined = " + greeting.join() + " " + name.join() + " / " + transformed.join());</code></pre>
 
-  <p><b>Q: Continue as soon as the first of several futures finishes, ignoring the rest.</b></p>
+  <p><b>Q: Continue with the first completed future, normalize its result, and wait for the winner.</b></p>
   <pre><code>CompletableFuture&lt;Object&gt; any = CompletableFuture.anyOf(
     CompletableFuture.supplyAsync(() -> "First"),
     CompletableFuture.supplyAsync(() -> { sleep(1); return "Second"; })
 );
-any.thenAccept(result -> System.out.println("anyOf: " + result));</code></pre>
+any.thenApply(Object::toString)
+   .thenAccept(result -> System.out.println("anyOf: " + result))
+   .join();</code></pre>
 
-  <p><b>Q: Block and get a future's result without dealing with a checked exception.</b></p>
-  <pre><code>String result = transformed.join(); // like .get(), but throws unchecked on failure</code></pre>
+  <p><b>Q: Join a future, validate its result, and handle a failed join without checked exceptions.</b></p>
+  <pre><code>String result;
+try {
+    result = transformed.join();
+    System.out.println("result = " + result + ", valid = " + !result.isBlank());
+} catch (CompletionException error) {
+    System.out.println("join failed = " + error.getCause().getMessage());
+}</code></pre>
 
   <p><b>Q: Utility to simulate a slow task, used by the examples above.</b></p>
   <pre><code>private static void sleep(int seconds) {
@@ -503,43 +539,58 @@ any.thenAccept(result -> System.out.println("anyOf: " + result));</code></pre>
   <h2>Multithreading</h2>
   <p>These exercises cover the core Java concurrency tools used to create, coordinate, and safely stop work across multiple threads.</p>
 
-  <p><b>Q: Create and start a thread that prints a completion message.</b></p>
-  <pre><code>Thread worker = new Thread(() -&gt; System.out.println("Worker completed"));
+  <p><b>Q: Create a named thread, capture its lifecycle, and wait for it to finish.</b></p>
+  <pre><code>AtomicBoolean completed = new AtomicBoolean();
+Thread worker = new Thread(() -&gt; {
+    completed.set(true);
+    System.out.println("Worker completed");
+}, "report-worker");
 worker.start();
-worker.join();</code></pre>
+worker.join();
+System.out.println("name = " + worker.getName() + ", completed = " + completed.get());</code></pre>
 
-  <p><b>Q: Run a task using the Runnable interface.</b></p>
-  <pre><code>Runnable task = () -&gt; System.out.println("Runnable executed");
+  <p><b>Q: Run a Runnable that processes input and reports a deterministic result.</b></p>
+  <pre><code>List&lt;Integer&gt; values = List.of(2, 4, 6, 8);
+AtomicInteger total = new AtomicInteger();
+Runnable task = () -&gt; values.forEach(total::addAndGet);
 Thread worker = new Thread(task);
 worker.start();
-worker.join();</code></pre>
+worker.join();
+System.out.println("total = " + total.get() + ", size = " + values.size());</code></pre>
 
-  <p><b>Q: Return a value from a background task with Callable and Future.</b></p>
+  <p><b>Q: Submit a Callable, validate its result through Future, and always shut down the executor.</b></p>
   <pre><code>ExecutorService executor = Executors.newSingleThreadExecutor();
-Future&lt;String&gt; result = executor.submit(() -&gt; "Callable result");
-System.out.println(result.get());
-executor.shutdown();</code></pre>
+try {
+    Future&lt;String&gt; result = executor.submit(() -&gt; "Callable result");
+    String value = result.get();
+    System.out.println(value + ", valid = " + !value.isBlank());
+} finally {
+    executor.shutdown();
+}</code></pre>
 
-  <p><b>Q: Safely increment a shared counter with a synchronized method.</b></p>
+  <p><b>Q: Safely update and read shared state with synchronized methods.</b></p>
   <pre><code>class Counter {
     private int value;
     synchronized void increment() { value++; }
+    synchronized void decrement() { value--; }
     synchronized int get() { return value; }
 }
 Counter counter = new Counter();
 Thread first = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.increment(); });
 Thread second = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.increment(); });
 first.start(); second.start(); first.join(); second.join();
+counter.decrement();
 System.out.println("counter = " + counter.get());</code></pre>
 
-  <p><b>Q: Use AtomicInteger for a lock-free counter update.</b></p>
+  <p><b>Q: Use AtomicInteger for atomic increments and a compare-and-set update.</b></p>
   <pre><code>AtomicInteger counter = new AtomicInteger();
 Thread first = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.incrementAndGet(); });
 Thread second = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.incrementAndGet(); });
 first.start(); second.start(); first.join(); second.join();
-System.out.println("counter = " + counter.get());</code></pre>
+boolean adjusted = counter.compareAndSet(200, 250);
+System.out.println("counter = " + counter.get() + ", adjusted = " + adjusted);</code></pre>
 
-  <p><b>Q: Coordinate a producer and consumer with wait and notifyAll.</b></p>
+  <p><b>Q: Coordinate a producer and consumer with wait/notifyAll and guard against spurious wakeups.</b></p>
   <pre><code>class Mailbox {
     private String message;
     synchronized void put(String value) { message = value; notifyAll(); }
@@ -549,68 +600,74 @@ System.out.println("counter = " + counter.get());</code></pre>
     }
 }
 Mailbox mailbox = new Mailbox();
-Thread producer = new Thread(() -&gt; mailbox.put("delivered"));
+Thread producer = new Thread(() -&gt; { mailbox.put("delivered"); mailbox.put("again"); });
 Thread consumer = new Thread(() -&gt; { try { System.out.println(mailbox.take()); } catch (InterruptedException error) { Thread.currentThread().interrupt(); } });
 consumer.start(); producer.start(); consumer.join(); producer.join();</code></pre>
 
-  <p><b>Q: Prevent deadlock by acquiring multiple locks in a consistent order.</b></p>
+  <p><b>Q: Prevent deadlock while updating shared state by acquiring multiple locks consistently.</b></p>
   <pre><code>java.util.concurrent.locks.Lock firstLock = new java.util.concurrent.locks.ReentrantLock();
 java.util.concurrent.locks.Lock secondLock = new java.util.concurrent.locks.ReentrantLock();
+AtomicInteger transfers = new AtomicInteger();
 Runnable task = () -&gt; {
     firstLock.lock();
-    try { secondLock.lock(); try { } finally { secondLock.unlock(); } }
+    try { secondLock.lock(); try { transfers.incrementAndGet(); } finally { secondLock.unlock(); } }
     finally { firstLock.unlock(); }
 };
 Thread first = new Thread(task); Thread second = new Thread(task);
 first.start(); second.start(); first.join(); second.join();
-System.out.println("completed without deadlock");</code></pre>
+System.out.println("completed without deadlock = " + (transfers.get() == 2));</code></pre>
 
-  <p><b>Q: Protect shared data with a ReentrantReadWriteLock.</b></p>
+  <p><b>Q: Serialize writes but allow protected reads with a ReentrantReadWriteLock.</b></p>
   <pre><code>java.util.concurrent.locks.ReentrantReadWriteLock lock = new java.util.concurrent.locks.ReentrantReadWriteLock();
 int[] value = {0};
-Thread writer = new Thread(() -&gt; { lock.writeLock().lock(); try { value[0] = 42; } finally { lock.writeLock().unlock(); } });
+Thread writer = new Thread(() -&gt; { lock.writeLock().lock(); try { value[0] += 42; } finally { lock.writeLock().unlock(); } });
 writer.start(); writer.join();
 lock.readLock().lock();
-try { System.out.println("value = " + value[0]); } finally { lock.readLock().unlock(); }</code></pre>
+try { System.out.println("value = " + value[0] + ", readers = " + lock.getReadLockCount()); } finally { lock.readLock().unlock(); }</code></pre>
 
-  <p><b>Q: Wait for three workers with CountDownLatch.</b></p>
+  <p><b>Q: Wait for three workers with CountDownLatch and collect their completion count.</b></p>
   <pre><code>CountDownLatch latch = new CountDownLatch(3);
-for (int i = 0; i &lt; 3; i++) new Thread(latch::countDown).start();
+AtomicInteger completed = new AtomicInteger();
+for (int i = 0; i &lt; 3; i++) new Thread(() -&gt; { completed.incrementAndGet(); latch.countDown(); }).start();
 latch.await();
-System.out.println("all workers finished");</code></pre>
+System.out.println("all workers finished = " + (completed.get() == 3));</code></pre>
 
-  <p><b>Q: Release two workers at the same point with CyclicBarrier.</b></p>
-  <pre><code>CyclicBarrier barrier = new CyclicBarrier(2, () -&gt; System.out.println("barrier opened"));
-Thread first = new Thread(() -&gt; await(barrier));
-Thread second = new Thread(() -&gt; await(barrier));
-first.start(); second.start(); first.join(); second.join();</code></pre>
+  <p><b>Q: Release two workers through two phases with a reusable CyclicBarrier.</b></p>
+  <pre><code>AtomicInteger phases = new AtomicInteger();
+CyclicBarrier barrier = new CyclicBarrier(2, phases::incrementAndGet);
+Thread first = new Thread(() -&gt; { await(barrier); await(barrier); });
+Thread second = new Thread(() -&gt; { await(barrier); await(barrier); });
+first.start(); second.start(); first.join(); second.join();
+System.out.println("phases = " + phases.get());</code></pre>
 
-  <p><b>Q: Pass a value safely from a producer to a consumer with BlockingQueue.</b></p>
+  <p><b>Q: Pass multiple values safely and apply backpressure with a bounded BlockingQueue.</b></p>
   <pre><code>BlockingQueue&lt;String&gt; queue = new ArrayBlockingQueue&lt;&gt;(1);
-Thread producer = new Thread(() -&gt; put(queue, "message"));
-Thread consumer = new Thread(() -&gt; takeAndPrint(queue));
+Thread producer = new Thread(() -&gt; { put(queue, "one"); put(queue, "two"); });
+Thread consumer = new Thread(() -&gt; { takeAndPrint(queue); takeAndPrint(queue); });
 producer.start(); consumer.start(); producer.join(); consumer.join();</code></pre>
 
-  <p><b>Q: Limit concurrent access with a Semaphore.</b></p>
+  <p><b>Q: Limit concurrent access with a Semaphore and release permits safely.</b></p>
   <pre><code>Semaphore permits = new Semaphore(2);
-Thread first = new Thread(() -&gt; usePermit(permits));
-Thread second = new Thread(() -&gt; usePermit(permits));
+AtomicInteger entered = new AtomicInteger();
+Thread first = new Thread(() -&gt; { usePermit(permits); entered.incrementAndGet(); });
+Thread second = new Thread(() -&gt; { usePermit(permits); entered.incrementAndGet(); });
 first.start(); second.start(); first.join(); second.join();
-System.out.println("permits available = " + permits.availablePermits());</code></pre>
+System.out.println("entered = " + entered.get() + ", permits available = " + permits.availablePermits());</code></pre>
 
-  <p><b>Q: Give each thread isolated state with ThreadLocal.</b></p>
+  <p><b>Q: Give worker threads isolated state with ThreadLocal and clean it up.</b></p>
   <pre><code>ThreadLocal&lt;String&gt; user = ThreadLocal.withInitial(() -&gt; "worker");
-Thread worker = new Thread(() -&gt; System.out.println("user = " + user.get()));
+Thread worker = new Thread(() -&gt; { user.set("worker"); System.out.println("user = " + user.get()); user.remove(); });
 worker.start(); worker.join();
 user.remove();</code></pre>
 
-  <p><b>Q: Stop a worker cooperatively using a volatile flag.</b></p>
+  <p><b>Q: Stop a worker cooperatively with a volatile flag and report its observed work.</b></p>
   <pre><code>CountDownLatch started = new CountDownLatch(1);
 class Control { volatile boolean running = true; }
 Control control = new Control();
-Thread worker = new Thread(() -&gt; { started.countDown(); while (control.running) Thread.yield(); });
+AtomicInteger iterations = new AtomicInteger();
+Thread worker = new Thread(() -&gt; { started.countDown(); while (control.running) iterations.incrementAndGet(); });
 worker.start(); started.await(); control.running = false; worker.join();
-System.out.println("worker stopped");</code></pre>
+System.out.println("worker stopped, iterations > 0 = " + (iterations.get() &gt; 0));</code></pre>
 
   <p><b>Q: Sum values recursively with the ForkJoin framework.</b></p>
   <pre><code>class SumTask extends RecursiveTask&lt;Integer&gt; {
@@ -627,36 +684,44 @@ ForkJoinPool pool = new ForkJoinPool(2);
 System.out.println("sum = " + pool.invoke(new SumTask(1, 10)));
 pool.shutdown();</code></pre>
 
-  <p><b>Q: Schedule a task to run after a short delay.</b></p>
+  <p><b>Q: Schedule a delayed task, capture its result, and shut down the scheduler.</b></p>
   <pre><code>ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
 CountDownLatch done = new CountDownLatch(1);
-scheduler.schedule(() -&gt; { System.out.println("scheduled task"); done.countDown(); }, 10, TimeUnit.MILLISECONDS);
+AtomicInteger runs = new AtomicInteger();
+scheduler.schedule(() -&gt; { runs.incrementAndGet(); done.countDown(); }, 10, TimeUnit.MILLISECONDS);
 done.await();
-scheduler.shutdown();</code></pre>
+scheduler.shutdown();
+System.out.println("scheduled runs = " + runs.get());</code></pre>
 
-  <p><b>Q: Coordinate two phases with Phaser.</b></p>
+  <p><b>Q: Coordinate two workers across two phases with Phaser.</b></p>
   <pre><code>Phaser phaser = new Phaser(2);
-Thread first = new Thread(() -&gt; { phaser.arriveAndAwaitAdvance(); });
-Thread second = new Thread(() -&gt; { phaser.arriveAndAwaitAdvance(); });
+AtomicInteger phases = new AtomicInteger();
+Runnable work = () -&gt; { phaser.arriveAndAwaitAdvance(); phases.incrementAndGet(); phaser.arriveAndAwaitAdvance(); };
+Thread first = new Thread(work);
+Thread second = new Thread(work);
 first.start(); second.start(); first.join(); second.join();
-System.out.println("phase completed");</code></pre>
+System.out.println("phase completed, workers advanced = " + phases.get());</code></pre>
 
-  <p><b>Q: Cancel a long-running Future and confirm cancellation.</b></p>
+  <p><b>Q: Cancel a long-running Future, preserve interruption, and release executor resources.</b></p>
   <pre><code>ExecutorService executor = Executors.newSingleThreadExecutor();
-Future&lt;String&gt; task = executor.submit(() -&gt; { Thread.sleep(10_000); return "done"; });
-task.cancel(true);
-System.out.println("cancelled = " + task.isCancelled());
-executor.shutdownNow();</code></pre>
+try {
+    Future&lt;String&gt; task = executor.submit(() -&gt; { Thread.sleep(10_000); return "done"; });
+    boolean cancelled = task.cancel(true);
+    System.out.println("cancelled = " + cancelled + ", done = " + task.isDone());
+} finally {
+    executor.shutdownNow();
+}</code></pre>
 
-  <p><b>Q: Collect results from a CompletionService.</b></p>
+  <p><b>Q: Collect multiple results as they complete with CompletionService and aggregate them.</b></p>
   <pre><code>ExecutorService executor = Executors.newFixedThreadPool(2);
 CompletionService&lt;Integer&gt; service = new ExecutorCompletionService&lt;&gt;(executor);
-service.submit(() -&gt; 4); service.submit(() -&gt; 6);
-int total = service.take().get() + service.take().get();
-System.out.println("total = " + total);
+for (int value : List.of(4, 6, 8)) service.submit(() -&gt; value);
+int total = 0;
+for (int i = 0; i &lt; 3; i++) total += service.take().get();
+System.out.println("total = " + total + ", tasks = " + 3);
 executor.shutdown();</code></pre>
 
-  <p><b>Q: Update shared values safely with ConcurrentHashMap.</b></p>
+  <p><b>Q: Update shared counters safely with ConcurrentHashMap and atomic map values.</b></p>
   <pre><code>ConcurrentHashMap&lt;String, AtomicInteger&gt; counts = new ConcurrentHashMap&lt;&gt;();
 Runnable update = () -&gt; {
     counts.computeIfAbsent("java", key -&gt; new AtomicInteger()).incrementAndGet();
@@ -664,17 +729,20 @@ Runnable update = () -&gt; {
 };
 Thread first = new Thread(update); Thread second = new Thread(update);
 first.start(); second.start(); first.join(); second.join();
-System.out.println("java = " + counts.get("java") + ", sql = " + counts.get("sql"));</code></pre>
+counts.computeIfAbsent("java", key -&gt; new AtomicInteger()).addAndGet(3);
+System.out.println("java = " + counts.get("java") + ", sql = " + counts.get("sql") + ", keys = " + counts.keySet().size());</code></pre>
 
   <h2>Collections</h2>
 
-  <p><b>Q: Count duplicate values while preserving the order of first appearance.</b></p>
+  <p><b>Q: Build an insertion-ordered frequency report and identify values that repeat.</b></p>
   <pre><code>List&lt;String&gt; words = List.of("java", "sql", "java", "aws", "sql", "java");
 Map&lt;String, Long&gt; counts = new LinkedHashMap&lt;&gt;();
 for (String word : words) counts.merge(word, 1L, Long::sum);
-System.out.println(counts);</code></pre>
+List&lt;String&gt; duplicates = counts.entrySet().stream().filter(entry -&gt; entry.getValue() &gt; 1)
+    .map(Map.Entry::getKey).toList();
+System.out.println("counts = " + counts + ", duplicates = " + duplicates);</code></pre>
 
-  <p><b>Q: Keep the three highest scores with a PriorityQueue.</b></p>
+  <p><b>Q: Keep the three highest scores with a bounded PriorityQueue and return them sorted.</b></p>
   <pre><code>PriorityQueue&lt;Integer&gt; top = new PriorityQueue&lt;&gt;();
 for (int score : List.of(40, 90, 70, 100, 80)) {
     top.offer(score);
@@ -682,27 +750,29 @@ for (int score : List.of(40, 90, 70, 100, 80)) {
 }
 List&lt;Integer&gt; result = new ArrayList&lt;&gt;(top);
 result.sort(Comparator.reverseOrder());
-System.out.println(result);</code></pre>
+int cutoff = result.get(result.size() - 1);
+System.out.println("top = " + result + ", cutoff = " + cutoff);</code></pre>
 
-  <p><b>Q: Create an immutable snapshot and prevent accidental collection changes.</b></p>
+  <p><b>Q: Create an immutable snapshot, mutate the source, and prove the snapshot is independent.</b></p>
   <pre><code>List&lt;String&gt; source = new ArrayList&lt;&gt;(List.of("Java", "SQL"));
 List&lt;String&gt; snapshot = List.copyOf(source);
 source.add("Cloud");
-System.out.println("snapshot = " + snapshot + ", source = " + source);</code></pre>
+boolean independent = snapshot.size() == 2 &amp;&amp; source.size() == 3;
+System.out.println("snapshot = " + snapshot + ", source = " + source + ", independent = " + independent);</code></pre>
 
   <h2>File Handling</h2>
 
-  <p><b>Q: Write UTF-8 text to a file, read it back, and clean up safely.</b></p>
+  <p><b>Q: Write multiple UTF-8 lines, read them back, validate content, and clean up safely.</b></p>
   <pre><code>Path file = Files.createTempFile("codeground-", ".txt");
 try {
-    Files.writeString(file, "Java file I/O", StandardCharsets.UTF_8);
-    String content = Files.readString(file, StandardCharsets.UTF_8);
-    System.out.println(content);
+    Files.write(file, List.of("Java file I/O", "safe cleanup"), StandardCharsets.UTF_8);
+    List&lt;String&gt; lines = Files.readAllLines(file, StandardCharsets.UTF_8);
+    System.out.println("lines = " + lines.size() + ", valid = " + lines.contains("safe cleanup"));
 } finally {
     Files.deleteIfExists(file);
 }</code></pre>
 
-  <p><b>Q: List only regular Java files from a temporary directory.</b></p>
+  <p><b>Q: Create a temporary directory, filter regular Java files, and delete the directory tree.</b></p>
   <pre><code>Path directory = Files.createTempDirectory("codeground-");
 try {
     Files.writeString(directory.resolve("Main.java"), "class Main {}");
@@ -712,7 +782,7 @@ try {
             .map(Path::getFileName).map(Path::toString)
             .filter(name -&gt; name.endsWith(".java"))
             .sorted().toList();
-        System.out.println(javaFiles);
+        System.out.println("java files = " + javaFiles + ", count = " + javaFiles.size());
     }
 } finally {
     Files.walk(directory).sorted(Comparator.reverseOrder()).forEach(path -&gt; {
@@ -722,16 +792,18 @@ try {
 
   <h2>Date &amp; Time</h2>
 
-  <p><b>Q: Parse a date, add one month, and format it for display.</b></p>
+  <p><b>Q: Parse a date, calculate a period, add one month, and format the result.</b></p>
   <pre><code>DateTimeFormatter input = DateTimeFormatter.ISO_LOCAL_DATE;
 DateTimeFormatter output = DateTimeFormatter.ofPattern("MMM dd, yyyy", Locale.ROOT);
 LocalDate date = LocalDate.parse("2026-01-15", input).plusMonths(1);
-System.out.println(date.format(output));</code></pre>
+Period period = Period.between(LocalDate.of(2026, 1, 15), date);
+System.out.println(date.format(output) + ", months added = " + period.toTotalMonths());</code></pre>
 
-  <p><b>Q: Calculate elapsed time between two timestamps in a specific time zone.</b></p>
+  <p><b>Q: Calculate elapsed time across a daylight-saving transition in a specific time zone.</b></p>
   <pre><code>ZoneId zone = ZoneId.of("America/Chicago");
 ZonedDateTime start = ZonedDateTime.of(2026, 3, 8, 1, 30, 0, 0, zone);
 ZonedDateTime end = start.plusHours(3);
 Duration elapsed = Duration.between(start, end);
-System.out.println("hours = " + elapsed.toHours() + ", end = " + end);</code></pre>
+boolean daylightChanged = !start.getOffset().equals(end.getOffset());
+System.out.println("hours = " + elapsed.toHours() + ", daylight changed = " + daylightChanged + ", end = " + end);</code></pre>
 </div>

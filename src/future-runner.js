@@ -2,6 +2,7 @@ export function futureProgram(snippet = '// TODO: Write your CompletableFuture e
   let body = snippet.trim();
   if (/^private static void sleep\s*\(/.test(body)) {
     return `import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 public class Main {
 ${body}
     public static void main(String[] args) {
@@ -27,6 +28,7 @@ ${body}
   const waitForCallbacks = /\.(?:thenAccept|thenRun|whenComplete|thenApplyAsync)\b/.test(body)
     ? '        Thread.sleep(1100);\n' : '';
   return `import java.util.concurrent.*;
+import java.util.concurrent.atomic.*;
 public class Main {
     static void sleep(int seconds) {
         try { TimeUnit.SECONDS.sleep(seconds); }
