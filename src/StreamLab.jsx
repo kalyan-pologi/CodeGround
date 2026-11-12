@@ -6,6 +6,7 @@ import CloudSaveControls from './CloudSaveControls';
 const expectedCache = new Map();
 function normalizeOutput(value) { return String(value || '').replace(/\r\n?/g, '\n').trim(); }
 function sampleInputFor(question) {
+  if (question.category === 'CompletableFuture') return 'No external input. The example uses fixed future values and asynchronous tasks.';
   const code = question.solutions?.[0]?.code || '';
   const lines = code.split('\n');
   const streamLine = lines.findIndex(line => line.includes('.stream()'));

@@ -11,6 +11,7 @@
     "check:browser": "node --experimental-websocket scripts/browser-smoke.mjs",
     "check:project": "node scripts/check-project-tasks.mjs",
     "check:streams": "node scripts/check-stream-approaches.mjs",
+    "check:completable-futures": "node scripts/check-completable-futures.mjs",
     "check:sql": "node scripts/check-sql.mjs",
     "check:samples": "node scripts/check-exercise-samples.mjs"
   },

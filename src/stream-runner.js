@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import StreamLab from './StreamLab';
+import { futureProgram } from './future-runner';
 
 export function streamProgram(model, snippet = '// TODO: Write your solution here.\n// Print the result with System.out.println(...).') {
   let body = snippet.trim();
@@ -31,7 +32,6 @@ ${body.split('\n').map(line => '        ' + line).join('\n')}
 }`;
 }
 
-
 export function mountStreamRunners(doc) {
   const body = doc.querySelector('.note-body');
   if (!body || body.dataset.runners) return;
@@ -47,15 +47,16 @@ export function mountStreamRunners(doc) {
     const nodes = []; let next = node.nextElementSibling;
     while (next && next.tagName !== 'H2' && !next.querySelector(':scope > b')?.textContent.trim().startsWith('Q:')) { nodes.push(next); next = next.nextElementSibling; }
     const primary = nodes.find(element => element.tagName === 'PRE'); if (!primary) continue;
-    const runnable = category !== 'CompletableFuture';
-    const solutions = [{ title:'Main solution', code:primary.textContent, program:runnable ? streamProgram(model,primary.textContent) : primary.textContent }];
+    const runnable = true;
+    const isFuture = category === 'CompletableFuture';
+    const solutions = [{ title:'Main solution', code:primary.textContent, program:isFuture ? futureProgram(primary.textContent) : streamProgram(model,primary.textContent) }];
     for (const alternative of nodes.filter(element => element.classList.contains('stream-alternative'))) {
       const code = alternative.querySelector('code').textContent;
-      solutions.push({ title:alternative.querySelector('.stream-alternative-label').textContent, code, program:streamProgram(model,code), choose:alternative.querySelector('p:last-child').textContent });
+      solutions.push({ title:alternative.querySelector('.stream-alternative-label').textContent, code, program:isFuture ? futureProgram(code) : streamProgram(model,code), choose:alternative.querySelector('p:last-child').textContent });
     }
     questions.push({ id:questions.length+1, title:node.textContent.replace(/^Q:\s*/,'').replace(/\s+/g,' ').trim(), category, runnable, solutions,
       description:nodes.filter(element => element.tagName === 'P').map(element => element.textContent).join(' '),
-      starter:runnable ? streamProgram(model) : primary.textContent });
+      starter:isFuture ? futureProgram() : streamProgram(model) });
   }
   for (const file of ['sql-lab.css','stream-lab.css']) { const link=doc.createElement('link'); link.rel='stylesheet'; link.href=new URL(file,new URL(import.meta.env.BASE_URL,location.href)).href; doc.head.append(link); }
   const root = doc.createElement('div'); root.id='stream-lab-root'; doc.body.className='sql-lab-page'; doc.body.replaceChildren(root);
