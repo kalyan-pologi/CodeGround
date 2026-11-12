@@ -520,14 +520,6 @@ Future&lt;String&gt; result = executor.submit(() -&gt; "Callable result");
 System.out.println(result.get());
 executor.shutdown();</code></pre>
 
-  <p><b>Q: Execute three tasks with a fixed thread pool and wait for all of them.</b></p>
-  <pre><code>ExecutorService executor = Executors.newFixedThreadPool(3);
-List&lt;Future&lt;?&gt;&gt; tasks = new ArrayList&lt;&gt;();
-for (int i = 0; i &lt; 3; i++) tasks.add(executor.submit(() -&gt; {}));
-for (Future&lt;?&gt; task : tasks) task.get();
-System.out.println("tasks completed = " + tasks.size());
-executor.shutdown();</code></pre>
-
   <p><b>Q: Safely increment a shared counter with a synchronized method.</b></p>
   <pre><code>class Counter {
     private int value;
@@ -547,21 +539,39 @@ Thread second = new Thread(() -&gt; { for (int i = 0; i &lt; 100; i++) counter.i
 first.start(); second.start(); first.join(); second.join();
 System.out.println("counter = " + counter.get());</code></pre>
 
-  <p><b>Q: Protect a shared update with a synchronized block.</b></p>
-  <pre><code>int[] counter = {0};
-Object lock = new Object();
-Runnable increment = () -&gt; { for (int i = 0; i &lt; 100; i++) synchronized (lock) { counter[0]++; } };
-Thread first = new Thread(increment); Thread second = new Thread(increment);
-first.start(); second.start(); first.join(); second.join();
-System.out.println("counter = " + counter[0]);</code></pre>
+  <p><b>Q: Coordinate a producer and consumer with wait and notifyAll.</b></p>
+  <pre><code>class Mailbox {
+    private String message;
+    synchronized void put(String value) { message = value; notifyAll(); }
+    synchronized String take() throws InterruptedException {
+        while (message == null) wait();
+        String value = message; message = null; return value;
+    }
+}
+Mailbox mailbox = new Mailbox();
+Thread producer = new Thread(() -&gt; mailbox.put("delivered"));
+Thread consumer = new Thread(() -&gt; { try { System.out.println(mailbox.take()); } catch (InterruptedException error) { Thread.currentThread().interrupt(); } });
+consumer.start(); producer.start(); consumer.join(); producer.join();</code></pre>
 
-  <p><b>Q: Use ReentrantLock to protect a critical section.</b></p>
-  <pre><code>java.util.concurrent.locks.Lock lock = new java.util.concurrent.locks.ReentrantLock();
-AtomicInteger counter = new AtomicInteger();
-Runnable increment = () -&gt; { for (int i = 0; i &lt; 100; i++) { lock.lock(); try { counter.incrementAndGet(); } finally { lock.unlock(); } } };
-Thread first = new Thread(increment); Thread second = new Thread(increment);
+  <p><b>Q: Prevent deadlock by acquiring multiple locks in a consistent order.</b></p>
+  <pre><code>java.util.concurrent.locks.Lock firstLock = new java.util.concurrent.locks.ReentrantLock();
+java.util.concurrent.locks.Lock secondLock = new java.util.concurrent.locks.ReentrantLock();
+Runnable task = () -&gt; {
+    firstLock.lock();
+    try { secondLock.lock(); try { } finally { secondLock.unlock(); } }
+    finally { firstLock.unlock(); }
+};
+Thread first = new Thread(task); Thread second = new Thread(task);
 first.start(); second.start(); first.join(); second.join();
-System.out.println("counter = " + counter.get());</code></pre>
+System.out.println("completed without deadlock");</code></pre>
+
+  <p><b>Q: Protect shared data with a ReentrantReadWriteLock.</b></p>
+  <pre><code>java.util.concurrent.locks.ReentrantReadWriteLock lock = new java.util.concurrent.locks.ReentrantReadWriteLock();
+int[] value = {0};
+Thread writer = new Thread(() -&gt; { lock.writeLock().lock(); try { value[0] = 42; } finally { lock.writeLock().unlock(); } });
+writer.start(); writer.join();
+lock.readLock().lock();
+try { System.out.println("value = " + value[0]); } finally { lock.readLock().unlock(); }</code></pre>
 
   <p><b>Q: Wait for three workers with CountDownLatch.</b></p>
   <pre><code>CountDownLatch latch = new CountDownLatch(3);
@@ -588,26 +598,34 @@ Thread second = new Thread(() -&gt; usePermit(permits));
 first.start(); second.start(); first.join(); second.join();
 System.out.println("permits available = " + permits.availablePermits());</code></pre>
 
-  <p><b>Q: Interrupt a sleeping thread and handle the interruption.</b></p>
-  <pre><code>Thread worker = new Thread(() -&gt; {
-    try { Thread.sleep(10_000); }
-    catch (InterruptedException error) { System.out.println("worker interrupted"); }
-});
-worker.start(); worker.interrupt(); worker.join();</code></pre>
+  <p><b>Q: Give each thread isolated state with ThreadLocal.</b></p>
+  <pre><code>ThreadLocal&lt;String&gt; user = ThreadLocal.withInitial(() -&gt; "worker");
+Thread worker = new Thread(() -&gt; System.out.println("user = " + user.get()));
+worker.start(); worker.join();
+user.remove();</code></pre>
 
   <p><b>Q: Stop a worker cooperatively using a volatile flag.</b></p>
   <pre><code>CountDownLatch started = new CountDownLatch(1);
-AtomicBoolean running = new AtomicBoolean(true);
-Thread worker = new Thread(() -&gt; { started.countDown(); while (running.get()) Thread.yield(); });
-worker.start(); started.await(); running.set(false); worker.join();
+class Control { volatile boolean running = true; }
+Control control = new Control();
+Thread worker = new Thread(() -&gt; { started.countDown(); while (control.running) Thread.yield(); });
+worker.start(); started.await(); control.running = false; worker.join();
 System.out.println("worker stopped");</code></pre>
 
-  <p><b>Q: Run multiple Callable tasks with invokeAll and sum their results.</b></p>
-  <pre><code>ExecutorService executor = Executors.newFixedThreadPool(2);
-List&lt;Callable&lt;Integer&gt;&gt; tasks = List.of(() -&gt; 2, () -&gt; 3, () -&gt; 5);
-int total = executor.invokeAll(tasks).stream().mapToInt(thisFuture -&gt; getValue(thisFuture)).sum();
-System.out.println("total = " + total);
-executor.shutdown();</code></pre>
+  <p><b>Q: Sum values recursively with the ForkJoin framework.</b></p>
+  <pre><code>class SumTask extends RecursiveTask&lt;Integer&gt; {
+    private final int from, to;
+    SumTask(int from, int to) { this.from = from; this.to = to; }
+    protected Integer compute() {
+        if (to - from &lt;= 2) return IntStream.rangeClosed(from, to).sum();
+        int middle = (from + to) / 2;
+        SumTask left = new SumTask(from, middle), right = new SumTask(middle + 1, to);
+        left.fork(); int rightValue = right.compute(); return left.join() + rightValue;
+    }
+}
+ForkJoinPool pool = new ForkJoinPool(2);
+System.out.println("sum = " + pool.invoke(new SumTask(1, 10)));
+pool.shutdown();</code></pre>
 
   <p><b>Q: Schedule a task to run after a short delay.</b></p>
   <pre><code>ScheduledExecutorService scheduler = Executors.newSingleThreadScheduledExecutor();
@@ -638,10 +656,13 @@ int total = service.take().get() + service.take().get();
 System.out.println("total = " + total);
 executor.shutdown();</code></pre>
 
-  <p><b>Q: Exchange values between two threads with Exchanger.</b></p>
-  <pre><code>Exchanger&lt;String&gt; exchanger = new Exchanger&lt;&gt;();
-Thread first = new Thread(() -&gt; exchange(exchanger, "one"));
-Thread second = new Thread(() -&gt; exchange(exchanger, "two"));
+  <p><b>Q: Update shared values safely with ConcurrentHashMap.</b></p>
+  <pre><code>ConcurrentHashMap&lt;String, AtomicInteger&gt; counts = new ConcurrentHashMap&lt;&gt;();
+Runnable update = () -&gt; {
+    counts.computeIfAbsent("java", key -&gt; new AtomicInteger()).incrementAndGet();
+    counts.computeIfAbsent("sql", key -&gt; new AtomicInteger()).incrementAndGet();
+};
+Thread first = new Thread(update); Thread second = new Thread(update);
 first.start(); second.start(); first.join(); second.join();
-System.out.println("exchange completed");</code></pre>
+System.out.println("java = " + counts.get("java") + ", sql = " + counts.get("sql"));</code></pre>
 </div>
