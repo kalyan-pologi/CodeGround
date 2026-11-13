@@ -1,0 +1,98 @@
+<div class="section-header">
+    <div class="tag">Foundations</div>
+    <h1>✍️ Prompt Engineering</h1>
+    <p>Techniques for writing prompts that reliably produce the output you want.</p>
+  </div>
+
+<div class="cs-section-label">✍️ Core Concept</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>Why It Matters</h3>
+    <div class="b">The exact same model, same weights, same everything, can produce <b>wildly different quality output</b> depending purely on how the request is phrased. This is the entire premise of prompt engineering: the model is a capability, the prompt is what unlocks how much of it you actually get.</div>
+    <div class="b">A vague ask forces the model to guess your intent, format, and scope, and it will guess wrong at least some of the time. A precise ask removes that guesswork entirely.</div>
+    <div class="b">Prompting is cheap to iterate on compared to fine-tuning or switching models, which is why it is almost always the <b>first lever</b> to pull when output quality is disappointing.</div>
+  </div>
+  <div class="card c2">
+    <h3>Core Techniques</h3>
+    <div class="b">Be <b>specific and explicit</b> about format, length, tone, and constraints. "Summarize this" and "summarize this in 3 bullet points, under 20 words each, no jargon" produce very different reliability.</div>
+    <div class="b">Provide <b>context and examples</b>. Showing the model one or two examples of the input-output pattern you want (few-shot prompting, covered on its own page) resolves ambiguity that no amount of description alone can.</div>
+    <div class="b">Use <b>role or persona framing</b> ("you are a senior security reviewer") to steer tone, vocabulary, and the assumptions the model brings, though it is not a substitute for explicit constraints.</div>
+    <div class="b">Break complex tasks into <b>explicit steps</b> rather than asking for the end result in one shot; this both improves reasoning and makes intermediate output easier to check.</div>
+    <div class="b">Give the <b>ideal output structure or schema upfront</b> (a template, a JSON shape, a heading outline) so the model fills in a known container instead of inventing its own structure.</div>
+  </div>
+  <div class="card c3">
+    <h3>Iteration & Negative Constraints</h3>
+    <div class="b">Prompting is rarely a one-shot activity. Treat a prompt like code: write it, run it, look at where the output goes wrong, and <b>revise the specific instruction</b> that caused that failure.</div>
+    <div class="b"><b>Negative constraints</b> ("don't use markdown", "don't mention pricing") are useful but often <b>less reliable</b> than positive instructions, because the model has to actively suppress a behavior rather than simply follow a directive. Telling it what to do instead ("respond in plain prose" rather than "don't use markdown") usually works better.</div>
+    <div class="b">Stacking too many negative constraints without positive alternatives tends to produce stilted or overly hedged output, since the model is spending effort avoiding things rather than confidently doing something.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🔬 Deeper Look</div>
+<div class="grid3">
+  <div class="card c4">
+    <h3>Common Failure Patterns</h3>
+    <div class="b"><b>Vague asks</b>: "make this better" or "improve this code" give the model no criteria to optimize for, so it picks arbitrary ones that may not match what you actually wanted.</div>
+    <div class="b"><b>Contradictory instructions</b>: asking for "a concise but comprehensive report" or "formal but casual tone" forces the model to silently resolve a conflict you never noticed you created.</div>
+    <div class="b"><b>Burying the actual question</b>: pasting a wall of background material and tacking the real ask onto the end (or worse, the middle) risks the specific question getting under-weighted relative to the surrounding noise.</div>
+    <div class="b">All three failure patterns share a root cause: the prompt describes the situation but not the <b>decision criteria</b> the model should use to produce good output.</div>
+  </div>
+  <div class="card c5">
+    <h3>Prompt Structure Best Practices</h3>
+    <div class="b">Separate <b>instructions from data</b>. Mixing "here is what to do" with "here is the content to do it on" in one undifferentiated blob makes it easy for the model to misread which part is which, especially with long inputs.</div>
+    <div class="b">Use <b>delimiters or XML-style tags</b> (`<document>...</document>`, `<instructions>...</instructions>`) to mark section boundaries explicitly. This is one of the most reliable ways to keep long, multi-part prompts unambiguous.</div>
+    <div class="b">For long prompts, put the <b>most critical instructions near the end</b>, right before the model starts generating. Models tend to weight recent context more heavily (a recency effect related to the lost-in-the-middle problem covered on the context window page), so the final instruction is the one most likely to be followed precisely.</div>
+  </div>
+  <div class="card c6">
+    <h3>Systematic Testing</h3>
+    <div class="b">Do not tune a prompt against a single example and assume it generalizes. Build a small set of <b>representative test cases</b>, including edge cases, and check the prompt against all of them before treating it as done.</div>
+    <div class="b">Changing a prompt to fix one failing case can silently break a previously-working case; a lightweight eval set catches this the same way unit tests catch regressions in code.</div>
+    <div class="b">For anything going into production, this systematic pass matters far more than any single clever wording, because the real question is not "does this work once" but "does this work reliably across the range of inputs it will actually see."</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🎯 Applying It</div>
+<div class="grid3">
+  <div class="card c7">
+    <h3>One-off vs. Reusable Prompts</h3>
+    <div class="b"><b>One-off prompting</b> (asking a question in a chat interface) can afford to be loose and conversational, since you are right there to notice a bad answer and rephrase immediately.</div>
+    <div class="b"><b>Reusable prompt templates or system prompts</b> for an application have to hold up across thousands of unseen inputs without a human in the loop to catch drift, so they need explicit structure, defined edge-case handling, and a way to be tested and versioned like any other piece of the system.</div>
+    <div class="b">A system prompt for an application is closer to writing a <b>spec</b> than writing a question: it has to anticipate variation in user input that a single one-off prompt never has to consider.</div>
+  </div>
+  <div class="card c8">
+    <h3>Anti-Patterns</h3>
+    <div class="b"><b>Overly long prompts</b> that pile on caveats and context dilute the signal; the model has to sift through everything to find what actually matters for this specific request.</div>
+    <div class="b"><b>Contradicting instructions</b> buried in different parts of a long prompt (common when a prompt has been edited many times by different people) force the model to pick a winner silently and unpredictably.</div>
+    <div class="b"><b>No examples for ambiguous formats</b>: if there are multiple reasonable ways to interpret "list the key points," and the exact format matters, a single example resolves it far more reliably than more prose description would.</div>
+  </div>
+  <div class="card c9">
+    <h3>Practical Playbook</h3>
+    <div class="b">Start specific: name the format, length, audience, and tone explicitly rather than assuming the model will infer them correctly.</div>
+    <div class="b">Add one or two examples the moment output format matters and prose description alone leaves room for interpretation.</div>
+    <div class="b">Use delimiters or tags once a prompt has more than one distinct section (instructions, data, examples, output format).</div>
+    <div class="b">Put the single most important instruction last for long prompts, and test against a small representative set before shipping.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">⚠️ Reliability</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>Failure Modes</h3>
+    <div class="b"><b>Prompt drift</b>: a prompt tuned carefully against today's model version can behave differently after a silent model update, since providers periodically retrain or adjust models behind the same name.</div>
+    <div class="b"><b>Instruction dilution</b>: as a prompt grows over time with patches for edge cases, the original core instruction can get buried under accumulated caveats, weakening the exact behavior it was meant to enforce.</div>
+    <div class="b"><b>Format non-compliance</b>: even with an explicit schema, models can occasionally drift from the requested structure on edge-case inputs, which is why production systems validate output rather than trusting the prompt alone.</div>
+    <div class="b"><b>Over-reliance on negative constraints</b>: stacking "don't do X" instructions without positive guidance tends to degrade rather than improve compliance.</div>
+  </div>
+  <div class="card c11">
+    <h3>Where It Fits</h3>
+    <div class="b">Prompt engineering is the layer that sits directly between the application and the model: it is the interface contract that determines what the model receives and, in large part, what shape of answer comes back.</div>
+    <div class="b">It works alongside, not instead of, other levers: temperature and sampling parameters affect randomness, retrieval affects what facts are available, and prompting affects how the task itself is framed. Good prompting cannot fix missing context, and good retrieval cannot fix a poorly framed instruction.</div>
+    <div class="note">Prompting is the cheapest, fastest lever to pull before reaching for fine-tuning, a bigger model, or new tooling.</div>
+  </div>
+  <div class="card c12">
+    <h3>Real World Example</h3>
+    <div class="b">A support-ticket triage system uses a system prompt with explicit XML-tagged sections: `<categories>` listing valid labels, `<examples>` showing three labeled tickets, and `<ticket>` holding the actual input, with the final instruction ("respond with only the category name") placed last.</div>
+    <div class="b">When misclassification rates crept up after a model upgrade, the fix was re-running the existing eval set of labeled tickets against the new model version and adjusting the category examples, not rewriting the prompt from scratch.</div>
+    <div class="note" style="color:#4ade80;">Treating the prompt as a versioned, tested artifact rather than a one-time piece of text is what made the failure fast to diagnose and cheap to fix.</div>
+  </div>
+</div>

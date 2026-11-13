@@ -1,0 +1,248 @@
+# Local teaching topology: three service databases, one Kafka broker, and optional Redis caching.
+services:
+  property-service:
+    # Build this application image using the repository Dockerfile.
+    build:
+      # Send the repository root as build context so Maven can access shared libraries and all
+      # module POMs.
+      context: .
+      args:
+        # Docker build argument selects which service JAR is packaged into this image.
+        SERVICE: property-service
+    # Map host ports to container ports; loopback binding makes this local setup accessible from
+    # this machine.
+    ports:
+      - "127.0.0.1:8081:8080"
+      - "127.0.0.1:9081:9090"
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Select the Spring profile at runtime; the same built application can use different
+      # environment settings.
+      # Runtime: activate application-dev.yml without rebuilding the JAR or Docker image.
+      SPRING_PROFILES_ACTIVE: dev
+      # Listen on container interfaces so Docker port forwarding can reach the application.
+      SERVER_ADDRESS: 0.0.0.0
+      # All application containers use port 8080 internally; distinct host ports identify each
+      # service.
+      SERVER_PORT: 8080
+      # Expose health and metrics on container port 9090, separate from business traffic.
+      MANAGEMENT_PORT: 9090
+      # Use the broker listener advertised for communication within the Compose network.
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+    # Named volumes preserve database or broker files when containers are replaced.
+    volumes:
+      - property-data:/app/data
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      kafka:
+        # Wait for the dependency health check to pass before starting this container.
+        condition: service_healthy
+    # Allow the JVM time to complete graceful shutdown before Docker forces termination.
+    stop_grace_period: 45s
+    # Prevent processes from gaining additional privileges inside this container.
+    security_opt: ["no-new-privileges:true"]
+    # Remove Linux capabilities that the Java application does not require.
+    cap_drop: [ALL]
+  appraisal-service:
+    # Build this application image using the repository Dockerfile.
+    build:
+      # Send the repository root as build context so Maven can access shared libraries and all
+      # module POMs.
+      context: .
+      args:
+        # Docker build argument selects which service JAR is packaged into this image.
+        # Build time: Docker ARG chooses which service is packaged; Spring profile selection happens
+        # later at runtime.
+        SERVICE: appraisal-service
+    # Map host ports to container ports; loopback binding makes this local setup accessible from
+    # this machine.
+    ports:
+      - "127.0.0.1:8082:8080"
+      - "127.0.0.1:9082:9090"
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Select the Spring profile at runtime; the same built application can use different
+      # environment settings.
+      # Runtime: activate application-dev.yml without rebuilding the JAR or Docker image.
+      SPRING_PROFILES_ACTIVE: dev
+      # Listen on container interfaces so Docker port forwarding can reach the application.
+      SERVER_ADDRESS: 0.0.0.0
+      # All application containers use port 8080 internally; distinct host ports identify each
+      # service.
+      SERVER_PORT: 8080
+      # Expose health and metrics on container port 9090, separate from business traffic.
+      MANAGEMENT_PORT: 9090
+      # Compose DNS resolves property-service; localhost here would refer to the calling container
+      # itself.
+      PROPERTY_SERVICE_URL: http://property-service:8080
+      # Use the broker listener advertised for communication within the Compose network.
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+    # Named volumes preserve database or broker files when containers are replaced.
+    volumes:
+      - appraisal-data:/app/data
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      property-service:
+        # Wait only for container startup; this does not guarantee the dependency API is ready.
+        # Lifecycle: startup ordering does not guarantee API readiness or continued dependency
+        # availability.
+        condition: service_started
+      kafka:
+        # Wait for the dependency health check to pass before starting this container.
+        condition: service_healthy
+    # Allow the JVM time to complete graceful shutdown before Docker forces termination.
+    stop_grace_period: 45s
+    # Prevent processes from gaining additional privileges inside this container.
+    security_opt: ["no-new-privileges:true"]
+    # Remove Linux capabilities that the Java application does not require.
+    cap_drop: [ALL]
+  communication-service:
+    # Build this application image using the repository Dockerfile.
+    build:
+      # Send the repository root as build context so Maven can access shared libraries and all
+      # module POMs.
+      context: .
+      args:
+        # Docker build argument selects which service JAR is packaged into this image.
+        SERVICE: communication-service
+    # Map host ports to container ports; loopback binding makes this local setup accessible from
+    # this machine.
+    ports:
+      - "127.0.0.1:8083:8080"
+      - "127.0.0.1:9083:9090"
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Select the Spring profile at runtime; the same built application can use different
+      # environment settings.
+      # Runtime: activate application-dev.yml without rebuilding the JAR or Docker image.
+      SPRING_PROFILES_ACTIVE: dev
+      # Listen on container interfaces so Docker port forwarding can reach the application.
+      SERVER_ADDRESS: 0.0.0.0
+      # All application containers use port 8080 internally; distinct host ports identify each
+      # service.
+      SERVER_PORT: 8080
+      # Expose health and metrics on container port 9090, separate from business traffic.
+      MANAGEMENT_PORT: 9090
+      # Compose DNS resolves property-service; localhost here would refer to the calling container
+      # itself.
+      PROPERTY_SERVICE_URL: http://property-service:8080
+      # Use the broker listener advertised for communication within the Compose network.
+      KAFKA_BOOTSTRAP_SERVERS: kafka:19092
+      # Use the Redis Compose service name for container-to-container cache access.
+      REDIS_HOST: redis
+      # Turn on optional template caching for the local communication service.
+      NOTIFICATIONS_REDIS_ENABLED: "true"
+    # Named volumes preserve database or broker files when containers are replaced.
+    volumes:
+      - communication-data:/app/data
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      kafka:
+        # Wait for the dependency health check to pass before starting this container.
+        condition: service_healthy
+      redis:
+        # Wait for the dependency health check to pass before starting this container.
+        condition: service_healthy
+      property-service:
+        # Wait only for container startup; this does not guarantee the dependency API is ready.
+        # Lifecycle: startup ordering does not guarantee API readiness or continued dependency
+        # availability.
+        condition: service_started
+    # Allow the JVM time to complete graceful shutdown before Docker forces termination.
+    stop_grace_period: 45s
+    # Prevent processes from gaining additional privileges inside this container.
+    security_opt: ["no-new-privileges:true"]
+    # Remove Linux capabilities that the Java application does not require.
+    cap_drop: [ALL]
+  kafka-storage-init:
+    image: apache/kafka:3.9.1
+    user: "0:0"
+    entrypoint: ["/bin/sh", "-c"]
+    command: ["chown -R 1000:1000 /var/lib/kafka/data"]
+    # Named volumes preserve database or broker files when containers are replaced.
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+  kafka:
+    image: apache/kafka:3.9.1
+    # Map host ports to container ports; loopback binding makes this local setup accessible from
+    # this machine.
+    ports:
+      - "127.0.0.1:9092:9092"
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Keep a stable local KRaft cluster identity when reusing persistent Kafka storage.
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
+      # Identify this single local Kafka node.
+      KAFKA_NODE_ID: 1
+      # Run broker and controller together for the local single-node teaching setup.
+      KAFKA_PROCESS_ROLES: broker,controller
+      # Bind separate internal, host-client and controller listener sockets.
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:19092,EXTERNAL://0.0.0.0:9092,CONTROLLER://0.0.0.0:19093
+      # Return reachable broker addresses: containers use kafka:19092; host applications use
+      # localhost:9092.
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:19092,EXTERNAL://localhost:9092
+      # Map named listeners to local PLAINTEXT transport; deployed broker security is configured
+      # separately.
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      # Choose the listener used for broker-to-broker traffic.
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      # Select the listener used for KRaft controller traffic.
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Define this local single-node controller quorum without ZooKeeper.
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:19093
+      # Use one replica for consumer offsets because this local cluster has one broker.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      # Use one replica for Kafka transaction metadata in this local cluster.
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      # Allow local transaction metadata writes with the single available replica.
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # Avoid the initial consumer-group delay in local demonstrations.
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      # Require explicit topic creation instead of silently accepting misspelled topic names.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"
+      # Store Kafka logs on the mounted persistent volume.
+      KAFKA_LOG_DIRS: /var/lib/kafka/data
+    # Named volumes preserve database or broker files when containers are replaced.
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      kafka-storage-init:
+        # Wait for the one-time initialization container to exit successfully.
+        condition: service_completed_successfully
+    # Docker checks container health; dependent startup can wait for service_healthy.
+    healthcheck:
+      test: ["CMD", "/opt/kafka/bin/kafka-topics.sh", "--bootstrap-server", "kafka:19092", "--list"]
+      # Wait this long between container health checks.
+      interval: 10s
+      # Fail an individual health check if it exceeds this duration.
+      timeout: 10s
+      # Mark the container unhealthy after this many consecutive failed checks.
+      retries: 20
+      # Allow an initial startup window before failures count against the retry threshold.
+      start_period: 20s
+  redis:
+    image: redis:7.4-alpine
+    # Map host ports to container ports; loopback binding makes this local setup accessible from
+    # this machine.
+    ports:
+      - "127.0.0.1:6379:6379"
+    # Docker checks container health; dependent startup can wait for service_healthy.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      # Wait this long between container health checks.
+      interval: 5s
+      # Fail an individual health check if it exceeds this duration.
+      timeout: 3s
+      # Mark the container unhealthy after this many consecutive failed checks.
+      retries: 10
+# Named volumes preserve database or broker files when containers are replaced.
+volumes:
+  property-data:
+  appraisal-data:
+  communication-data:
+  kafka-data:

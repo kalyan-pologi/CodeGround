@@ -1,0 +1,39 @@
+# Local development: no external database, Redis, or identity provider required.
+spring:
+  datasource:
+    hikari:
+      # Name the JDBC pool so logs and metrics identify its owning service.
+      pool-name: ${spring.application.name}-db
+      # Maximum JDBC connections per service instance; replicas each create their own pool.
+      maximum-pool-size: ${DB_POOL_MAX:6}
+      # Target idle connections kept ready without exceeding the maximum pool size.
+      minimum-idle: ${DB_POOL_MIN_IDLE:1}
+  jpa:
+    hibernate:
+      # Local update creates or adjusts tables; deployed validate checks mappings without changing
+      # the schema.
+      ddl-auto: update
+  flyway:
+    # Enable schema migrations for deployed profiles; local demos use Hibernate schema updates.
+    enabled: false
+server:
+  # Choose the listening interface; containers must bind to 0.0.0.0 for mapped ports to work.
+  address: ${SERVER_ADDRESS:127.0.0.1}
+springdoc:
+  api-docs:
+    # Control OpenAPI JSON availability; deployed profiles disable it unless explicitly enabled.
+    enabled: true
+  swagger-ui:
+    # Control the browser API explorer separately from business endpoints.
+    enabled: true
+logging:
+  level:
+    # Default logging level for application dependencies.
+    root: INFO
+    # Set application-specific verbosity independently of dependency logs.
+    com.reidy: DEBUG
+app:
+  kafka:
+    # Local startup may create topics; deployed environments provision topics and policies
+    # separately.
+    create-topics: true

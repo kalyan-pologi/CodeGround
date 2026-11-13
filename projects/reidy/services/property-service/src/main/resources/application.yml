@@ -1,0 +1,21 @@
+# Each service imports shared policies but owns its database and listening ports.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import: classpath:platform-defaults.yml
+  application:
+    # Identify this independently running service in logs and infrastructure configuration.
+    name: property-service
+  profiles:
+    # Use dev only when no active profile is supplied at runtime.
+    default: dev
+    group:
+      # Activating demo also activates dev; appraisal-service adds demo-specific cache overrides.
+      demo: [dev]
+server:
+  # Application HTTP port; SERVER_PORT overrides the service-specific local default.
+  port: ${SERVER_PORT:8081}
+management:
+  server:
+    # Expose health and metrics on a separate port from business APIs.
+    port: ${MANAGEMENT_PORT:9081}

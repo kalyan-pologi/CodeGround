@@ -1,0 +1,15 @@
+target/
+data/
+.idea/
+*.iml
+.maven-repository/
+*.log
+
+.env
+.docker-local/
+
+logs/
+
+**/target/
+**/data/
+**/logs/

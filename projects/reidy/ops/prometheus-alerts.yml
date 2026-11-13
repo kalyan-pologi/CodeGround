@@ -1,0 +1,61 @@
+# Load into your Prometheus server; no monitoring infrastructure is provisioned by this repo.
+# A separately configured Prometheus server must load these rules and scrape application metrics.
+groups:
+  - name: reidy-backend
+    rules:
+      # Sustained JDBC connection waiting can indicate slow queries, long transactions or exhausted
+      # pool capacity.
+      - alert: DatabasePoolWaiting
+        expr: hikaricp_connections_pending > 0
+        # Require the condition to remain true for this duration before firing, reducing alerts for
+        # brief spikes.
+        for: 2m
+        # Attach routing metadata for the monitoring system; severity alone does not configure a
+        # notification channel.
+        labels:
+          severity: warning
+        # Provide a human-readable explanation for the alert shown to support staff.
+        annotations:
+          summary: Database pool has waiting requests; inspect slow queries and active connections.
+      # An open circuit rejects calls temporarily; inspect dependency errors before changing breaker
+      # thresholds.
+      - alert: DependencyCircuitOpen
+        expr: resilience4j_circuitbreaker_state{state="open"} == 1
+        # Require the condition to remain true for this duration before firing, reducing alerts for
+        # brief spikes.
+        for: 1m
+        # Attach routing metadata for the monitoring system; severity alone does not configure a
+        # notification channel.
+        labels:
+          severity: warning
+        # Provide a human-readable explanation for the alert shown to support staff.
+        annotations:
+          summary: A dependency circuit is open; inspect provider or Redis availability.
+      # Dead producer publications exhausted retries and need investigation before an authorized
+      # replay.
+      - alert: OutboxPublicationDeadLetters
+        expr: event_outbox_rows{status="DEAD"} > 0
+        # Require the condition to remain true for this duration before firing, reducing alerts for
+        # brief spikes.
+        for: 1m
+        # Attach routing metadata for the monitoring system; severity alone does not configure a
+        # notification channel.
+        labels:
+          severity: warning
+        # Provide a human-readable explanation for the alert shown to support staff.
+        annotations:
+          summary: Dead Kafka publications require inspection and an authorized replay.
+      # A sustained pending backlog can indicate unavailable Kafka or insufficient publisher
+      # throughput.
+      - alert: KafkaPublicationBacklog
+        expr: event_outbox_rows{status="PENDING"} > 100
+        # Require the condition to remain true for this duration before firing, reducing alerts for
+        # brief spikes.
+        for: 5m
+        # Attach routing metadata for the monitoring system; severity alone does not configure a
+        # notification channel.
+        labels:
+          severity: warning
+        # Provide a human-readable explanation for the alert shown to support staff.
+        annotations:
+          summary: Notification backlog is growing; inspect worker errors and database health.

@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import initSqlJs from 'sql.js';
-import { compareSqlResults } from '../src/sql-result-checks.js';
-import { sqlExercise } from '../src/sql-exercises.js';
+import { compareSqlResults } from '../src/features/backend-practice/sql/sql-result-checks.js';
+import { sqlExercise } from '../src/features/backend-practice/sql/sql-exercises.js';
 
 const sampleResult = [{ columns: ['name'], values: [['Ada'], ['Bob']] }];
 assert.ok(compareSqlResults([{ columns: ['name'], values: [['Bob'], ['Ada']] }], sampleResult).passed);

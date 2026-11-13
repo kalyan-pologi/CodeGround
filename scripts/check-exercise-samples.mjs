@@ -3,10 +3,10 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { challenges } from '../practice/src/data/challenges.js';
-import { javaPracticeTasks } from '../src/java-practice-tasks.js';
-import { projectTopicTasks } from '../src/project-topic-tasks.js';
-import { sampleChecksFor, assessSample } from '../src/exercise-samples.js';
+import { challenges } from '../src/features/backend-practice/java-backend/data/challenges.js';
+import { javaPracticeTasks } from '../src/features/backend-practice/java-backend/java-practice-tasks.js';
+import { projectTopicTasks } from '../src/features/backend-practice/reidy/project-topic-tasks.js';
+import { sampleChecksFor, assessSample } from '../src/data/exercise-samples.js';
 
 assert.ok(assessSample({ status: { id: 3 }, stdout: 'ok\r\n', exit_code: 0 }, { expected: 'ok' }));
 assert.ok(!assessSample({ status: { id: 3 }, stdout: 'wrong\n' }, { expected: 'ok' }));

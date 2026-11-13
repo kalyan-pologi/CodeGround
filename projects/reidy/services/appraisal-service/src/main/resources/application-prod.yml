@@ -1,0 +1,22 @@
+# Supply distinct database, broker, and identity settings for this service and environment.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import:
+      - classpath:platform-sqlserver.yml
+      - classpath:platform-deployed.yml
+  datasource:
+    hikari:
+      # Maximum JDBC connections per service instance; replicas each create their own pool.
+      maximum-pool-size: ${DB_POOL_MAX:12}
+      # Target idle connections kept ready without exceeding the maximum pool size.
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+logging:
+  file:
+    # Choose the service and environment log file; LOG_FILE can redirect it at runtime.
+    name: ${LOG_FILE:./logs/appraisal-service-prod.log}
+app:
+  property-client:
+    # Call property-service through its runtime URL; deployed profiles require an explicit
+    # environment-specific address.
+    base-url: ${PROPERTY_SERVICE_URL}

@@ -1,0 +1,61 @@
+# Supply distinct database, broker, and identity settings for this service and environment.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import:
+      - classpath:platform-sqlserver.yml
+      - classpath:platform-deployed.yml
+  datasource:
+    hikari:
+      # Maximum JDBC connections per service instance; replicas each create their own pool.
+      maximum-pool-size: ${DB_POOL_MAX:12}
+      # Target idle connections kept ready without exceeding the maximum pool size.
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+logging:
+  file:
+    # Choose the service and environment log file; LOG_FILE can redirect it at runtime.
+    name: ${LOG_FILE:./logs/communication-service-prod.log}
+springdoc:
+  api-docs:
+    # Control OpenAPI JSON availability; deployed profiles disable it unless explicitly enabled.
+    enabled: ${API_DOCS_ENABLED:false}
+notifications:
+  # Enable optional template caching; template reads fall back to the database on Redis failure.
+  redis-enabled: ${NOTIFICATIONS_REDIS_ENABLED:true}
+  # Cache reusable template text for this duration, not rendered per-user notifications.
+  template-ttl: 1h
+# A second YAML document adds settings within the same profile-specific resource.
+---
+spring:
+  data:
+    redis:
+      # Redis hostname resolves in the current runtime network, such as localhost or the Compose
+      # service name.
+      host: ${REDIS_HOST}
+      # Redis service port; distinct from the application HTTP port.
+      port: ${REDIS_PORT:6379}
+      # Inject the Redis ACL user selected for this environment.
+      username: ${REDIS_USERNAME:default}
+      # Inject the Redis password rather than storing credentials in source control.
+      password: ${REDIS_PASSWORD}
+      ssl:
+        # Use TLS for deployed Redis connections when supported by the configured endpoint.
+        enabled: ${REDIS_SSL_ENABLED:true}
+      # Bound establishment of a Redis connection so cache outages do not cause long waits.
+      connect-timeout: 500ms
+      # Bound Redis command waiting before template rendering falls back to the database.
+      timeout: 500ms
+      repositories:
+        # Disable Redis repository discovery because this service uses Redis only through its
+        # template client.
+        enabled: false
+management:
+  health:
+    redis:
+      # Include Redis health only when notification template caching is enabled.
+      enabled: ${NOTIFICATIONS_REDIS_ENABLED:true}
+app:
+  property-client:
+    # Call property-service through its runtime URL; deployed profiles require an explicit
+    # environment-specific address.
+    base-url: ${PROPERTY_SERVICE_URL}

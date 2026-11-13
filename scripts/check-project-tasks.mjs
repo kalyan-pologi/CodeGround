@@ -3,7 +3,7 @@ import { mkdtempSync, mkdirSync, writeFileSync, readdirSync, rmSync } from 'node
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { projectTopicTasks } from '../src/project-topic-tasks.js';
+import { projectTopicTasks } from '../src/features/backend-practice/reidy/project-topic-tasks.js';
 import { jdbcChecks, junitChecks, mvcConfiguration } from './project-task-fixtures.mjs';
 const selectedArgument = process.argv.find(argument => argument.startsWith('--task='));
 const selectedId = selectedArgument ? Number(selectedArgument.slice('--task='.length)) : null;

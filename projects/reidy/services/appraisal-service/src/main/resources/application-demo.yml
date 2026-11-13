@@ -1,0 +1,10 @@
+# Short TTLs for an interactive expiration demonstration only.
+rental:
+  cache:
+    ttl:
+      # Reuse rental estimates for this duration before another provider refresh is required.
+      RENTAL_ESTIMATE: 3s
+      # Neighborhood aggregates can use a different freshness window from individual estimates.
+      NEIGHBORHOOD_STATISTICS: 6s
+      # Control how long comparable-property results remain reusable.
+      RENTAL_COMPARABLES: 9s

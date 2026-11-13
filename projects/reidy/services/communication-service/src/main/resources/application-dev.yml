@@ -1,0 +1,32 @@
+# Local service data is isolated; the former monolith database is never reused automatically.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import: classpath:platform-dev.yml
+  datasource:
+    # Select this service's database; relative H2 paths resolve from the process working directory.
+    url: jdbc:h2:file:./data/communication-service;LOCK_TIMEOUT=3000;QUERY_TIMEOUT=3000
+    # Use the configured database login; deployed environments supply their own service credentials.
+    username: sa
+    # Supply deployed passwords through environment injection; local H2 uses an empty password.
+    password: ''
+  data:
+    redis:
+      # Redis hostname resolves in the current runtime network, such as localhost or the Compose
+      # service name.
+      host: ${REDIS_HOST:localhost}
+      # Redis service port; distinct from the application HTTP port.
+      port: ${REDIS_PORT:6379}
+      # Bound establishment of a Redis connection so cache outages do not cause long waits.
+      connect-timeout: 500ms
+      # Bound Redis command waiting before template rendering falls back to the database.
+      timeout: 500ms
+      repositories:
+        # Disable Redis repository discovery because this service uses Redis only through its
+        # template client.
+        enabled: false
+management:
+  health:
+    redis:
+      # Include Redis health only when notification template caching is enabled.
+      enabled: ${NOTIFICATIONS_REDIS_ENABLED:false}

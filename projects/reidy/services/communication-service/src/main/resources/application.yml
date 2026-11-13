@@ -1,0 +1,44 @@
+# Each service imports shared policies but owns its database and listening ports.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import: classpath:platform-defaults.yml
+  application:
+    # Identify this independently running service in logs and infrastructure configuration.
+    name: communication-service
+  profiles:
+    # Use dev only when no active profile is supplied at runtime.
+    default: dev
+    group:
+      # Activating demo also activates dev; appraisal-service adds demo-specific cache overrides.
+      demo: [dev]
+server:
+  # Application HTTP port; SERVER_PORT overrides the service-specific local default.
+  port: ${SERVER_PORT:8083}
+management:
+  server:
+    # Expose health and metrics on a separate port from business APIs.
+    port: ${MANAGEMENT_PORT:9083}
+app:
+  property-client:
+    # Create the shared HTTP property client only in services that need remote property lookup.
+    enabled: true
+    # Call property-service through its runtime URL; deployed profiles require an explicit
+    # environment-specific address.
+    base-url: ${PROPERTY_SERVICE_URL:http://localhost:8081}
+    # Bound TCP connection establishment for property lookups.
+    connect-timeout: 1s
+    # Bound network response waiting for property lookups.
+    response-timeout: 2s
+    # Bound each HTTP exchange attempt; retry backoff and multiple attempts can extend the overall
+    # caller duration.
+    total-timeout: 3s
+notifications:
+  # Enable optional template caching; template reads fall back to the database on Redis failure.
+  redis-enabled: ${NOTIFICATIONS_REDIS_ENABLED:false}
+  # Cache reusable template text for this duration, not rendered per-user notifications.
+  template-ttl: 1h
+springdoc:
+  swagger-ui:
+    # Set the local Swagger UI entry path.
+    path: /swagger-ui.html

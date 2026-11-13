@@ -1,0 +1,106 @@
+<div class="section-header">
+    <div class="tag">Foundations</div>
+    <h1>📚 Few-Shot & Zero-Shot Learning</h1>
+    <p>Teaching the model by example — and when no examples are needed at all.</p>
+  </div>
+
+<div class="cs-section-label">📚 Core Concept</div>
+<div class="grid3">
+  <div class="card c1">
+    <h3>Zero-Shot, One-Shot, Few-Shot</h3>
+    <div class="b"><b>Zero-shot</b>: just ask, with no examples, relying entirely on the model's pretrained and instruction-tuned knowledge to infer what you want.</div>
+    <div class="b"><b>One-shot</b>: a single example input/output pair before the real task, useful mainly to pin down format when one example is enough to disambiguate.</div>
+    <div class="b"><b>Few-shot</b>: several (typically 2 to 10) example pairs before the real task, giving the model a pattern to imitate rather than just an instruction to follow.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">zero-shot</span><span class="v">no examples, instruction only</span></div>
+    <div class="row"><span class="k">few-shot</span><span class="v">N examples in the prompt</span></div>
+  </div>
+  <div class="card c2">
+    <h3>Why Few-Shot Works</h3>
+    <div class="b">It works via <b>in-context learning</b>: the model infers the pattern, format, and style from the examples sitting in its context window, purely at inference time.</div>
+    <div class="b">This is fundamentally different from fine-tuning: <b>no weights are updated</b>, nothing persists after the request, the "learning" is a temporary effect of what's currently in the prompt.</div>
+    <div class="b">The model is doing pattern completion: given "here is the shape of five solved examples," it continues that shape onto a sixth, unsolved one.</div>
+    <div class="sep"></div>
+    <div class="note">Because nothing is stored, every single request has to re-pay the token cost of the examples, unlike fine-tuning where the cost is paid once upfront.</div>
+  </div>
+  <div class="card c3">
+    <h3>When Few-Shot Helps Most</h3>
+    <div class="b"><b>Ambiguous output format</b>: when there are many reasonable ways to structure a response and you need one specific shape, like a particular JSON schema or citation style.</div>
+    <div class="b"><b>Unusual task framing</b>: tasks the model would not default to on its own, like a nonstandard summarization length or an invented category scheme.</div>
+    <div class="b"><b>Domain-specific style or jargon</b>: internal terminology, legal boilerplate phrasing, or a company's specific voice that the model wouldn't produce by default.</div>
+    <div class="b"><b>Unusual label schemes</b> in classification: when your categories don't map cleanly onto common-sense labels the model would guess at zero-shot.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🔬 Deeper Look</div>
+<div class="grid3">
+  <div class="card c4">
+    <h3>Diminishing Returns & Cost</h3>
+    <div class="b">Each example costs real <b>tokens</b>, both in latency and in API price, on every single request, not just once.</div>
+    <div class="b">Too many examples can <b>overfit the prompt</b>: the model starts pattern-matching to the exact examples shown rather than generalizing the underlying task, especially if the examples are too similar to each other.</div>
+    <div class="b">Past a small number of examples (often 3 to 8), additional examples usually add <b>little accuracy gain</b> for a lot of extra token cost, quality of examples matters far more than raw quantity.</div>
+  </div>
+  <div class="card c5">
+    <h3>Choosing Good Examples</h3>
+    <div class="b"><b>Diverse</b>: cover different variations of the task so the model generalizes the pattern instead of memorizing one narrow case.</div>
+    <div class="b"><b>Representative</b>: reflect the real distribution of inputs the model will see in production, not just easy or convenient cases.</div>
+    <div class="b"><b>Correctly labeled</b>: a single wrong example can actively teach the wrong pattern, since the model has no way to know it's an error.</div>
+    <div class="b"><b>Cover edge cases</b>: include at least one tricky or boundary example, since models tend to default to the "average" behavior of the examples shown.</div>
+    <div class="note">Bad examples are worse than no examples. A confidently wrong few-shot set will reliably steer the model toward the same mistakes.</div>
+  </div>
+  <div class="card c6">
+    <h3>Few-Shot vs Fine-Tuning</h3>
+    <div class="b">Few-shot is <b>instant and cheap to set up</b>, just edit the prompt, but it's bounded by the context window and re-paid on every request.</div>
+    <div class="b">Fine-tuning is <b>upfront-costly</b>, a training run, data curation, an eval pass, but scales cheaper at high volume since the behavior is baked into the weights and costs nothing extra per request.</div>
+    <div class="b">A common pattern: start with few-shot to validate the approach quickly and cheaply, then graduate to fine-tuning only once volume and stability justify the upfront investment.</div>
+    <div class="sep"></div>
+    <div class="row"><span class="k">few-shot</span><span class="v">cheap per setup, costly per request</span></div>
+    <div class="row"><span class="k">fine-tuning</span><span class="v">costly per setup, cheap per request</span></div>
+  </div>
+</div>
+
+<div class="cs-section-label">🧩 Chain-of-Thought Few-Shot</div>
+<div class="grid3">
+  <div class="card c7">
+    <h3>Reasoning-Style Examples</h3>
+    <div class="b">Instead of showing just input and final output, chain-of-thought few-shot examples show the <b>worked reasoning steps</b> that lead to the answer.</div>
+    <div class="b">This teaches the model not just what the answer looks like but <b>how to arrive at it</b>, which transfers better to problems that need multi-step logic rather than pure pattern lookup.</div>
+    <div class="b">See the dedicated Chain-of-Thought page for the mechanics of why spreading reasoning across tokens improves accuracy, this is the few-shot flavor of that same idea.</div>
+  </div>
+  <div class="card c8">
+    <h3>Practical Notes</h3>
+    <div class="b">Reasoning examples cost <b>more tokens per example</b> than plain input/output pairs, so the diminishing-returns tradeoff is sharper, usually 2 to 4 worked examples is plenty.</div>
+    <div class="b">Keep the reasoning style <b>consistent</b> across examples (same structure, same level of detail) so the model imitates a stable pattern rather than a mix of styles.</div>
+    <div class="note">On modern instruction-tuned and reasoning models, zero-shot "think step by step" often gets most of this benefit without needing worked examples at all.</div>
+  </div>
+  <div class="card c9">
+    <h3>Where It Fits</h3>
+    <div class="b">Prompt Design, then <b>choose zero-shot vs few-shot</b> based on task ambiguity, then optionally add chain-of-thought structure to the examples, then send to the model.</div>
+    <div class="sep"></div>
+    <div class="note">Few-shot is a lightweight lever to pull before reaching for retrieval, tool use, or fine-tuning, it's often the fastest way to fix a format or style problem.</div>
+  </div>
+</div>
+
+<div class="cs-section-label">🎯 Applying It</div>
+<div class="grid3">
+  <div class="card c10">
+    <h3>Use Cases</h3>
+    <div class="b"><b>Structured extraction</b>: pinning down an exact JSON shape or field naming convention.</div>
+    <div class="b"><b>Classification with custom labels</b>: categories specific to a business that the model wouldn't invent on its own.</div>
+    <div class="b"><b>Style transfer</b>: matching a specific brand voice, code style, or formatting convention.</div>
+    <div class="b"><b>Rapid prototyping</b>: validating a task is even feasible before investing in fine-tuning or a bigger pipeline.</div>
+  </div>
+  <div class="card c11">
+    <h3>Trade-offs</h3>
+    <div class="b"><b>Context cost</b>: examples eat into the token budget available for the actual task input, retrieved documents, or conversation history.</div>
+    <div class="b"><b>Overfitting to examples</b>: too narrow a set of examples can make the model mimic surface details of the examples rather than the underlying task.</div>
+    <div class="b"><b>Maintenance</b>: as the task evolves, the example set has to be kept in sync, stale examples can actively mislead.</div>
+  </div>
+  <div class="card c12">
+    <h3>When NOT to Use</h3>
+    <div class="b">When the task is already <b>unambiguous and common</b> (e.g. "translate this to French"), zero-shot is simpler and cheaper, added examples buy nothing.</div>
+    <div class="b">When you have <b>high volume and stable requirements</b>, fine-tuning usually beats paying the few-shot token tax forever.</div>
+    <div class="b">When examples would need to encode <b>sensitive or proprietary data</b> that shouldn't be repeated in every request's context.</div>
+    <div class="note" style="color:#4ade80;">Default to zero-shot first, add few-shot only when you observe a concrete format or style failure, and keep the example set as small as it can be while still fixing the problem.</div>
+  </div>
+</div>

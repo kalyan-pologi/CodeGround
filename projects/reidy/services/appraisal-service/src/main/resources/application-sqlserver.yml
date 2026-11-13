@@ -1,0 +1,5 @@
+# Plain SQL Server mode is a local demonstration; UAT/prod add migrations and authentication.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import: classpath:platform-sqlserver.yml

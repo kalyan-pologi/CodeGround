@@ -1,0 +1,10 @@
+**/target
+.maven-repository
+.git
+**/data
+**/logs
+*.log
+.env
+.docker-local
+
+**/.env

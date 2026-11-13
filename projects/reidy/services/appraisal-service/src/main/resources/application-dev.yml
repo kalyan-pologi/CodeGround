@@ -1,0 +1,12 @@
+# Local service data is isolated; the former monolith database is never reused automatically.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import: classpath:platform-dev.yml
+  datasource:
+    # Select this service's database; relative H2 paths resolve from the process working directory.
+    url: jdbc:h2:file:./data/appraisal-service;LOCK_TIMEOUT=3000;QUERY_TIMEOUT=3000
+    # Use the configured database login; deployed environments supply their own service credentials.
+    username: sa
+    # Supply deployed passwords through environment injection; local H2 uses an empty password.
+    password: ''

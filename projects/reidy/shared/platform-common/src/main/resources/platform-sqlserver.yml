@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    # Select this service's database; relative H2 paths resolve from the process working directory.
+    url: ${SQLSERVER_URL:jdbc:sqlserver://localhost:1433;databaseName=reidy;encrypt=true;trustServerCertificate=true;loginTimeout=3;socketTimeout=5000;queryTimeout=3;cancelQueryTimeout=2;lockTimeout=3000}
+    # Use the configured database login; deployed environments supply their own service credentials.
+    username: ${SQLSERVER_USERNAME:sa}
+    # Supply deployed passwords through environment injection; local H2 uses an empty password.
+    password: ${SQLSERVER_PASSWORD}
+    # Select the SQL Server JDBC driver for this database connection.
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    hikari:
+      data-source-properties:
+        # SQL Server login timeout in seconds; independent of waiting for a pooled connection.
+        loginTimeout: 3
+        # SQL Server socket-read timeout in milliseconds.
+        socketTimeout: 5000
+        # Default SQL statement timeout in seconds.
+        queryTimeout: 3
+        # Bound waiting for SQL Server to acknowledge query cancellation, in seconds.
+        cancelQueryTimeout: 2
+        # Bound SQL Server lock waiting in milliseconds.
+        lockTimeout: 3000
+  jpa:
+    # Generate SQL using SQL Server-specific Hibernate rules.
+    database-platform: org.hibernate.dialect.SQLServerDialect
+app:
+  kafka:
+    # Local startup may create topics; deployed environments provision topics and policies
+    # separately.
+    create-topics: true

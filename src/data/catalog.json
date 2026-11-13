@@ -1,0 +1,1508 @@
+[
+  {
+    "repo": "interview",
+    "id": "angular",
+    "title": "Angular",
+    "file": "features/web/frameworks/content/angular.html"
+  },
+  {
+    "repo": "interview",
+    "id": "azure",
+    "title": "Azure",
+    "file": "features/devops/cloud/content/azure.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-01",
+    "title": "🗣️ Tell me about a time you solved a difficult/challenging production bug. What did you learn?",
+    "file": "features/home/project-stories/content/behavioral-01.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-02",
+    "title": "🗣️ Tell me about a time you failed and what you learned from it.",
+    "file": "features/home/project-stories/content/behavioral-02.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-03",
+    "title": "🗣️ What is your greatest strength and your biggest weakness?",
+    "file": "features/home/project-stories/content/behavioral-03.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-04",
+    "title": "🗣️ Tell me about a time you had a disagreement with your manager or a technical decision.",
+    "file": "features/home/project-stories/content/behavioral-04.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-05",
+    "title": "🗣️ Tell me about a time you had to quickly adjust your priorities to meet changing demands.",
+    "file": "features/home/project-stories/content/behavioral-05.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-06",
+    "title": "🗣️ Give an example of a time you faced a conflict on a team. How did you handle it?",
+    "file": "features/home/project-stories/content/behavioral-06.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-07",
+    "title": "🗣️ Tell me about a time you took ownership of something outside your responsibility.",
+    "file": "features/home/project-stories/content/behavioral-07.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-08",
+    "title": "🗣️ Tell me about a time you missed a deadline or failed to deliver on time. What happened?",
+    "file": "features/home/project-stories/content/behavioral-08.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-09",
+    "title": "🗣️ Tell me about a time you had to learn something quickly.",
+    "file": "features/home/project-stories/content/behavioral-09.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-10",
+    "title": "🗣️ Tell me about a time you received critical/negative feedback. How did you respond?",
+    "file": "features/home/project-stories/content/behavioral-10.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-11",
+    "title": "🗣️ Describe a challenging bug or performance issue you diagnosed and resolved.",
+    "file": "features/home/project-stories/content/behavioral-11.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-12",
+    "title": "🗣️ Tell me about a time you improved performance or code quality.",
+    "file": "features/home/project-stories/content/behavioral-12.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-13",
+    "title": "🗣️ How do you handle unclear or changing requirements?",
+    "file": "features/home/project-stories/content/behavioral-13.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-14",
+    "title": "🗣️ Tell me about a time a project didn't go as planned. How did you manage it?",
+    "file": "features/home/project-stories/content/behavioral-14.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-15",
+    "title": "🗣️ Tell me about a time you had to balance quality with delivery speed.",
+    "file": "features/home/project-stories/content/behavioral-15.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-16",
+    "title": "🗣️ How do you approach a codebase or problem you've never seen before?",
+    "file": "features/home/project-stories/content/behavioral-16.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-17",
+    "title": "🗣️ Tell me about the toughest decision you've made in the past six months.",
+    "file": "features/home/project-stories/content/behavioral-17.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-18",
+    "title": "🗣️ Tell me about a time you stepped into a leadership role.",
+    "file": "features/home/project-stories/content/behavioral-18.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-19",
+    "title": "🗣️ Describe a time you disagreed with a team member and how you resolved it.",
+    "file": "features/home/project-stories/content/behavioral-19.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-20",
+    "title": "🗣️ Tell me about a time you communicated a technical risk to a non-technical stakeholder.",
+    "file": "features/home/project-stories/content/behavioral-20.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-questions",
+    "title": "❓ Questions",
+    "file": "features/home/project-stories/content/behavioral-questions.html"
+  },
+  {
+    "repo": "interview",
+    "id": "behavioral-stories",
+    "title": "📖 Stories",
+    "file": "features/home/project-stories/content/behavioral-stories.html"
+  },
+  {
+    "repo": "interview",
+    "id": "css",
+    "title": "CSS",
+    "file": "features/web/fundamentals/content/css.html"
+  },
+  {
+    "repo": "interview",
+    "id": "devops-daily",
+    "title": "Daily Commands",
+    "file": "features/devops/commands/content/devops-daily.html"
+  },
+  {
+    "repo": "interview",
+    "id": "devops-useful",
+    "title": "Useful Commands",
+    "file": "features/devops/commands/content/devops-useful.html"
+  },
+  {
+    "repo": "interview",
+    "id": "docker",
+    "title": "Docker",
+    "file": "features/devops/infrastructure/content/docker.html"
+  },
+  {
+    "repo": "interview",
+    "id": "frontend-quickref",
+    "title": "Quick Revision Guide",
+    "file": "features/web/fundamentals/content/frontend-quickref.html"
+  },
+  {
+    "repo": "interview",
+    "id": "git-commands",
+    "title": "Git Commands",
+    "file": "features/backend/tooling/content/git-commands.html"
+  },
+  {
+    "repo": "interview",
+    "id": "home",
+    "title": "🏠 Home",
+    "file": "features/home/getting-started/content/home.html"
+  },
+  {
+    "repo": "interview",
+    "id": "html",
+    "title": "HTML",
+    "file": "features/web/fundamentals/content/html.html"
+  },
+  {
+    "repo": "interview",
+    "id": "intro",
+    "title": "👋 Intro",
+    "file": "features/home/getting-started/content/intro.html"
+  },
+  {
+    "repo": "interview",
+    "id": "java-snippets",
+    "title": "Java Core Tasks",
+    "file": "features/backend-practice/java-stream/questions.html"
+  },
+  {
+    "repo": "interview",
+    "id": "java-topics",
+    "title": "Java Topics",
+    "file": "features/backend/java-spring/content/java-topics.html"
+  },
+  {
+    "repo": "interview",
+    "id": "java-interview-questions",
+    "title": "Java Interview Questions",
+    "file": "features/backend-practice/java-interview/questions/index.html"
+  },
+  {
+    "repo": "interview",
+    "id": "javascript",
+    "title": "JavaScript",
+    "file": "features/web/fundamentals/content/javascript.html"
+  },
+  {
+    "repo": "interview",
+    "id": "junit-concepts",
+    "title": "JUnit Core Concepts",
+    "file": "features/backend/tooling/content/junit-concepts.html"
+  },
+  {
+    "repo": "interview",
+    "id": "kubernetes",
+    "title": "Kubernetes",
+    "file": "features/devops/infrastructure/content/kubernetes.html"
+  },
+  {
+    "repo": "interview",
+    "id": "minikube",
+    "title": "Minikube",
+    "file": "features/devops/infrastructure/content/minikube.html"
+  },
+  {
+    "repo": "interview",
+    "id": "mongodb",
+    "title": "MongoDB",
+    "file": "features/backend/tooling/content/mongodb.html"
+  },
+  {
+    "repo": "interview",
+    "id": "proj-accenture",
+    "title": "Accenture (MyHub)",
+    "file": "features/home/project-writeups/content/proj-accenture.html"
+  },
+  {
+    "repo": "interview",
+    "id": "proj-citibank",
+    "title": "Citibank",
+    "file": "features/home/project-writeups/content/proj-citibank.html"
+  },
+  {
+    "repo": "interview",
+    "id": "proj-reidyai",
+    "title": "ReidyAI",
+    "file": "features/home/project-writeups/content/proj-reidyai.html"
+  },
+  {
+    "repo": "interview",
+    "id": "react",
+    "title": "React",
+    "file": "features/web/frameworks/content/react.html"
+  },
+  {
+    "repo": "interview",
+    "id": "redux",
+    "title": "Redux",
+    "file": "features/web/frameworks/content/redux.html"
+  },
+  {
+    "repo": "interview",
+    "id": "solid-patterns",
+    "title": "SOLID Principles & Design Patterns",
+    "file": "features/backend/java-spring/content/solid-patterns.html"
+  },
+  {
+    "repo": "interview",
+    "id": "spring-topics",
+    "title": "Spring Framework Topics",
+    "file": "features/backend/java-spring/content/spring-topics.html"
+  },
+  {
+    "repo": "interview",
+    "id": "sql-snippets",
+    "title": "SQL Code Snippets",
+    "file": "features/backend-practice/sql/questions.html"
+  },
+  {
+    "repo": "interview",
+    "id": "typescript",
+    "title": "TypeScript",
+    "file": "features/web/fundamentals/content/typescript.html"
+  },
+  {
+    "repo": "sd",
+    "id": "acid",
+    "title": "Transactions & ACID",
+    "file": "library/sd/notes/acid.html"
+  },
+  {
+    "repo": "sd",
+    "id": "apidesign",
+    "title": "Versioning & Idempotency",
+    "file": "library/sd/notes/apidesign.html"
+  },
+  {
+    "repo": "sd",
+    "id": "apigateway",
+    "title": "API Gateway",
+    "file": "library/sd/notes/apigateway.html"
+  },
+  {
+    "repo": "sd",
+    "id": "apigw",
+    "title": "🔌 API Gateway",
+    "file": "library/sd/notes/apigw.html"
+  },
+  {
+    "repo": "sd",
+    "id": "auth",
+    "title": "Authentication (OAuth2, JWT)",
+    "file": "library/sd/notes/auth.html"
+  },
+  {
+    "repo": "sd",
+    "id": "autoscaling",
+    "title": "Elastic / Auto-scaling",
+    "file": "library/sd/notes/autoscaling.html"
+  },
+  {
+    "repo": "sd",
+    "id": "availability",
+    "title": "Availability & Reliability",
+    "file": "library/sd/notes/availability.html"
+  },
+  {
+    "repo": "sd",
+    "id": "backpressure",
+    "title": "Back Pressure",
+    "file": "library/sd/notes/backpressure.html"
+  },
+  {
+    "repo": "sd",
+    "id": "bloomfilter",
+    "title": "Bloom Filter",
+    "file": "library/sd/notes/bloomfilter.html"
+  },
+  {
+    "repo": "sd",
+    "id": "btree",
+    "title": "B-Tree vs LSM Tree",
+    "file": "library/sd/notes/btree.html"
+  },
+  {
+    "repo": "sd",
+    "id": "cacheeviction",
+    "title": "Eviction & Invalidation",
+    "file": "library/sd/notes/cacheeviction.html"
+  },
+  {
+    "repo": "sd",
+    "id": "cachestrategies",
+    "title": "Cache Strategies",
+    "file": "library/sd/notes/cachestrategies.html"
+  },
+  {
+    "repo": "sd",
+    "id": "caching",
+    "title": "Caching Fundamentals",
+    "file": "library/sd/notes/caching.html"
+  },
+  {
+    "repo": "sd",
+    "id": "cap",
+    "title": "CAP Basics",
+    "file": "library/sd/notes/cap.html"
+  },
+  {
+    "repo": "sd",
+    "id": "cassandra",
+    "title": "🪨 Cassandra",
+    "file": "library/sd/notes/cassandra.html"
+  },
+  {
+    "repo": "sd",
+    "id": "cdn",
+    "title": "CDN",
+    "file": "library/sd/notes/cdn.html"
+  },
+  {
+    "repo": "sd",
+    "id": "circuitbreaker",
+    "title": "Circuit Breaker",
+    "file": "library/sd/notes/circuitbreaker.html"
+  },
+  {
+    "repo": "sd",
+    "id": "clientserver",
+    "title": "Client-Server & P2P",
+    "file": "library/sd/notes/clientserver.html"
+  },
+  {
+    "repo": "sd",
+    "id": "consistency",
+    "title": "Consistency Models",
+    "file": "library/sd/notes/consistency.html"
+  },
+  {
+    "repo": "sd",
+    "id": "delivery",
+    "title": "🎯 Delivery Framework",
+    "file": "library/sd/notes/delivery.html"
+  },
+  {
+    "repo": "sd",
+    "id": "dfs",
+    "title": "Distributed File Systems",
+    "file": "library/sd/notes/dfs.html"
+  },
+  {
+    "repo": "sd",
+    "id": "disaster",
+    "title": "Disaster Recovery",
+    "file": "library/sd/notes/disaster.html"
+  },
+  {
+    "repo": "sd",
+    "id": "distrcache",
+    "title": "Distributed Caching",
+    "file": "library/sd/notes/distrcache.html"
+  },
+  {
+    "repo": "sd",
+    "id": "distrlog",
+    "title": "Distributed Logs",
+    "file": "library/sd/notes/distrlog.html"
+  },
+  {
+    "repo": "sd",
+    "id": "distrtx",
+    "title": "Distributed Transactions",
+    "file": "library/sd/notes/distrtx.html"
+  },
+  {
+    "repo": "sd",
+    "id": "dns",
+    "title": "DNS",
+    "file": "library/sd/notes/dns.html"
+  },
+  {
+    "repo": "sd",
+    "id": "dynamodb",
+    "title": "⚡ DynamoDB",
+    "file": "library/sd/notes/dynamodb.html"
+  },
+  {
+    "repo": "sd",
+    "id": "elastic",
+    "title": "🔍 Elasticsearch",
+    "file": "library/sd/notes/elastic.html"
+  },
+  {
+    "repo": "sd",
+    "id": "envelope",
+    "title": "📐 Back of Envelope",
+    "file": "library/sd/notes/envelope.html"
+  },
+  {
+    "repo": "sd",
+    "id": "faulttolerance",
+    "title": "Fault Tolerance",
+    "file": "library/sd/notes/faulttolerance.html"
+  },
+  {
+    "repo": "sd",
+    "id": "flink",
+    "title": "⚡ Flink",
+    "file": "library/sd/notes/flink.html"
+  },
+  {
+    "repo": "sd",
+    "id": "gossip",
+    "title": "Gossip Protocol",
+    "file": "library/sd/notes/gossip.html"
+  },
+  {
+    "repo": "sd",
+    "id": "hashing",
+    "title": "Consistent Hashing",
+    "file": "library/sd/notes/hashing.html"
+  },
+  {
+    "repo": "sd",
+    "id": "home",
+    "title": "🏠 Home",
+    "file": "library/sd/notes/home.html"
+  },
+  {
+    "repo": "sd",
+    "id": "hotspots",
+    "title": "Hot Spots & Rebalancing",
+    "file": "library/sd/notes/hotspots.html"
+  },
+  {
+    "repo": "sd",
+    "id": "indexing",
+    "title": "Indexing Fundamentals",
+    "file": "library/sd/notes/indexing.html"
+  },
+  {
+    "repo": "sd",
+    "id": "indextypes",
+    "title": "Index Types & Trade-offs",
+    "file": "library/sd/notes/indextypes.html"
+  },
+  {
+    "repo": "sd",
+    "id": "isolation",
+    "title": "Isolation Levels",
+    "file": "library/sd/notes/isolation.html"
+  },
+  {
+    "repo": "sd",
+    "id": "kafka",
+    "title": "📊 Kafka",
+    "file": "library/sd/notes/kafka.html"
+  },
+  {
+    "repo": "sd",
+    "id": "kubernetes",
+    "title": "☸️ Kubernetes",
+    "file": "library/sd/notes/kubernetes.html"
+  },
+  {
+    "repo": "sd",
+    "id": "kvstore",
+    "title": "Key-Value Store",
+    "file": "library/sd/notes/kvstore.html"
+  },
+  {
+    "repo": "sd",
+    "id": "leaderelection",
+    "title": "Leader Election",
+    "file": "library/sd/notes/leaderelection.html"
+  },
+  {
+    "repo": "sd",
+    "id": "loadbalancing",
+    "title": "Load Balancing",
+    "file": "library/sd/notes/loadbalancing.html"
+  },
+  {
+    "repo": "sd",
+    "id": "merkle",
+    "title": "Merkle Tree",
+    "file": "library/sd/notes/merkle.html"
+  },
+  {
+    "repo": "sd",
+    "id": "monitoring",
+    "title": "Health Checks & Monitoring",
+    "file": "library/sd/notes/monitoring.html"
+  },
+  {
+    "repo": "sd",
+    "id": "msgsemantics",
+    "title": "Delivery Semantics",
+    "file": "library/sd/notes/msgsemantics.html"
+  },
+  {
+    "repo": "sd",
+    "id": "nginx",
+    "title": "🌐 Nginx",
+    "file": "library/sd/notes/nginx.html"
+  },
+  {
+    "repo": "sd",
+    "id": "normalization",
+    "title": "Normalization vs Denormalization",
+    "file": "library/sd/notes/normalization.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-blobs",
+    "title": "Handling Large Blobs",
+    "file": "library/sd/notes/p-blobs.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-contention",
+    "title": "Dealing with Contention",
+    "file": "library/sd/notes/p-contention.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-dedup",
+    "title": "Deduplication",
+    "file": "library/sd/notes/p-dedup.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-fanout",
+    "title": "Fan-out",
+    "file": "library/sd/notes/p-fanout.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-geo",
+    "title": "Geo-spatial Queries",
+    "file": "library/sd/notes/p-geo.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-longtasks",
+    "title": "Long Running Tasks",
+    "file": "library/sd/notes/p-longtasks.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-multistep",
+    "title": "Multi-step Processes",
+    "file": "library/sd/notes/p-multistep.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-notification",
+    "title": "Notification System",
+    "file": "library/sd/notes/p-notification.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-ratelimit",
+    "title": "Rate Limiting Pattern",
+    "file": "library/sd/notes/p-ratelimit.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-realtime",
+    "title": "Real-time Updates",
+    "file": "library/sd/notes/p-realtime.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-scalereads",
+    "title": "Scaling Reads",
+    "file": "library/sd/notes/p-scalereads.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-scalewrites",
+    "title": "Scaling Writes",
+    "file": "library/sd/notes/p-scalewrites.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-search",
+    "title": "Search at Scale",
+    "file": "library/sd/notes/p-search.html"
+  },
+  {
+    "repo": "sd",
+    "id": "p-topk",
+    "title": "Top-K / Heavy Hitters",
+    "file": "library/sd/notes/p-topk.html"
+  },
+  {
+    "repo": "sd",
+    "id": "pacelc",
+    "title": "PACELC Extension",
+    "file": "library/sd/notes/pacelc.html"
+  },
+  {
+    "repo": "sd",
+    "id": "postgres",
+    "title": "🐘 PostgreSQL",
+    "file": "library/sd/notes/postgres.html"
+  },
+  {
+    "repo": "sd",
+    "id": "practice",
+    "title": "📝 Practice Questions",
+    "file": "library/sd/notes/practice.html"
+  },
+  {
+    "repo": "sd",
+    "id": "proxy",
+    "title": "Proxy Servers",
+    "file": "library/sd/notes/proxy.html"
+  },
+  {
+    "repo": "sd",
+    "id": "pubsub",
+    "title": "Pub/Sub & Event-Driven",
+    "file": "library/sd/notes/pubsub.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-adclick",
+    "title": "Ad Click Aggregator",
+    "file": "library/sd/notes/q-adclick.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-auction",
+    "title": "Online Auction",
+    "file": "library/sd/notes/q-auction.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-bitly",
+    "title": "Bitly (URL Shortener)",
+    "file": "library/sd/notes/q-bitly.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-chatgpt",
+    "title": "ChatGPT",
+    "file": "library/sd/notes/q-chatgpt.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-crawler",
+    "title": "Web Crawler",
+    "file": "library/sd/notes/q-crawler.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-delivery",
+    "title": "Local Delivery Service",
+    "file": "library/sd/notes/q-delivery.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-distrcache",
+    "title": "Distributed Cache",
+    "file": "library/sd/notes/q-distrcache.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-dropbox",
+    "title": "Dropbox (File Storage)",
+    "file": "library/sd/notes/q-dropbox.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-fb-feed",
+    "title": "Facebook News Feed",
+    "file": "library/sd/notes/q-fb-feed.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-fb-live",
+    "title": "Facebook Live Comments",
+    "file": "library/sd/notes/q-fb-live.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-fb-search",
+    "title": "Facebook Post Search",
+    "file": "library/sd/notes/q-fb-search.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-gdocs",
+    "title": "Google Docs",
+    "file": "library/sd/notes/q-gdocs.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-instagram",
+    "title": "Instagram",
+    "file": "library/sd/notes/q-instagram.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-jobscheduler",
+    "title": "Job Scheduler",
+    "file": "library/sd/notes/q-jobscheduler.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-leetcode",
+    "title": "LeetCode (Online Judge)",
+    "file": "library/sd/notes/q-leetcode.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-metrics",
+    "title": "Metrics Monitoring",
+    "file": "library/sd/notes/q-metrics.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-netflix",
+    "title": "Netflix",
+    "file": "library/sd/notes/q-netflix.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-news",
+    "title": "News Aggregator",
+    "file": "library/sd/notes/q-news.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-payment",
+    "title": "Payment System",
+    "file": "library/sd/notes/q-payment.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-price",
+    "title": "Price Tracking Service",
+    "file": "library/sd/notes/q-price.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-ratelimiter",
+    "title": "Rate Limiter",
+    "file": "library/sd/notes/q-ratelimiter.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-robinhood",
+    "title": "Robinhood",
+    "file": "library/sd/notes/q-robinhood.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-s3",
+    "title": "S3 / Object Storage",
+    "file": "library/sd/notes/q-s3.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-strava",
+    "title": "Strava",
+    "file": "library/sd/notes/q-strava.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-ticketmaster",
+    "title": "Ticketmaster",
+    "file": "library/sd/notes/q-ticketmaster.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-tinder",
+    "title": "Tinder",
+    "file": "library/sd/notes/q-tinder.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-uber",
+    "title": "Uber",
+    "file": "library/sd/notes/q-uber.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-whatsapp",
+    "title": "WhatsApp",
+    "file": "library/sd/notes/q-whatsapp.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-yelp",
+    "title": "Yelp (Proximity Search)",
+    "file": "library/sd/notes/q-yelp.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-youtube-topk",
+    "title": "YouTube Top-K",
+    "file": "library/sd/notes/q-youtube-topk.html"
+  },
+  {
+    "repo": "sd",
+    "id": "q-youtube",
+    "title": "YouTube",
+    "file": "library/sd/notes/q-youtube.html"
+  },
+  {
+    "repo": "sd",
+    "id": "queues",
+    "title": "Message Queue Fundamentals",
+    "file": "library/sd/notes/queues.html"
+  },
+  {
+    "repo": "sd",
+    "id": "rabbitmq",
+    "title": "🐰 RabbitMQ",
+    "file": "library/sd/notes/rabbitmq.html"
+  },
+  {
+    "repo": "sd",
+    "id": "ratelimit",
+    "title": "Rate Limiting & Throttling",
+    "file": "library/sd/notes/ratelimit.html"
+  },
+  {
+    "repo": "sd",
+    "id": "realtime",
+    "title": "WebSocket / SSE / Polling",
+    "file": "library/sd/notes/realtime.html"
+  },
+  {
+    "repo": "sd",
+    "id": "redis",
+    "title": "🟥 Redis",
+    "file": "library/sd/notes/redis.html"
+  },
+  {
+    "repo": "sd",
+    "id": "replication",
+    "title": "Replication Fundamentals",
+    "file": "library/sd/notes/replication.html"
+  },
+  {
+    "repo": "sd",
+    "id": "repliclag",
+    "title": "Replication Lag & Failover",
+    "file": "library/sd/notes/repliclag.html"
+  },
+  {
+    "repo": "sd",
+    "id": "restgraphql",
+    "title": "REST vs GraphQL vs gRPC",
+    "file": "library/sd/notes/restgraphql.html"
+  },
+  {
+    "repo": "sd",
+    "id": "s3cdn",
+    "title": "🌍 S3 / CDN",
+    "file": "library/sd/notes/s3cdn.html"
+  },
+  {
+    "repo": "sd",
+    "id": "scaling",
+    "title": "Horizontal vs Vertical Scaling",
+    "file": "library/sd/notes/scaling.html"
+  },
+  {
+    "repo": "sd",
+    "id": "schema",
+    "title": "Schema Design",
+    "file": "library/sd/notes/schema.html"
+  },
+  {
+    "repo": "sd",
+    "id": "sharding",
+    "title": "Sharding Fundamentals",
+    "file": "library/sd/notes/sharding.html"
+  },
+  {
+    "repo": "sd",
+    "id": "shardstrats",
+    "title": "Sharding Strategies",
+    "file": "library/sd/notes/shardstrats.html"
+  },
+  {
+    "repo": "sd",
+    "id": "sqlnosql",
+    "title": "SQL vs NoSQL",
+    "file": "library/sd/notes/sqlnosql.html"
+  },
+  {
+    "repo": "sd",
+    "id": "storagetypes",
+    "title": "Block vs File vs Object",
+    "file": "library/sd/notes/storagetypes.html"
+  },
+  {
+    "repo": "sd",
+    "id": "tcp",
+    "title": "TCP / UDP / HTTP / WebSocket",
+    "file": "library/sd/notes/tcp.html"
+  },
+  {
+    "repo": "sd",
+    "id": "virtualnodes",
+    "title": "Virtual Nodes",
+    "file": "library/sd/notes/virtualnodes.html"
+  },
+  {
+    "repo": "sd",
+    "id": "zookeeper",
+    "title": "🦁 ZooKeeper",
+    "file": "library/sd/notes/zookeeper.html"
+  },
+  {
+    "repo": "genai",
+    "id": "advancedrag",
+    "title": "Naive vs Advanced RAG",
+    "file": "library/genai/notes/advancedrag.html"
+  },
+  {
+    "repo": "genai",
+    "id": "agenticloops",
+    "title": "Agentic Loops & Stopping",
+    "file": "library/genai/notes/agenticloops.html"
+  },
+  {
+    "repo": "genai",
+    "id": "agents",
+    "title": "AI Agents",
+    "file": "library/genai/notes/agents.html"
+  },
+  {
+    "repo": "genai",
+    "id": "chroma",
+    "title": "Chroma",
+    "file": "library/genai/notes/chroma.html"
+  },
+  {
+    "repo": "genai",
+    "id": "chunking",
+    "title": "Chunking Strategies",
+    "file": "library/genai/notes/chunking.html"
+  },
+  {
+    "repo": "genai",
+    "id": "claude-code",
+    "title": "⌨️ Claude Code",
+    "file": "library/genai/notes/claude-code.html"
+  },
+  {
+    "repo": "genai",
+    "id": "claude",
+    "title": "Claude (Anthropic)",
+    "file": "library/genai/notes/claude.html"
+  },
+  {
+    "repo": "genai",
+    "id": "claudesdk",
+    "title": "Anthropic SDK (Claude)",
+    "file": "library/genai/notes/claudesdk.html"
+  },
+  {
+    "repo": "genai",
+    "id": "context",
+    "title": "Context Window",
+    "file": "library/genai/notes/context.html"
+  },
+  {
+    "repo": "genai",
+    "id": "contexteng",
+    "title": "Context Engineering",
+    "file": "library/genai/notes/contexteng.html"
+  },
+  {
+    "repo": "genai",
+    "id": "costopt",
+    "title": "Cost Optimization",
+    "file": "library/genai/notes/costopt.html"
+  },
+  {
+    "repo": "genai",
+    "id": "cot",
+    "title": "Chain-of-Thought (CoT)",
+    "file": "library/genai/notes/cot.html"
+  },
+  {
+    "repo": "genai",
+    "id": "diffusion",
+    "title": "Diffusion Models",
+    "file": "library/genai/notes/diffusion.html"
+  },
+  {
+    "repo": "genai",
+    "id": "embeddings",
+    "title": "Embeddings",
+    "file": "library/genai/notes/embeddings.html"
+  },
+  {
+    "repo": "genai",
+    "id": "evals",
+    "title": "Evals & Benchmarking",
+    "file": "library/genai/notes/evals.html"
+  },
+  {
+    "repo": "genai",
+    "id": "fewshot",
+    "title": "Few-Shot & Zero-Shot",
+    "file": "library/genai/notes/fewshot.html"
+  },
+  {
+    "repo": "genai",
+    "id": "gemini",
+    "title": "Gemini (Google)",
+    "file": "library/genai/notes/gemini.html"
+  },
+  {
+    "repo": "genai",
+    "id": "guardrails",
+    "title": "Guardrails & Validation",
+    "file": "library/genai/notes/guardrails.html"
+  },
+  {
+    "repo": "genai",
+    "id": "hallucination",
+    "title": "Hallucinations & Grounding",
+    "file": "library/genai/notes/hallucination.html"
+  },
+  {
+    "repo": "genai",
+    "id": "home",
+    "title": "🏠 Home",
+    "file": "library/genai/notes/home.html"
+  },
+  {
+    "repo": "genai",
+    "id": "huggingface",
+    "title": "Hugging Face",
+    "file": "library/genai/notes/huggingface.html"
+  },
+  {
+    "repo": "genai",
+    "id": "hybridsearch",
+    "title": "Hybrid Search",
+    "file": "library/genai/notes/hybridsearch.html"
+  },
+  {
+    "repo": "genai",
+    "id": "imagegen",
+    "title": "Image Generation Pipeline",
+    "file": "library/genai/notes/imagegen.html"
+  },
+  {
+    "repo": "genai",
+    "id": "instructiontune",
+    "title": "Instruction Tuning",
+    "file": "library/genai/notes/instructiontune.html"
+  },
+  {
+    "repo": "genai",
+    "id": "langchain",
+    "title": "LangChain",
+    "file": "library/genai/notes/langchain.html"
+  },
+  {
+    "repo": "genai",
+    "id": "langgraph",
+    "title": "LangGraph",
+    "file": "library/genai/notes/langgraph.html"
+  },
+  {
+    "repo": "genai",
+    "id": "llamaindex",
+    "title": "LlamaIndex",
+    "file": "library/genai/notes/llamaindex.html"
+  },
+  {
+    "repo": "genai",
+    "id": "llm",
+    "title": "LLMs & How They Work",
+    "file": "library/genai/notes/llm.html"
+  },
+  {
+    "repo": "genai",
+    "id": "llmcaching",
+    "title": "Caching LLM Responses",
+    "file": "library/genai/notes/llmcaching.html"
+  },
+  {
+    "repo": "genai",
+    "id": "lora",
+    "title": "LoRA & QLoRA",
+    "file": "library/genai/notes/lora.html"
+  },
+  {
+    "repo": "genai",
+    "id": "mcp",
+    "title": "Model Context Protocol (MCP)",
+    "file": "library/genai/notes/mcp.html"
+  },
+  {
+    "repo": "genai",
+    "id": "memory",
+    "title": "Memory Types",
+    "file": "library/genai/notes/memory.html"
+  },
+  {
+    "repo": "genai",
+    "id": "multiagent",
+    "title": "Multi-Agent Systems",
+    "file": "library/genai/notes/multiagent.html"
+  },
+  {
+    "repo": "genai",
+    "id": "observability",
+    "title": "Observability & Tracing",
+    "file": "library/genai/notes/observability.html"
+  },
+  {
+    "repo": "genai",
+    "id": "ollama",
+    "title": "Ollama (local models)",
+    "file": "library/genai/notes/ollama.html"
+  },
+  {
+    "repo": "genai",
+    "id": "openai",
+    "title": "OpenAI API",
+    "file": "library/genai/notes/openai.html"
+  },
+  {
+    "repo": "genai",
+    "id": "openaisdk",
+    "title": "OpenAI SDK",
+    "file": "library/genai/notes/openaisdk.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-agent",
+    "title": "Agent Loop Pattern",
+    "file": "library/genai/notes/p-agent.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-caching",
+    "title": "Caching Pattern",
+    "file": "library/genai/notes/p-caching.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-eval",
+    "title": "Eval Pattern",
+    "file": "library/genai/notes/p-eval.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-fanout",
+    "title": "Fan-out Pattern",
+    "file": "library/genai/notes/p-fanout.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-guardrail",
+    "title": "Guardrail Pattern",
+    "file": "library/genai/notes/p-guardrail.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-memory",
+    "title": "Memory Pattern",
+    "file": "library/genai/notes/p-memory.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-multiagent",
+    "title": "Multi-Agent Pattern",
+    "file": "library/genai/notes/p-multiagent.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-rag",
+    "title": "RAG Pattern",
+    "file": "library/genai/notes/p-rag.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-streaming",
+    "title": "Streaming Pattern",
+    "file": "library/genai/notes/p-streaming.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-summarize",
+    "title": "Summarization Pattern",
+    "file": "library/genai/notes/p-summarize.html"
+  },
+  {
+    "repo": "genai",
+    "id": "p-toolrouter",
+    "title": "Tool Router Pattern",
+    "file": "library/genai/notes/p-toolrouter.html"
+  },
+  {
+    "repo": "genai",
+    "id": "peft",
+    "title": "PEFT",
+    "file": "library/genai/notes/peft.html"
+  },
+  {
+    "repo": "genai",
+    "id": "pgvector",
+    "title": "pgvector",
+    "file": "library/genai/notes/pgvector.html"
+  },
+  {
+    "repo": "genai",
+    "id": "pinecone",
+    "title": "Pinecone",
+    "file": "library/genai/notes/pinecone.html"
+  },
+  {
+    "repo": "genai",
+    "id": "planning",
+    "title": "Planning & Task Decomposition",
+    "file": "library/genai/notes/planning.html"
+  },
+  {
+    "repo": "genai",
+    "id": "prompting",
+    "title": "Prompt Engineering",
+    "file": "library/genai/notes/prompting.html"
+  },
+  {
+    "repo": "genai",
+    "id": "promptinjection",
+    "title": "Prompt Injection & Security",
+    "file": "library/genai/notes/promptinjection.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-chatgpt",
+    "title": "Design ChatGPT",
+    "file": "library/genai/notes/q-chatgpt.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-codeassist",
+    "title": "Code Assistant",
+    "file": "library/genai/notes/q-codeassist.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-codegen",
+    "title": "Code Generation Agent",
+    "file": "library/genai/notes/q-codegen.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-copilot",
+    "title": "Design GitHub Copilot",
+    "file": "library/genai/notes/q-copilot.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-cursor",
+    "title": "Design Cursor AI",
+    "file": "library/genai/notes/q-cursor.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-customerservice",
+    "title": "Customer Service Agent",
+    "file": "library/genai/notes/q-customerservice.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-docsearch",
+    "title": "Document Search Bot",
+    "file": "library/genai/notes/q-docsearch.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-emailagent",
+    "title": "Email Agent",
+    "file": "library/genai/notes/q-emailagent.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-imagegen",
+    "title": "Image Generation System",
+    "file": "library/genai/notes/q-imagegen.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-perplexity",
+    "title": "Design Perplexity",
+    "file": "library/genai/notes/q-perplexity.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-researchagent",
+    "title": "Research Agent",
+    "file": "library/genai/notes/q-researchagent.html"
+  },
+  {
+    "repo": "genai",
+    "id": "q-videoanalysis",
+    "title": "Video Analysis Pipeline",
+    "file": "library/genai/notes/q-videoanalysis.html"
+  },
+  {
+    "repo": "genai",
+    "id": "ragbasics",
+    "title": "RAG Fundamentals",
+    "file": "library/genai/notes/ragbasics.html"
+  },
+  {
+    "repo": "genai",
+    "id": "rageval",
+    "title": "RAG Evaluation",
+    "file": "library/genai/notes/rageval.html"
+  },
+  {
+    "repo": "genai",
+    "id": "ragpipeline",
+    "title": "RAG Pipeline Design",
+    "file": "library/genai/notes/ragpipeline.html"
+  },
+  {
+    "repo": "genai",
+    "id": "ragvsfine",
+    "title": "Fine-Tune vs RAG vs Prompt",
+    "file": "library/genai/notes/ragvsfine.html"
+  },
+  {
+    "repo": "genai",
+    "id": "react",
+    "title": "ReAct Pattern",
+    "file": "library/genai/notes/react.html"
+  },
+  {
+    "repo": "genai",
+    "id": "reranking",
+    "title": "Re-ranking",
+    "file": "library/genai/notes/reranking.html"
+  },
+  {
+    "repo": "genai",
+    "id": "rlhf",
+    "title": "RLHF",
+    "file": "library/genai/notes/rlhf.html"
+  },
+  {
+    "repo": "genai",
+    "id": "semanticsearch",
+    "title": "Semantic Search",
+    "file": "library/genai/notes/semanticsearch.html"
+  },
+  {
+    "repo": "genai",
+    "id": "similarity",
+    "title": "Similarity Metrics",
+    "file": "library/genai/notes/similarity.html"
+  },
+  {
+    "repo": "genai",
+    "id": "streaming",
+    "title": "Streaming Responses",
+    "file": "library/genai/notes/streaming.html"
+  },
+  {
+    "repo": "genai",
+    "id": "sysprompt",
+    "title": "System Prompts",
+    "file": "library/genai/notes/sysprompt.html"
+  },
+  {
+    "repo": "genai",
+    "id": "temperature",
+    "title": "Temperature & Sampling",
+    "file": "library/genai/notes/temperature.html"
+  },
+  {
+    "repo": "genai",
+    "id": "tokens",
+    "title": "Tokens & Tokenization",
+    "file": "library/genai/notes/tokens.html"
+  },
+  {
+    "repo": "genai",
+    "id": "tooluse",
+    "title": "Tool Use & Function Calling",
+    "file": "library/genai/notes/tooluse.html"
+  },
+  {
+    "repo": "genai",
+    "id": "vectordb",
+    "title": "Vector Databases",
+    "file": "library/genai/notes/vectordb.html"
+  },
+  {
+    "repo": "genai",
+    "id": "vllm",
+    "title": "vLLM (serving)",
+    "file": "library/genai/notes/vllm.html"
+  },
+  {
+    "repo": "genai",
+    "id": "vlm",
+    "title": "Vision-Language Models (VLMs)",
+    "file": "library/genai/notes/vlm.html"
+  },
+  {
+    "repo": "genai",
+    "id": "weaviate",
+    "title": "Weaviate",
+    "file": "library/genai/notes/weaviate.html"
+  },
+  {
+    "repo": "interview",
+    "id": "aws",
+    "title": "AWS",
+    "file": "features/devops/cloud/content/aws.html"
+  }
+]

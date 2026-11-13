@@ -1,0 +1,25 @@
+# Plain SQL Server mode is a local demonstration; UAT/prod add migrations and authentication.
+spring:
+  config:
+    # Import shared policies explicitly; service and environment files provide their own overrides.
+    import: classpath:platform-sqlserver.yml
+  data:
+    redis:
+      # Redis hostname resolves in the current runtime network, such as localhost or the Compose
+      # service name.
+      host: ${REDIS_HOST:localhost}
+      # Redis service port; distinct from the application HTTP port.
+      port: ${REDIS_PORT:6379}
+      # Bound establishment of a Redis connection so cache outages do not cause long waits.
+      connect-timeout: 500ms
+      # Bound Redis command waiting before template rendering falls back to the database.
+      timeout: 500ms
+      repositories:
+        # Disable Redis repository discovery because this service uses Redis only through its
+        # template client.
+        enabled: false
+management:
+  health:
+    redis:
+      # Include Redis health only when notification template caching is enabled.
+      enabled: ${NOTIFICATIONS_REDIS_ENABLED:false}

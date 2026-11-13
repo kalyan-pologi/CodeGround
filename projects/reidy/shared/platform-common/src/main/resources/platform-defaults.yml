@@ -1,0 +1,240 @@
+# ${NAME:default} reads an environment value with a fallback; ${NAME} requires a supplied value.
+# Bare numeric timeout units depend on the setting; duration suffixes such as s and m are explicit.
+# Shared service infrastructure; imported explicitly to avoid conflicting application.yml resources.
+# Shared settings. Environment overrides live in application-dev/uat/prod.yml.
+spring:
+  kafka:
+    # Initial broker addresses used to discover the Kafka cluster; containers use Kafka's internal
+    # listener.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    security:
+      # Local PLAINTEXT is replaced by authenticated TLS transport in deployed profiles.
+      protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+    producer:
+      # Serialize partition keys as strings rather than Java objects.
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Publish JSON envelopes as strings; no arbitrary Java class headers are required.
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      # Wait for all current in-sync replicas, subject to the broker's minimum in-sync replica
+      # policy.
+      acks: all
+      properties:
+        # Reduce duplicate broker writes from producer retries; database-to-Kafka delivery remains
+        # at least once.
+        # Kafka: producer retry deduplication does not cover a new outbox send after a crash;
+        # consumer event-ID deduplication remains necessary.
+        enable.idempotence: true
+        # Bound the producer delivery window, including retry and batching time, in milliseconds.
+        delivery.timeout.ms: 10000
+        # Bound waiting for an individual broker request response, in milliseconds.
+        request.timeout.ms: 5000
+        # Bound producer blocking while obtaining metadata or buffer capacity, in milliseconds.
+        max.block.ms: 3000
+    consumer:
+      # Read Kafka keys as strings for partition and event-routing logic.
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # Decode strings first; EventCodec validates the JSON envelope before business processing.
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      # Let listener completion control offsets instead of committing independently of database
+      # processing.
+      # Spring Kafka: listener success controls acknowledgment, but database commit and offset
+      # commit remain separate operations.
+      enable-auto-commit: false
+      # Start at the earliest retained record only when the consumer group has no valid committed
+      # offset.
+      # Kafka: a valid committed group offset takes precedence; this does not replay every record
+      # after each restart.
+      auto-offset-reset: earliest
+      # Limit the number of records returned in one poll to bound each processing batch.
+      max-poll-records: 25
+      properties:
+        # Prevent accidental topic creation from misspelled consumer topic names.
+        allow.auto.create.topics: false
+        # Hide aborted transactional producer records; this does not make database writes atomic
+        # with Kafka.
+        # Kafka: filter aborted Kafka transactions; this does not create an atomic transaction
+        # spanning Kafka and the service database.
+        isolation.level: read_committed
+    listener:
+      # Acknowledge each successfully handled record after the listener returns.
+      ack-mode: record
+      # Allow startup when topics are temporarily unavailable; consumers still need those topics to
+      # process events.
+      missing-topics-fatal: false
+    admin:
+      # Do not fail application startup solely because the broker is unavailable during topic
+      # administration.
+      fail-fast: false
+  datasource:
+    hikari:
+      # Name the JDBC pool so logs and metrics identify its owning service.
+      pool-name: reidy-db
+      # Maximum JDBC connections per service instance; replicas each create their own pool.
+      # Capacity: three replicas with a maximum of twelve can open up to 36 JDBC connections; budget
+      # capacity across all services.
+      maximum-pool-size: ${DB_POOL_MAX:12}
+      # Target idle connections kept ready without exceeding the maximum pool size.
+      minimum-idle: ${DB_POOL_MIN_IDLE:2}
+      # Wait at most 2000 milliseconds for a pooled connection; this is not a SQL execution timeout.
+      # HikariCP: pool acquisition failure is distinct from query execution timeout; increasing this
+      # value does not make SQL faster.
+      connection-timeout: 2000
+      # Allow at most 1000 milliseconds when checking whether a JDBC connection is alive.
+      validation-timeout: 1000
+      # Retire eligible surplus idle connections after approximately five minutes.
+      idle-timeout: 300000
+      # Recycle connections after approximately 25 minutes; align this with database and network
+      # connection limits.
+      max-lifetime: 1500000
+      # Periodically check idle connections to help detect or avoid stale connections.
+      keepalive-time: 120000
+      # Log a possible leak when a connection stays borrowed beyond 20 seconds; this does not
+      # reclaim it.
+      # Diagnostics: long legitimate transactions can also trigger this warning; investigate before
+      # concluding a connection was leaked.
+      leak-detection-threshold: 20000
+      # Use a bounded startup failure window when the pool cannot obtain an initial connection.
+      initialization-fail-timeout: 5000
+  flyway:
+    # Enable schema migrations for deployed profiles; local demos use Hibernate schema updates.
+    enabled: false
+  transaction:
+    # Default Spring transaction timeout; individual transaction annotations can override this
+    # budget.
+    # Spring: enforcement depends on the transaction manager and resource; this does not
+    # automatically interrupt unrelated Java or HTTP work.
+    default-timeout: 10s
+  lifecycle:
+    # Limit how long each graceful shutdown phase may wait.
+    timeout-per-shutdown-phase: 20s
+  task:
+    scheduling:
+      pool:
+        # Provide scheduler threads for polling and maintenance; this is separate from HTTP and
+        # asynchronous delivery pools.
+        size: 2
+      shutdown:
+        # Allow scheduled work to finish during graceful shutdown.
+        await-termination: true
+        # Bound how long shutdown waits for scheduler tasks.
+        await-termination-period: 15s
+  jpa:
+    # Close persistence access at the service boundary rather than allowing database work during
+    # response rendering.
+    # JPA: accessing an uninitialized lazy association after its persistence context closes can
+    # fail; map required response data inside services.
+    open-in-view: false
+    properties:
+      # JPA query timeout hint in milliseconds; driver and database enforcement can differ.
+      jakarta.persistence.query.timeout: 3000
+    hibernate:
+      # Local update creates or adjusts tables; deployed validate checks mappings without changing
+      # the schema.
+      ddl-auto: update
+server:
+  # Choose the listening interface; containers must bind to 0.0.0.0 for mapped ports to work.
+  address: ${SERVER_ADDRESS:127.0.0.1}
+  # Stop accepting new work and allow active requests to finish during shutdown.
+  shutdown: graceful
+  # Reject oversized HTTP headers before application processing.
+  max-http-request-header-size: 16KB
+  error:
+    # Keep internal exception messages out of default error responses.
+    include-message: never
+  tomcat:
+    # Limit how long Tomcat waits for the request URI after accepting a connection.
+    connection-timeout: 10s
+    # Bound idle waiting for another request on a reused HTTP connection.
+    keep-alive-timeout: 15s
+    # Cap accepted connections; this differs from the number of request-processing threads.
+    max-connections: 200
+    # Bound the operating-system connection queue when all configured connections are occupied.
+    accept-count: 50
+    threads:
+      # Limit servlet worker threads instead of allowing request concurrency to grow without bounds.
+      max: 64
+      # Keep a small set of worker threads ready for incoming requests.
+      min-spare: 8
+management:
+  endpoint:
+    health:
+      probes:
+        # Publish liveness and readiness health groups for runtime health checks.
+        enabled: true
+      # Control whether health responses reveal dependency details.
+      show-details: when_authorized
+      group:
+        liveness:
+          # Liveness checks process state; database outages should not cause restart loops.
+          include: livenessState
+        readiness:
+          # Readiness includes database availability before traffic should be routed to this
+          # instance.
+          include: readinessState,db
+  endpoints:
+    web:
+      exposure:
+        # Expose only the listed Actuator endpoints; authentication rules still apply.
+        # Spring Security: exposing an endpoint and authorizing access to it are separate
+        # configuration decisions.
+        include: health,info,metrics,prometheus
+logging:
+  structured:
+    format:
+      # Emit structured JSON console logs for aggregation and request correlation.
+      console: logstash
+resilience:
+  api:
+    # Limit request arrivals per application instance; this is not a cluster-wide rate limiter.
+    requests-per-second: ${API_REQUESTS_PER_SECOND:100}
+    # Cap simultaneous admitted API requests in this instance.
+    max-concurrent: ${API_MAX_CONCURRENT:32}
+  rental:
+    # Bound concurrent rental dependency calls using a bulkhead.
+    max-concurrent: 8
+    # Total retry attempts include the original call, not just additional retries.
+    max-attempts: 2
+  breaker:
+    # Evaluate dependency outcomes using this many recent calls.
+    window-size: 20
+    # Require enough observations before the circuit breaker evaluates its failure threshold.
+    minimum-calls: 10
+    # Wait this long before allowing half-open recovery probes.
+    open-duration: 20s
+app:
+  kafka:
+    # Enable background Kafka publication; disabling it does not remove already stored outbox work.
+    enabled: ${KAFKA_ENABLED:true}
+    # Local startup may create topics; deployed environments provision topics and policies
+    # separately.
+    create-topics: false
+    # Local topic partition count; consumer concurrency cannot provide more active readers per topic
+    # than available partitions.
+    partitions: 3
+    # Copies per partition; actual deployed topic replication is set during external topic
+    # provisioning.
+    replication-factor: 1
+    # Control whether configured Kafka listeners begin consuming when the application starts.
+    listener-auto-startup: true
+    # Number of consumer threads per notification listener container; partition assignments
+    # determine actual parallelism.
+    # Kafka: partition assignments are independent per consumer group; surplus consumers can remain
+    # idle.
+    consumer-concurrency: 3
+  outbox:
+    # Wait this many milliseconds after a poll completes before polling again.
+    poll-delay: 1000
+    # Delay the first background poll after application startup, in milliseconds.
+    initial-delay: 1000
+    # Select at most this many candidate publications per poll; each still needs a claim.
+    batch-size: 25
+    # Move exhausted publications to DEAD for operator inspection and explicit replay.
+    max-attempts: 5
+    # Allow another worker to reclaim abandoned work after this lease expires.
+    # Coordination: a late original send can finish after expiry; claim tokens prevent stale
+    # acknowledgment while consumers deduplicate repeated deliveries.
+    lease: 30s
+    # Keep successfully published rows for this duration before scheduled cleanup.
+    retention: 30d
+    # Spring six-field cron schedule; the cleanup job interprets it in UTC.
+    cleanup-cron: "0 0 2 * * *"

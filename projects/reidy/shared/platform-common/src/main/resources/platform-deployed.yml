@@ -1,0 +1,108 @@
+# UAT and prod profile files import these deployed policies together with SQL Server settings.
+# All secrets and identity endpoints come from this environment's secret store.
+spring:
+  kafka:
+    # Initial broker addresses used to discover the Kafka cluster; containers use Kafka's internal
+    # listener.
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+    security:
+      # Local PLAINTEXT is replaced by authenticated TLS transport in deployed profiles.
+      protocol: ${KAFKA_SECURITY_PROTOCOL:SASL_SSL}
+    properties:
+      # Select the authentication mechanism supported by the deployed broker.
+      sasl.mechanism: ${KAFKA_SASL_MECHANISM:SCRAM-SHA-512}
+      # Inject broker authentication configuration as a secret; do not commit real credentials.
+      sasl.jaas.config: ${KAFKA_SASL_JAAS_CONFIG}
+      # Verify broker certificate hostnames instead of accepting an unrelated TLS certificate.
+      ssl.endpoint.identification.algorithm: https
+  datasource:
+    # Select this service's database; relative H2 paths resolve from the process working directory.
+    url: ${SQLSERVER_URL}
+    # Use the configured database login; deployed environments supply their own service credentials.
+    username: ${SQLSERVER_USERNAME}
+    # Supply deployed passwords through environment injection; local H2 uses an empty password.
+    password: ${SQLSERVER_PASSWORD}
+    hikari:
+      # Name the JDBC pool so logs and metrics identify its owning service.
+      pool-name: ${spring.application.name}-db
+  jpa:
+    hibernate:
+      # Local update creates or adjusts tables; deployed validate checks mappings without changing
+      # the schema.
+      # Startup: Flyway migrates the schema before Hibernate validates entity mappings; validate
+      # does not apply schema changes.
+      ddl-auto: validate
+  flyway:
+    # Enable schema migrations for deployed profiles; local demos use Hibernate schema updates.
+    enabled: true
+    # Run common outbox migrations and this service's own schema migrations.
+    locations:
+      - classpath:db/migration/common/sqlserver
+      - classpath:db/migration/sqlserver
+    # Migrate the same service database used by the application.
+    url: ${SQLSERVER_URL}
+    # Use separate migration credentials so schema permissions need not belong to the runtime login.
+    # Least privilege: migration credentials can have schema permissions that the runtime database
+    # login does not need.
+    user: ${SQLSERVER_MIGRATION_USERNAME}
+    # Inject the migration account password through the environment.
+    password: ${SQLSERVER_MIGRATION_PASSWORD}
+    # Reject silently adopting an existing nonempty schema without an established migration
+    # baseline.
+    baseline-on-migrate: false
+    # Disable Flyway clean to prevent accidental schema removal.
+    clean-disabled: true
+server:
+  # Choose the listening interface; containers must bind to 0.0.0.0 for mapped ports to work.
+  address: ${SERVER_ADDRESS:0.0.0.0}
+security:
+  jwt:
+    # Accept tokens from this issuer after signature and standard claim validation.
+    issuer: ${JWT_ISSUER_URI}
+    # Download trusted public signing keys from this identity-provider endpoint.
+    jwk-set-uri: ${JWT_JWK_SET_URI}
+    # Reject otherwise valid tokens intended for a different API.
+    # JWT: signature validation alone does not establish that a token was issued for this resource.
+    audience: ${JWT_AUDIENCE}
+springdoc:
+  api-docs:
+    # Control OpenAPI JSON availability; deployed profiles disable it unless explicitly enabled.
+    enabled: ${API_DOCS_ENABLED:false}
+  swagger-ui:
+    # Control the browser API explorer separately from business endpoints.
+    enabled: ${API_DOCS_ENABLED:false}
+management:
+  server:
+    # Expose health and metrics on a separate port from business APIs.
+    port: ${MANAGEMENT_PORT:9090}
+  endpoint:
+    health:
+      # Control whether health responses reveal dependency details.
+      show-details: never
+logging:
+  level:
+    # Default logging level for application dependencies.
+    root: INFO
+    # Set application-specific verbosity independently of dependency logs.
+    com.reidy: INFO
+  structured:
+    format:
+      # Use structured JSON for file output as well as console logging.
+      file: logstash
+  logback:
+    rollingpolicy:
+      # Rotate a log file when it reaches this size.
+      max-file-size: 10MB
+      # Keep at most this many archive periods, subject to the total-size limit.
+      max-history: 7
+      # Bound combined archived log size; centralized retention is configured outside this
+      # application.
+      total-size-cap: 100MB
+app:
+  kafka:
+    # Local startup may create topics; deployed environments provision topics and policies
+    # separately.
+    create-topics: false
+    # Copies per partition; actual deployed topic replication is set during external topic
+    # provisioning.
+    replication-factor: ${KAFKA_REPLICATION_FACTOR:3}

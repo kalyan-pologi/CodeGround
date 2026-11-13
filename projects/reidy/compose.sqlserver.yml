@@ -1,0 +1,108 @@
+# Optional local SQL Server override; each service still owns a separate database.
+services:
+  property-service:
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Select the Spring profile at runtime; the same built application can use different
+      # environment settings.
+      SPRING_PROFILES_ACTIVE: sqlserver
+      # Use a separate logical database for this service; trusting the local certificate is for this
+      # demonstration only.
+      SQLSERVER_URL: jdbc:sqlserver://sqlserver:1433;databaseName=reidy_property;encrypt=true;trustServerCertificate=true
+      # Compose requires this variable from the shell or .env before starting the service.
+      SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD:?Set SQLSERVER_PASSWORD in .env}
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      sqlserver-init:
+        # Wait for the one-time initialization container to exit successfully.
+        condition: service_completed_successfully
+  appraisal-service:
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Select the Spring profile at runtime; the same built application can use different
+      # environment settings.
+      SPRING_PROFILES_ACTIVE: sqlserver
+      # Use a separate logical database for this service; trusting the local certificate is for this
+      # demonstration only.
+      SQLSERVER_URL: jdbc:sqlserver://sqlserver:1433;databaseName=reidy_appraisal;encrypt=true;trustServerCertificate=true
+      # Compose requires this variable from the shell or .env before starting the service.
+      SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD:?Set SQLSERVER_PASSWORD in .env}
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      sqlserver-init:
+        # Wait for the one-time initialization container to exit successfully.
+        condition: service_completed_successfully
+  communication-service:
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Select the Spring profile at runtime; the same built application can use different
+      # environment settings.
+      SPRING_PROFILES_ACTIVE: sqlserver
+      # Use a separate logical database for this service; trusting the local certificate is for this
+      # demonstration only.
+      SQLSERVER_URL: jdbc:sqlserver://sqlserver:1433;databaseName=reidy_communication;encrypt=true;trustServerCertificate=true
+      # Compose requires this variable from the shell or .env before starting the service.
+      SQLSERVER_PASSWORD: ${SQLSERVER_PASSWORD:?Set SQLSERVER_PASSWORD in .env}
+      # Override Spring Redis settings directly using the Compose service hostname.
+      SPRING_DATA_REDIS_HOST: redis
+      # Bound Redis connection establishment during the SQL Server demonstration.
+      SPRING_DATA_REDIS_CONNECT_TIMEOUT: 500ms
+      # Bound Redis command waiting independently of SQL Server timeouts.
+      SPRING_DATA_REDIS_TIMEOUT: 500ms
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      sqlserver-init:
+        # Wait for the one-time initialization container to exit successfully.
+        condition: service_completed_successfully
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Accept the SQL Server container license terms for this local setup.
+      ACCEPT_EULA: "Y"
+      # Use the Developer edition for local learning and development.
+      MSSQL_PID: Developer
+      # Inject the local administrator password without placing its real value in this YAML file.
+      MSSQL_SA_PASSWORD: ${SQLSERVER_PASSWORD:?Set SQLSERVER_PASSWORD in .env}
+    # Map host ports to container ports; loopback binding makes this local setup accessible from
+    # this machine.
+    ports:
+      - "127.0.0.1:1433:1433"
+    # Named volumes preserve database or broker files when containers are replaced.
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+    # Docker checks container health; dependent startup can wait for service_healthy.
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q 'SELECT 1' -b -o /dev/null
+      # Wait this long between container health checks.
+      interval: 10s
+      # Fail an individual health check if it exceeds this duration.
+      timeout: 5s
+      # Mark the container unhealthy after this many consecutive failed checks.
+      retries: 30
+      # Allow an initial startup window before failures count against the retry threshold.
+      start_period: 30s
+  sqlserver-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    # Inject settings when the container starts; these values are not baked into the JAR.
+    environment:
+      # Inject the local administrator password without placing its real value in this YAML file.
+      MSSQL_SA_PASSWORD: ${SQLSERVER_PASSWORD:?Set SQLSERVER_PASSWORD in .env}
+    # Order startup using the conditions below; runtime timeouts and retries still handle later
+    # dependency failures.
+    depends_on:
+      sqlserver:
+        # Wait for the dependency health check to pass before starting this container.
+        condition: service_healthy
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - /opt/mssql-tools18/bin/sqlcmd -S sqlserver -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "IF DB_ID('reidy_property') IS NULL CREATE DATABASE reidy_property; IF DB_ID('reidy_appraisal') IS NULL CREATE DATABASE reidy_appraisal; IF DB_ID('reidy_communication') IS NULL CREATE DATABASE reidy_communication;" -b
+# Named volumes preserve database or broker files when containers are replaced.
+volumes:
+  sqlserver-data:

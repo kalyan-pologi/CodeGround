@@ -1,0 +1,122 @@
+export const reidyStoryScenarios = [
+  {
+    id: 'paid-free-boundary', category: 'Appraisal persistence', title: 'Free and paid appraisal writes must never mix',
+    story: 1,
+    context: 'ReidyAI has free cached-property reports and credit-charged reports. A shared save path can charge a free request or overwrite an auditable paid record.',
+    symptoms: ['A free report can reach billing code.', 'A paid history row can be overwritten by cache data.', 'Retries can charge the same paid request twice.'],
+    investigate: ['Trace both save paths from the request boundary to persistence.', 'Identify which dependency would make an accidental cross-call compile.', 'Replay free, paid, and duplicate requests.'],
+    tasks: ['Expose separate interfaces for free cache writes and paid history writes.', 'Reject a free request before any credit mutation and make paid writes idempotent.', 'Keep the audit record immutable after creation.'],
+    checks: ['Free writes never call the credit ledger.', 'A paid replay returns the original record without charging again.', 'A conflicting replay is rejected without changing either record.'],
+    hints: ['A boolean is weaker than separate ports.', 'Check idempotency before mutating balance.', 'Immutable history is easier to audit than update-in-place rows.'],
+    explanation: 'Separate write ports make the business boundary visible in code and prevent accidental reuse of a paid persistence path for free cached data.',
+    deliverables: 'Provide free/paid fixtures, call tracing, idempotency tests, and the audit invariant.'
+  },
+  {
+    id: 'pdf-download-config', category: 'Appraisal delivery', title: 'Paid PDF downloads point at the wrong storage account',
+    story: 2,
+    context: 'Customers paid for appraisal PDFs, but downloads return 404 even though the blobs exist. The runtime URL is built from a filename and storage configuration.',
+    symptoms: ['Every download in one environment returns 404.', 'The blob is present when inspected directly.', 'Invalid filenames reach URL generation instead of being rejected.'],
+    investigate: ['Compare the runtime storage account with the account containing the blob.', 'Verify container, blob name, and signed URL expiry separately.', 'Add a configuration-focused regression test.'],
+    tasks: ['Resolve download URLs from one validated storage configuration.', 'Fail startup or health checks when the configured account/container is incomplete.', 'Preserve the filename while preventing path traversal and exposing no credentials.'],
+    checks: ['A valid stored PDF produces a URL for the correct account.', 'Missing configuration fails clearly before serving broken links.', 'Traversal-like filenames are rejected.'],
+    hints: ['Verify the data location before changing URL logic.', 'Configuration errors should be observable at startup.', 'Treat blob names as data, not paths supplied to a filesystem.'],
+    explanation: 'The fix is a configuration and boundary problem, not a rewrite of URL concatenation. Validate the storage target and the blob name at the edge.',
+    deliverables: 'Provide runtime configuration fixtures, URL assertions, invalid-name cases, and a safe failure message.'
+  },
+  {
+    id: 'billing-history-gap', category: 'Billing integrity', title: 'Appraisal endpoints must record billable history',
+    story: 4,
+    context: 'Land and plex appraisal endpoints calculate results but skip the shared history write used for billing and audit. The work succeeds without a durable record.',
+    symptoms: ['The response succeeds while billing history is empty.', 'Support cannot reconstruct an unrecorded appraisal later.', 'A retried request can create duplicate billing records.'],
+    investigate: ['Compare all appraisal endpoints with the canonical history-service call.', 'Trace failures and retry behavior in the shared writer.', 'Check that the record is created exactly once per request key.'],
+    tasks: ['Route every billable appraisal type through the shared history service.', 'Persist the history record atomically with the billing decision.', 'Make retries idempotent and surface persistence failures instead of returning success.'],
+    checks: ['Land and plex requests create one history record.', 'A repeated request key does not double-charge or duplicate history.', 'A history failure prevents a false success response.'],
+    hints: ['Reuse the existing safe path instead of copying it.', 'Billing and audit need the same request identity.', 'Do not swallow the write exception after calculating the result.'],
+    explanation: 'A single history boundary prevents endpoint drift: new appraisal types inherit the same retry, audit, and billing guarantees.',
+    deliverables: 'Provide endpoint fixtures, history call counts, duplicate-request tests, and failure propagation.'
+  },
+  {
+    id: 'land-schema-normalization', category: 'Appraisal persistence', title: 'Land appraisals fit a shared nullable schema',
+    story: 5,
+    context: 'Land appraisals have lot size and as-is value but no bedrooms, bathrooms, ARV, or structure adjustments. They must remain queryable with the existing appraisal schema.',
+    symptoms: ['A land payload is forced into unrelated fields.', 'Cross-property queries become inconsistent when a new table fork is introduced.', 'Missing land data is confused with a numeric zero.'],
+    investigate: ['List fields produced by each appraisal type.', 'Mark intentionally absent values separately from invalid values.', 'Test normalization and cross-type reads.'],
+    tasks: ['Normalize land output into the shared record with explicit nulls for unsupported fields.', 'Validate required land fields without inventing residential values.', 'Expose the property type so consumers interpret nullable fields correctly.'],
+    checks: ['Land keeps lot size and value.', 'Residential-only fields remain null.', 'A missing required land field is rejected without partial persistence.'],
+    hints: ['Null can be a documented domain value.', 'Do not use zero to mean not applicable.', 'Schema reuse needs a type discriminator and field contract.'],
+    explanation: 'A shared schema is safe when the normalizer documents which fields apply to each property type and validates required fields before writing.',
+    deliverables: 'Provide type fixtures, normalized records, invalid payload tests, and the nullable-field contract.'
+  },
+  {
+    id: 'replace-comps', category: 'Appraisal persistence', title: 'Refresh comparable properties with an atomic replacement',
+    story: 6,
+    context: 'A KNN refresh can reorder, replace, or shrink the six comparable properties for an appraisal. There is no stable natural key for safely diffing old and new rows.',
+    symptoms: ['A refresh leaves orphaned or incorrectly matched comps.', 'The report can contain adjustments from a previous comp set.', 'A failed refresh can leave a partially replaced set.'],
+    investigate: ['Compare old and new comp identities and ordering.', 'Reproduce a refresh that removes and adds several comps.', 'Inject a failure between delete and insert.'],
+    tasks: ['Replace the complete child set inside one transaction.', 'Use the parent foreign key cascade and reject malformed duplicate comp IDs.', 'Guarantee rollback leaves the previous set intact when the new set fails validation.'],
+    checks: ['A refresh stores exactly the new set and order.', 'A failed refresh preserves the old set.', 'A duplicate or missing comp is rejected before deletion.'],
+    hints: ['Six rows make full replacement simpler and safer than guessing identity.', 'Validate before mutating.', 'The transaction boundary must include both delete and insert.'],
+    explanation: 'When child identity is unstable and the set is small, transactional replacement is more correct than a fragile diff algorithm.',
+    deliverables: 'Provide old/new fixtures, replacement SQL or repository operations, rollback tests, and the scaling tradeoff.'
+  },
+  {
+    id: 'cache-decorator', category: 'Caching', title: 'Cache shared rental API calls without changing 20 callers',
+    story: 8,
+    context: 'Twenty Mashvisor endpoint classes call one shared transport. Repeat property views make the same external calls even when fresh data is already stored locally.',
+    symptoms: ['A repeat view makes all external calls again.', 'Freshness rules differ by metric but are implemented inconsistently.', 'Provider failures can erase previously valid cached data.'],
+    investigate: ['Trace all callers to the shared transport interface.', 'Measure calls before and after a repeated view.', 'Test independent freshness windows for estimates and comps.'],
+    tasks: ['Add caching as a decorator around the shared transport.', 'Keep cache identity and freshness separate for each metric.', 'Return fresh cached data without calling the provider and persist refreshed data only after a successful response.'],
+    checks: ['A fresh repeat view makes zero provider calls.', 'An expired metric refreshes only that metric.', 'A provider failure does not replace a valid cached value with null.'],
+    hints: ['Decorate one stable port instead of editing every caller.', 'A present key can still be stale.', 'Cache failures must not destroy the last known good value.'],
+    explanation: 'A transport decorator centralizes caching and lets future endpoint callers inherit the behavior without duplicated policy code.',
+    deliverables: 'Provide call-count fixtures, freshness cases, provider failure behavior, and the decorator boundary.'
+  },
+  {
+    id: 'cache-kill-switch', category: 'Caching', title: 'A cache kill switch must remove the cache dependency',
+    story: 9,
+    context: 'Caching can be disabled by configuration during an incident, but an eagerly created cache datasource still prevents startup when the cache database is unavailable.',
+    symptoms: ['The service fails startup even with caching disabled.', 'The feature flag appears to work only after the infrastructure is healthy.', 'Disabled mode still makes cache calls at runtime.'],
+    investigate: ['Trace bean creation with the flag enabled and disabled.', 'Simulate an unreachable cache database.', 'Verify the disabled path makes no cache calls.'],
+    tasks: ['Create the cache adapter only when the feature is enabled.', 'Provide a no-op or direct-provider implementation when disabled.', 'Expose the active mode in health/diagnostic output without leaking credentials.'],
+    checks: ['Disabled mode starts without the cache datasource.', 'Disabled mode makes zero cache calls.', 'Enabled mode still reads and writes cached values.'],
+    hints: ['Optional usage is not optional construction.', 'Conditional bean creation removes the dependency.', 'Test the failure infrastructure, not just the flag value.'],
+    explanation: 'A kill switch is real only when disabled mode removes initialization and runtime dependency on the failing system.',
+    deliverables: 'Provide enabled/disabled fixtures, startup behavior, call counts, and safe diagnostics.'
+  },
+  {
+    id: 'chat-query-latency', category: 'Chat performance', title: 'Chat sends must avoid redundant database round trips',
+    story: 10,
+    context: 'Sending or deleting a chat message takes 30–60 seconds because lazy message, attachment, session, and participant access creates 15–20 database calls.',
+    symptoms: ['Chat actions are slow without throwing errors.', 'Authorization happens after expensive database work.', 'Lazy relationship loading creates repeated queries per message.'],
+    investigate: ['Capture SQL and timings on representative data.', 'Count calls for send and delete separately.', 'Move cheap authorization checks before database loading.'],
+    tasks: ['Load the message boundary needed for the operation in one bounded query.', 'Validate authorization before loading attachments or writing.', 'Keep send/delete writes atomic and return the correct status for a missing message.'],
+    checks: ['A send uses the bounded query budget.', 'Unauthorized access makes no attachment query.', 'Delete returns not-found for a missing message and does not mutate the session.'],
+    hints: ['Measure realistic data, not a five-row local table.', 'Lazy loading is still loading.', 'Cheap rejection should happen before expensive graph traversal.'],
+    explanation: 'The fix combines query planning, authorization ordering, and correct response behavior; performance work often reveals hidden correctness bugs.',
+    deliverables: 'Provide SQL counts, authorization cases, send/delete outputs, and a realistic fixture.'
+  },
+  {
+    id: 'startup-observability', category: 'Operations', title: 'Startup logs must include the failure window',
+    story: 14,
+    context: 'A log-clearing bean initializes after the APM appender and removes the first startup messages, hiding migration and dependency failures during every deployment.',
+    symptoms: ['The first seconds of every deployment are absent from APM.', 'Startup failures require local reproduction because the original logs are missing.', 'The first dependency error is replaced by a later generic failure.'],
+    investigate: ['Record bean initialization order.', 'Identify which component clears or replaces the appender.', 'Fail startup deliberately and confirm the first error is retained.'],
+    tasks: ['Make initialization order explicit instead of relying on incidental discovery order.', 'Keep startup diagnostics until the process is ready.', 'Add a regression check that startup failure output contains the original error.'],
+    checks: ['The appender is ready before startup diagnostics are emitted.', 'A failed dependency leaves an actionable first error.', 'Normal startup does not clear the captured startup window.'],
+    hints: ['Spring guarantees declared dependency edges, not unrelated bean order.', 'Observe startup as an operational contract.', 'The test should inspect ordering and retained output.'],
+    explanation: 'Small initialization-order bugs can erase the evidence needed to diagnose every other production failure, so observability must be tested as behavior.',
+    deliverables: 'Provide the bean-order fixture, captured logs, failure test, and the explicit dependency edge.'
+  },
+  {
+    id: 'notification-template-invalidation', category: 'Messaging', title: 'Notification template edits propagate across instances',
+    story: 15,
+    context: 'More than 164 notification templates live in the database and are cached in Redis. A local in-memory map leaves different application instances serving different copy after an edit.',
+    symptoms: ['Template changes require a restart.', 'Users behind different instances receive old and new wording simultaneously.', 'A broad cache flush can evict unrelated templates.'],
+    investigate: ['Simulate two instances with independent caches.', 'Edit one template and observe both instances.', 'Check invalidation authentication and failure handling.'],
+    tasks: ['Load templates through a shared cache abstraction with database fallback.', 'Publish an authenticated invalidation event and evict the changed key on every instance.', 'Keep stale data bounded and make invalidation failures observable without blocking notification delivery.'],
+    checks: ['An edit becomes visible on both instances without restart.', 'An unrelated template remains cached.', 'A malformed or unauthorized invalidation does not evict arbitrary keys.'],
+    hints: ['Local eviction is not distributed invalidation.', 'Invalidate one key rather than flushing the entire cache.', 'The invalidation channel needs its own trust boundary.'],
+    explanation: 'Database-backed templates plus targeted Redis pub/sub invalidation allow copy changes without deployments while preserving cache efficiency and instance consistency.',
+    deliverables: 'Provide two-instance fixtures, event validation, targeted eviction tests, and failure observability.'
+  }
+];

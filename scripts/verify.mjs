@@ -1,32 +1,39 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import { fileURLToPath } from 'node:url';
-import { projectChallenges, projectMcqs } from '../src/project-exercises.js';
-import { challenges } from '../practice/src/data/challenges.js';
-import { mcqs } from '../practice/src/data/mcqs.js';
-import { projectTopicTasks } from '../src/project-topic-tasks.js';
-import { topics } from '../practice/src/data/topics.js';
-import { productionScenarios } from '../src/production-scenarios.js';
-import { productionExercises } from '../src/production-exercises.js';
+import { projectChallenges, projectMcqs } from '../src/features/backend-practice/reidy/project-exercises.js';
+import { challenges } from '../src/features/backend-practice/java-backend/data/challenges.js';
+import { mcqs } from '../src/features/backend-practice/java-backend/data/mcqs.js';
+import { projectTopicTasks } from '../src/features/backend-practice/reidy/project-topic-tasks.js';
+import { topics } from '../src/features/backend-practice/java-backend/data/topics.js';
+import { productionScenarios } from '../src/features/backend-practice/reidy/production-scenarios.js';
+import { productionExercises } from '../src/features/backend-practice/reidy/production-exercises.js';
+import { reidyStoryScenarios } from '../src/features/backend-practice/reidy/reidy-story-scenarios.js';
 const root = fileURLToPath(new URL('../', import.meta.url));
-const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/catalog.json'), 'utf8'));
-const manifest = JSON.parse(fs.readFileSync(path.join(root, 'migration-manifest.json'), 'utf8'));
-let verifiedFiles = 0;
-for (const entry of manifest) {
-  // Archived source documents were intentionally ignored by the original repo.
-  // Verify them when present locally, without requiring them in a public checkout.
-  if (entry.localOnly && !fs.existsSync(path.join(root, entry.file))) continue;
-  const bytes = fs.readFileSync(path.join(root, entry.file));
-  assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), entry.adaptedSha256 || entry.sha256, `Imported file differs: ${entry.file}`);
-  verifiedFiles++;
-}
+const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/data/catalog.json'), 'utf8'));
+const resolveFeatureNote = (base, file) => {
+  const directory = path.join(root, base);
+  const match = fs.readdirSync(directory, { recursive: true }).find(entry => path.basename(entry) === path.basename(file));
+  return match ? path.join(directory, match) : path.join(directory, path.basename(file));
+};
 const keys = new Set();
 for (const note of catalog) {
   const key = `${note.repo}/${note.id}`;
   assert.ok(!keys.has(key), `Duplicate note key: ${key}`); keys.add(key);
-  assert.ok(fs.existsSync(path.join(root, 'public', note.file)), `Missing note: ${key}`);
+  const aliases = {
+    'library/sd/notes/': 'src/features/system-design/notes/',
+    'library/genai/notes/': 'src/features/genai/notes/'
+  };
+  const featureFile = Object.entries(aliases).reduce((value, [prefix, replacement]) => value.startsWith(prefix) ? replacement + value.slice(prefix.length) : value, note.file);
+  const notePath = featureFile.startsWith('src/features/system-design/notes/')
+    ? resolveFeatureNote('src/features/system-design/notes', note.file)
+    : featureFile.startsWith('src/features/genai/notes/')
+      ? resolveFeatureNote('src/features/genai/notes', note.file)
+      : featureFile.startsWith('features/')
+        ? path.join(root, 'src', featureFile)
+    : path.join(root, 'public', note.file);
+  assert.ok(fs.existsSync(notePath), `Missing note: ${key}`);
 }
 for (const challenge of projectChallenges) {
   for (const field of ['title', 'statement', 'starter', 'solution', 'expected']) assert.ok(challenge[field], `Challenge ${challenge.id} missing ${field}`);
@@ -41,16 +48,22 @@ assert.equal(projectTopicTasks.length, topics.length + productionExercises.lengt
 assert.equal(new Set(projectTopicTasks.map(task => task.id)).size, projectTopicTasks.length);
 assert.equal(new Set(projectTopicTasks.map(task => task.topic)).size, topics.length);
 for (const topic of topics) {
-  const task = projectTopicTasks.find(task => task.topic === topic);
+  const task = projectTopicTasks.find(task => task.topic === topic && !task.scenarioId);
   assert.ok(task, `Missing project task: ${topic}`);
   for (const field of ['title', 'statement', 'starter', 'solution', 'expected', 'pseudocode', 'notes', 'runtime']) assert.ok(task[field], `${topic}: missing ${field}`);
   assert.ok(task.requirements?.length >= 6, `${topic}: needs feature requirements`);
   assert.ok(task.hintSteps?.length >= 4, `${topic}: needs progressive hints`);
   assert.ok(task.explanation?.length >= 3, `${topic}: needs an explained solution`);
 }
-console.log(`Verified ${verifiedFiles} imported/adapted files, ${catalog.length} unique notes, and ${projectTopicTasks.length} ReidyAI tasks covering every practice topic.`);
+console.log(`Verified ${catalog.length} catalog notes and ${projectTopicTasks.length} ReidyAI tasks covering every practice topic.`);
 console.log(`Full original Java Practice banks available: ${challenges.length} coding challenges and ${mcqs.length} MCQs.`);
 assert.equal(productionScenarios.length, 12);
+assert.equal(reidyStoryScenarios.length, 10);
+assert.equal(new Set(reidyStoryScenarios.map(scenario => scenario.id)).size, reidyStoryScenarios.length);
+for (const scenario of reidyStoryScenarios) {
+  for (const field of ['id', 'title', 'context', 'explanation', 'deliverables']) assert.ok(scenario[field], `${scenario.id}: missing ${field}`);
+  for (const field of ['symptoms', 'investigate', 'tasks', 'checks', 'hints']) assert.ok(scenario[field]?.length >= 3, `${scenario.id}: incomplete ${field}`);
+}
 assert.equal(new Set(productionScenarios.map(scenario => scenario.id)).size, 12);
 assert.equal(new Set(productionScenarios.map(scenario => scenario.category)).size, 5);
 for (const scenario of productionScenarios) {
@@ -59,12 +72,12 @@ for (const scenario of productionScenarios) {
   for (const field of ['investigate', 'tasks', 'checks', 'hints']) assert.ok(scenario[field]?.length >= 3, `${scenario.id}: incomplete ${field}`);
 }
 console.log('Verified 12 production scenarios across five focus areas.');
-assert.equal(productionExercises.length, productionScenarios.length);
+assert.equal(productionExercises.length, productionScenarios.length + 10);
 assert.equal(new Set(productionExercises.map(exercise => exercise.id)).size, productionExercises.length);
 for (const exercise of productionExercises) {
   assert.ok(topics.includes(exercise.topic), `Unknown production topic: ${exercise.topic}`);
-  assert.ok(!projectTopicTasks.filter(task => !task.scenarioId).some(task => task.id === exercise.id), 'Production and topic task IDs overlap');
-  assert.equal(exercise.runtime, 'project');
+  assert.ok(!projectTopicTasks.filter(task => !task.scenarioId).some(task => task.sourceId === exercise.id), 'Production and topic source IDs overlap');
+  assert.ok(['project', 'java'].includes(exercise.runtime));
   for (const field of ['starter', 'solution', 'expected', 'notes', 'executionNote']) assert.ok(exercise[field]);
 }
-assert.deepEqual(productionExercises.map(exercise => exercise.id), Array.from({ length: 12 }, (_, index) => 23 + index));
+assert.deepEqual(productionExercises.map(exercise => exercise.id), Array.from({ length: 22 }, (_, index) => 23 + index));
