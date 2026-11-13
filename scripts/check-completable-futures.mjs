@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { futureProgram } from '../src/future-runner.js';
+import { futureProgram } from '../src/features/backend-practice/java-stream/future-runner.js';
 
-const html = readFileSync(new URL('../public/library/interview/notes/java-snippets.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../src/features/backend-practice/java-stream/questions.html', import.meta.url), 'utf8');
 const start = html.indexOf('<h2>CompletableFuture</h2>');
 const end = html.indexOf('<h2>', start + 10);
 const section = html.slice(start, end < 0 ? undefined : end);

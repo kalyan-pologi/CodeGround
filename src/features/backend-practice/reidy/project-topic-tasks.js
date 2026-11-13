@@ -8,6 +8,7 @@ import { mediumWorkflowTasks } from './project-medium-workflows.js';
 import { mediumDeliveryTasks } from './project-medium-delivery.js';
 import { mediumOperationTasks } from './project-medium-operations.js';
 import { productionExercises } from './production-exercises.js';
+import { buildDeepReidyTasks } from './deep-reidy-task-plan.js';
 
 const tasks = [propertyCatalogTask, ...mediumJavaTasks, ...advancedJavaTasks, ...mediumDataTasks,
   ...mediumApiTasks, ...mediumWorkflowTasks, ...mediumDeliveryTasks, ...mediumOperationTasks];
@@ -19,5 +20,4 @@ const topicTasks = topics.map((topic, index) => {
   if (!task) throw new Error(`Missing ReidyAI task for ${topic}`);
   return { ...task, id: index + 1, runtime: task.runtime || 'java' };
 });
-const orderedTasks = [...productionExercises, ...topicTasks];
-export const projectTopicTasks = orderedTasks.map((task, index) => ({ ...task, sourceId: task.id, id: index + 1 }));
+export const projectTopicTasks = buildDeepReidyTasks(productionExercises, topicTasks);

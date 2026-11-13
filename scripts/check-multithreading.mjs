@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { threadProgram } from '../src/thread-runner.js';
+import { threadProgram } from '../src/features/backend-practice/java-stream/thread-runner.js';
 
-const html = readFileSync(new URL('../public/library/interview/notes/java-snippets.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../src/features/backend-practice/java-stream/questions.html', import.meta.url), 'utf8');
 const start = html.indexOf('<h2>Multithreading</h2>');
 const end = html.indexOf('<h2>Collections</h2>', start);
 const section = html.slice(start, end < 0 ? undefined : end);

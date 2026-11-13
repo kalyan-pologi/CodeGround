@@ -23,16 +23,16 @@ async function loadSupabase() {
   return supabaseLoad;
 }
 
-const tabs = ['Home', 'Backend', 'Backend Practice', 'DevOps', 'Web', 'SD', 'GenAI'];
+const tabs = ['Home', 'Backend Notes', 'Backend Practice', 'DevOps', 'Web', 'SD', 'GenAI'];
 const slugs = ['home', 'backend', 'practice', 'devops', 'web', 'sd', 'genai'];
 const groups = {
   backend: [['Java & Spring', featureCatalog.backend['java-spring']], ['Tooling', featureCatalog.backend.tooling]],
-  practice: [['Java Interview Questions', ['java-interview-questions']], ['Reidy Tasks', ['@tasks']], ['Java Backend Tasks', ['@workspace']], ['Java Core Tasks', ['java-snippets']], ['SQL', ['sql-snippets']], ['Debugging', ['@debugging']]],
+  practice: [['Java Interview Questions', ['java-interview-questions']], ['Reidy Tasks', ['@tasks']], ['Java Backend Tasks', ['@workspace']], ['Java Core Tasks', ['java-snippets']], ['SQL', ['sql-snippets']], ['Java & Spring Practice MCQs', ['@debugging']]],
   devops: [['Commands', featureCatalog.devops.commands], ['Infrastructure', featureCatalog.devops.infrastructure], ['Cloud', featureCatalog.devops.cloud]],
   web: [['Fundamentals', featureCatalog.web.fundamentals], ['Frameworks', featureCatalog.web.frameworks]],
   home: [['Getting started', ['@overview', ...featureCatalog.home['getting-started'].filter(id => id !== 'home')]], ['Project write-ups', featureCatalog.home['project-writeups']], ['Project stories & questions', featureCatalog.home['project-stories']]]
 };
-const names = { '@overview': 'Overview', '@tasks': 'Reidy Tasks', '@workspace': 'Java Backend Tasks', '@debugging': 'Debugging', 'java-interview-questions': 'Java Interview Questions', 'java-snippets': 'Java Core Tasks', 'sql-snippets': 'SQL' };
+const names = { '@overview': 'Overview', '@tasks': 'Reidy Tasks', '@workspace': 'Java Backend Tasks', '@debugging': 'Java & Spring Practice MCQs', 'java-interview-questions': 'Java Interview Questions', 'java-snippets': 'Java Core Tasks', 'sql-snippets': 'SQL' };
 const labels = { backend: 'Java, Spring Boot & design principles', practice: 'Build skills through project work', devops: 'Commands, containers & cloud', web: 'Frontend fundamentals & frameworks', sd: 'Architecture & distributed systems', genai: 'Models, retrieval & AI applications' };
 const escape = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const initials = email => {
@@ -256,7 +256,7 @@ function showWorkspace(project = false, topicTasks = false, scenarioId = '', tas
   if (project && scenarioId) params.set('scenario', scenarioId);
   if (taskId) params.set('task', taskId);
   const query = params.toString();
-  main.innerHTML = `<div class="reader"><iframe class="note-frame" title="${debugging ? 'Debugging' : project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
+  main.innerHTML = `<div class="reader"><iframe class="note-frame" title="${debugging ? 'Java & Spring Practice MCQs' : project ? 'ReidyAI Coding Exercises' : 'Java Practice Exercises'}" src="${import.meta.env.BASE_URL}practice.html${query ? '?' + query : ''}"></iframe></div>`;
   const frame = main.querySelector('iframe');
   frame.addEventListener('load', () => frame.contentDocument?.addEventListener('pointerdown', () => closeDropdown()));
 }

@@ -12,7 +12,7 @@ assert.ok(!compareSqlResults([{ columns: ['name'], values: [['Ada'], ['Ada'], ['
 assert.ok(!compareSqlResults([], sampleResult).passed);
 assert.ok(!compareSqlResults([{ columns: ['name'], values: [['Ada'], ['Bob']], truncated: true }], sampleResult).passed);
 const SQL = await initSqlJs();
-const html = readFileSync(new URL('../public/library/interview/notes/sql-snippets.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../src/features/backend-practice/sql/questions.html', import.meta.url), 'utf8');
 const snippets = [...html.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)].map(match => match[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"'));
 let ran = 0;
 for (const snippet of snippets) {

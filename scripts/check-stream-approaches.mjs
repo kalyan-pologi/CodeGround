@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { streamApproaches } from '../src/stream-approaches.js';
+import { streamApproaches } from '../src/features/backend-practice/java-stream/stream-approaches.js';
 
 const model = `import java.util.*;
 import java.util.function.*;

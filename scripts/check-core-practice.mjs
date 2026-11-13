@@ -2,9 +2,9 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { coreProgram } from '../src/core-runner.js';
+import { coreProgram } from '../src/features/backend-practice/java-stream/core-runner.js';
 
-const html = readFileSync(new URL('../public/library/interview/notes/java-snippets.html', import.meta.url), 'utf8');
+const html = readFileSync(new URL('../src/features/backend-practice/java-stream/questions.html', import.meta.url), 'utf8');
 const start = html.indexOf('<h2>Collections</h2>');
 const section = html.slice(start);
 const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');

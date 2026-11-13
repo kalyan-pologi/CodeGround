@@ -44,12 +44,24 @@ for (const question of projectMcqs) {
   assert.ok(Number.isInteger(question.answer) && question.answer >= 0 && question.answer < 4);
   assert.ok(question.explanation);
 }
-assert.equal(projectTopicTasks.length, topics.length + productionExercises.length);
+assert.equal(projectTopicTasks.length, 30);
 assert.equal(new Set(projectTopicTasks.map(task => task.id)).size, projectTopicTasks.length);
-assert.equal(new Set(projectTopicTasks.map(task => task.topic)).size, topics.length);
+for (const task of projectTopicTasks) {
+  for (const field of ['title', 'statement', 'starter', 'solution', 'expected', 'notes', 'runtime']) assert.ok(task[field], `Task ${task.id}: missing ${field}`);
+  assert.ok(task.sourceIds?.length >= 1, `Task ${task.id}: missing source mapping`);
+  assert.ok(task.requirements?.length >= 3, `Task ${task.id}: needs implementation requirements`);
+  assert.ok(task.hintSteps?.length >= 1, `Task ${task.id}: missing hints`);
+  assert.ok(task.subtasks?.length >= 4, `Task ${task.id}: needs implementation phases`);
+  assert.ok(task.files?.length >= 4, `Task ${task.id}: needs a multi-file sample codebase`);
+  for (const file of task.files) {
+    assert.ok(file.starter, `Task ${task.id}: empty sample file ${file.path}`);
+    assert.ok(Object.hasOwn(task.fileSolutions || {}, file.path), `Task ${task.id}: missing solution file ${file.path}`);
+  }
+}
 for (const topic of topics) {
-  const task = projectTopicTasks.find(task => task.topic === topic && !task.scenarioId);
-  assert.ok(task, `Missing project task: ${topic}`);
+  const topicIndex = topics.indexOf(topic) + 1;
+  const task = projectTopicTasks.find(candidate => candidate.sourceIds?.includes(`topic-${topicIndex}`));
+  assert.ok(task, `Missing project task coverage: ${topic}`);
   for (const field of ['title', 'statement', 'starter', 'solution', 'expected', 'pseudocode', 'notes', 'runtime']) assert.ok(task[field], `${topic}: missing ${field}`);
   assert.ok(task.requirements?.length >= 6, `${topic}: needs feature requirements`);
   assert.ok(task.hintSteps?.length >= 4, `${topic}: needs progressive hints`);
