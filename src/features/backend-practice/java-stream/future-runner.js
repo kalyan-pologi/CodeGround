@@ -18,13 +18,14 @@ ${body}
   if ((/\bfuture\b/.test(body) || /\btransformed\b/.test(body)) && !declarations('future')) setup.push('CompletableFuture<String> future = CompletableFuture.completedFuture("Hello");');
   if (/\btransformed\b/.test(body) && !declarations('transformed')) setup.push('CompletableFuture<String> transformed = future.thenApply(result -> result + " World");');
   if (/\bgreeting\b/.test(body) && !declarations('greeting')) setup.push('CompletableFuture<String> greeting = CompletableFuture.completedFuture("Hi");');
-  if (/\bname\b/.test(body) && !declarations('name')) setup.push('CompletableFuture<String> name = CompletableFuture.completedFuture("Shiva");');
+  if (/\bname\b/.test(body) && !declarations('name')) setup.push('CompletableFuture<String> name = CompletableFuture.completedFuture("Maya");');
   const futureNames = [...body.matchAll(/CompletableFuture<[^>]+>\s+(\w+)\s*=/g)].map(match => match[1]);
   const output = futureNames.map(name => `        System.out.println(${JSON.stringify(name + ' = ')} + ${name}.join());`);
   const values = [...body.matchAll(/^\s*(?:String|int|long|double|boolean)\s+(\w+)\s*=/gm)]
     .map(match => match[1])
     .filter(name => !futureNames.includes(name));
   output.push(...values.map(name => `        System.out.println(${JSON.stringify(name + ' = ')} + ${name});`));
+  if (/System\.out\.print(?:ln)?\s*\(/.test(body)) output.length = 0;
   const waitForCallbacks = /\.(?:thenAccept|thenRun|whenComplete|thenApplyAsync)\b/.test(body)
     ? '        Thread.sleep(1100);\n' : '';
   return `import java.util.concurrent.*;

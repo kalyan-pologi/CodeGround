@@ -63,6 +63,7 @@ export function mountStreamRunners(doc) {
     }
     questions.push({ id:questions.length+1, title:node.textContent.replace(/^Q:\s*/,'').replace(/\s+/g,' ').trim(), category, runnable, solutions,
       description:nodes.filter(element => element.tagName === 'P').map(element => element.textContent).join(' '),
+      task:nodes.find(element => element.tagName === 'P' && element.querySelector(':scope > b')?.textContent.trim() === 'Task:')?.textContent.replace(/^Task:\s*/, '').trim(),
       starter:wrap() });
   }
   for (const [name, css] of [['sql-lab', sqlLabStyles], ['stream-lab', streamLabStyles]]) { const style = doc.createElement('style'); style.setAttribute('data-style-name', name); style.textContent = css; doc.head.append(style); }

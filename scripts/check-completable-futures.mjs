@@ -11,6 +11,13 @@ const section = html.slice(start, end < 0 ? undefined : end);
 const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
 const snippets = [...section.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)].map(match => decode(match[1]));
 assert.equal(snippets.length, 13, 'CompletableFuture question count changed unexpectedly');
+const expectedOutputs = new Map([
+  [0, 'message = Hello\nlength = 5'],
+  [1, 'pipeline: result=HELLO WORLD'],
+  [2, 'value = Hello World\nvalid = true'],
+  [4, 'thenCombine: Hi, Maya!'],
+  [9, 'allOf: All tasks done\ncombined = Hi Maya / Hello World']
+]);
 
 const folder = mkdtempSync(join(process.cwd(), '.tmp-completable-future-'));
 try {
@@ -19,6 +26,7 @@ try {
     writeFileSync(file, futureProgram(snippet));
     const result = spawnSync('java', ['--source', '17', file], { encoding: 'utf8', timeout: 30000 });
     assert.equal(result.status, 0, `Question ${index + 1} failed:\n${result.stderr || result.stdout}`);
+    if (expectedOutputs.has(index)) assert.equal(result.stdout.replace(/\r\n/g, '\n').trim(), expectedOutputs.get(index), `Question ${index + 1} output changed`);
   });
 } finally {
   rmSync(folder, { recursive: true, force: true });
