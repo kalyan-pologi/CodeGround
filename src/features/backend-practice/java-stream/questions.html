@@ -422,6 +422,9 @@ int oddSum = sumByParity.get(false);</code></pre>
     <code>thenApply</code>/<code>thenApplyAsync</code> or <code>thenCombine</code>/<code>thenCompose</code>.</p>
 
   <p><b>Q: Run an asynchronous task, derive a second value, and report both results after completion.</b></p>
+  <p><b>Task:</b> Write a Java program that starts a background operation which produces the greeting <code>"Hello"</code>. After the greeting is available, produce a second result containing the number of characters in that greeting. Print both the original greeting and the derived character count after the work is complete.</p>
+  <p><b>Sample input:</b> No keyboard input is required. The starter program provides the greeting value and the short delay.</p>
+  <p><b>Expected output:</b> <code>message = Hello</code><br><code>length = 5</code></p>
   <pre><code>CompletableFuture&lt;String&gt; future = CompletableFuture.supplyAsync(() -> {
     sleep(1);
     return "Hello";
