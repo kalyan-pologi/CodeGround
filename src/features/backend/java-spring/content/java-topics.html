@@ -190,6 +190,93 @@
   <h3>JSON Parsing</h3>
   <p>Converting between Java objects and JSON format. Use case: web APIs, data exchange, configuration files, REST services.</p>
 
+  <h3>Common Exceptions: Java to Spring Boot</h3>
+  <p>The same exception can have several causes. Read the first relevant application stack frame and the root cause before choosing a fix. Checked exceptions must be caught or declared; unchecked exceptions usually point to a broken input contract, invalid state, or programming mistake. Spring may wrap an underlying Java, JDBC, or Jackson exception.</p>
+
+  <h3>Core Java Exceptions</h3>
+  <ul>
+    <li><strong><code>NullPointerException</code>:</strong> A missing request field, an uninitialized dependency, or an unexpected null result is used as an object. Check which reference is null and where it should have been validated or initialized.</li>
+    <li><strong><code>IllegalArgumentException</code>:</strong> A method receives a negative amount, blank ID, or unsupported option. Check the method contract and validate input at the boundary.</li>
+    <li><strong><code>NumberFormatException</code>:</strong> Text is blank, contains letters, or exceeds the target number type's range. Check the original value and expected numeric format. This is a subtype of <code>IllegalArgumentException</code>.</li>
+    <li><strong><code>IllegalStateException</code>:</strong> Code reuses a closed resource, runs an operation in the wrong workflow state, or collects duplicate map keys without a merge rule. Check the object's state and the operation's preconditions.</li>
+    <li><strong><code>IndexOutOfBoundsException</code>:</strong> Code reads an empty list, uses an invalid array index, or assumes a page contains an item. Check collection size before indexing.</li>
+    <li><strong><code>NoSuchElementException</code>:</strong> <code>Optional.get()</code> is called on an empty value, an iterator is exhausted, or an empty queue is read with <code>remove()</code>. Check whether absence is expected and handle it explicitly.</li>
+    <li><strong><code>ClassCastException</code>:</strong> Code casts to the wrong DTO or entity, uses a raw collection, or assumes a deserialized value has a particular type. Check the actual runtime type and remove unsafe casts.</li>
+    <li><strong><code>UnsupportedOperationException</code>:</strong> Code mutates an unmodifiable collection or calls an operation an implementation does not support. Check the API contract and choose a mutable copy or supported operation.</li>
+    <li><strong><code>ConcurrentModificationException</code>:</strong> Code structurally changes a collection during iteration, including from another thread. Check the iteration and mutation path; this can happen even in one thread.</li>
+    <li><strong><code>ArithmeticException</code>:</strong> Integer division uses zero, or <code>BigDecimal.divide()</code> needs a rounding rule. Check the divisor and the required precision policy.</li>
+    <li><strong><code>DateTimeParseException</code>:</strong> A date string has an invalid day, unexpected format, or missing component required by the formatter. Check the input and formatter together.</li>
+  </ul>
+
+  <h3>I/O and Serialization Exceptions</h3>
+  <ul>
+    <li><strong><code>IOException</code> (checked):</strong> A file read fails, a connection closes during transfer, or writing to a stream fails. Check the underlying cause, path or endpoint, and resource cleanup.</li>
+    <li><strong><code>NoSuchFileException</code> (checked):</strong> A path is wrong, the production working directory differs, or an expected mounted file is absent. Check the resolved absolute path and deployment configuration.</li>
+    <li><strong><code>SQLException</code> (checked):</strong> Raw JDBC encounters invalid SQL, a constraint violation, a connection failure, or a query timeout. Check the SQL state and vendor error; Spring data access often translates this exception.</li>
+    <li><strong><code>InterruptedException</code> (checked):</strong> A thread is interrupted during <code>sleep()</code>, a blocking queue operation, or shutdown. Propagate it when possible; otherwise restore the interrupt flag with <code>Thread.currentThread().interrupt()</code>.</li>
+    <li><strong><code>JsonProcessingException</code> (Jackson, checked):</strong> Direct JSON parsing sees malformed text or an incompatible value, or object serialization fails. Check the input or object shape; Spring HTTP conversion may wrap the Jackson cause.</li>
+    <li><strong><code>NotSerializableException</code> (checked):</strong> Native Java object serialization encounters a class that does not implement <code>Serializable</code>. Check the object graph; this does not apply to ordinary JSON serialization.</li>
+    <li><strong><code>ClassNotFoundException</code> (checked):</strong> <code>Class.forName()</code> requests a missing class, a plugin is absent, or native Java deserialization cannot find a class. Check the requested name and runtime classpath; unlike <code>NoClassDefFoundError</code>, this comes from an explicit class lookup.</li>
+  </ul>
+
+  <h3>Spring MVC Request and Response Exceptions</h3>
+  <ul>
+    <li><strong><code>HttpMessageNotReadableException</code>:</strong> The request body is missing, JSON is malformed, or a JSON value cannot be converted to the target Java type. Inspect the request body and its nested Jackson cause.</li>
+    <li><strong><code>MethodArgumentNotValidException</code>:</strong> A <code>@Valid</code> request DTO violates constraints such as <code>@NotBlank</code> or <code>@Size</code>. Inspect field errors and return a clear 400 response.</li>
+    <li><strong><code>HandlerMethodValidationException</code>:</strong> Direct constraints on controller parameters or return values fail under Spring MVC method validation. Inspect parameter validation results; availability depends on the Spring version.</li>
+    <li><strong><code>MethodArgumentTypeMismatchException</code>:</strong> A path or query value cannot convert to a <code>UUID</code>, number, enum, or date. Check the supplied value and parameter type.</li>
+    <li><strong><code>MissingServletRequestParameterException</code>:</strong> A required <code>@RequestParam</code> is absent or supplied without a value. Check the API contract and caller's query string.</li>
+    <li><strong><code>HttpRequestMethodNotSupportedException</code>:</strong> A caller sends the wrong HTTP verb, such as POST to a GET route. Check the route mapping and client request.</li>
+    <li><strong><code>HttpMediaTypeNotSupportedException</code>:</strong> A request has an unsupported <code>Content-Type</code> or lacks a converter for its body type. Check the header and endpoint's <code>consumes</code> setting.</li>
+    <li><strong><code>HttpMessageNotWritableException</code>:</strong> Spring cannot serialize a response because of an unsupported type, bad object graph, or serialization failure. Inspect the nested cause and return DTOs with a controlled shape.</li>
+    <li><strong><code>ResponseStatusException</code>:</strong> Application code deliberately signals an HTTP status, such as 404 for a missing resource or 409 for a conflict. Check the business condition and keep the response message safe for clients.</li>
+  </ul>
+
+  <h3>Database, JPA, and Transaction Exceptions</h3>
+  <ul>
+    <li><strong><code>DataIntegrityViolationException</code>:</strong> An insert or update violates a unique key, foreign key, or NOT NULL constraint. Inspect the underlying constraint name and decide whether the conflict is a client error or an application bug.</li>
+    <li><strong><code>ConstraintViolationException</code> (Jakarta Validation):</strong> Service method validation or entity validation finds a value that violates a constraint. Inspect the property path and violation messages; this is different from the similarly named Hibernate database constraint exception.</li>
+    <li><strong><code>EmptyResultDataAccessException</code>:</strong> A query expecting at least one row, such as <code>JdbcTemplate.queryForObject()</code>, returns none. Check whether a missing row is expected and use an optional lookup when appropriate.</li>
+    <li><strong><code>OptimisticLockingFailureException</code>:</strong> Two requests update the same versioned row or code saves a stale entity. Check the version field and apply an explicit conflict or retry policy.</li>
+    <li><strong><code>PessimisticLockingFailureException</code>:</strong> A database lock cannot be acquired, or a deadlock or lock timeout is translated by Spring. Check transaction duration and lock order before retrying.</li>
+    <li><strong><code>CannotGetJdbcConnectionException</code>:</strong> The database is unavailable, connection settings are wrong, or the pool cannot supply a connection. Check database health, credentials, pool usage, and the root cause.</li>
+    <li><strong><code>QueryTimeoutException</code>:</strong> A query exceeds its configured time limit or is cancelled by the database. Check query plan, indexes, load, and timeout settings.</li>
+    <li><strong><code>UnexpectedRollbackException</code>:</strong> An inner operation marks a shared transaction rollback-only, but outer code still tries to commit. Find the earlier failure; catching it does not make that transaction safe to reuse.</li>
+    <li><strong><code>LazyInitializationException</code> (Hibernate):</strong> Code maps or serializes an unfetched relationship after the session closes. Fetch the data needed for a DTO inside the transaction and check query counts.</li>
+  </ul>
+
+  <h3>Security, Outbound HTTP, and Background Work</h3>
+  <ul>
+    <li><strong><code>AuthenticationException</code> (Spring Security):</strong> Credentials are invalid, expired, or cannot be authenticated. Check the authentication mechanism; the security filter chain often handles this before a controller runs.</li>
+    <li><strong><code>AccessDeniedException</code> (Spring Security):</strong> An authenticated user lacks a role or method permission. Check authorization rules and principal authorities; this differs from <code>java.nio.file.AccessDeniedException</code>.</li>
+    <li><strong><code>HttpClientErrorException</code>:</strong> A <code>RestClient</code> or <code>RestTemplate</code> call receives a 4xx response, such as 400, 404, or 429. Inspect the status and response body before deciding whether to retry.</li>
+    <li><strong><code>HttpServerErrorException</code>:</strong> An outbound HTTP call receives a 5xx response. Check the dependency's status and apply a bounded retry policy only when the operation is safe to retry.</li>
+    <li><strong><code>ResourceAccessException</code>:</strong> An outbound HTTP call fails to connect, times out, or hits another I/O problem. Check network, DNS, TLS, timeouts, and the nested cause.</li>
+    <li><strong><code>WebClientResponseException</code>:</strong> A <code>WebClient</code> call receives an error HTTP status. Inspect the status and body; transport failures use other exception types.</li>
+    <li><strong><code>WebClientRequestException</code>:</strong> A <code>WebClient</code> call fails before receiving an HTTP response because of DNS, connection, TLS, or timeout trouble. Inspect the nested network cause and dependency availability.</li>
+    <li><strong><code>TimeoutException</code>:</strong> Waiting for a <code>Future</code> or background result exceeds its limit. Check the operation's latency and whether cancellation or a fallback is needed.</li>
+    <li><strong><code>CompletionException</code>:</strong> A <code>CompletableFuture</code> stage fails and <code>join()</code> or a dependent stage reports a wrapper exception. Inspect <code>getCause()</code> to find the actual failure.</li>
+    <li><strong><code>TaskRejectedException</code>:</strong> A Spring executor rejects work because its queue is full or it is shutting down. Check executor capacity, task duration, and shutdown timing.</li>
+  </ul>
+
+  <h3>Application Startup Exceptions</h3>
+  <ul>
+    <li><strong><code>BeanCreationException</code>:</strong> A bean constructor, factory method, or initialization step fails. Follow nested causes to the failing bean and its configuration.</li>
+    <li><strong><code>UnsatisfiedDependencyException</code>:</strong> A required dependency is missing, ambiguous, or fails during creation. Check the injection point, component scanning, qualifiers, and nested cause.</li>
+    <li><strong><code>NoSuchBeanDefinitionException</code>:</strong> A component is outside scanning, a conditional bean was not created, or a requested type was never registered. Check the active profile and configuration conditions.</li>
+  </ul>
+
+  <h3>Important Java Errors</h3>
+  <p><code>Error</code> is a separate branch of <code>Throwable</code>. These usually indicate JVM resource exhaustion, a failing class initialization, or incompatible compiled code. Investigate the environment and root cause; do not treat them as routine recoverable request failures or catch <code>Error</code> broadly.</p>
+  <ul>
+    <li><strong><code>OutOfMemoryError</code>:</strong> Heap is exhausted, too many threads are created, or another JVM memory area runs out. Check the exact error message, memory limits, heap dump, and allocation pattern.</li>
+    <li><strong><code>StackOverflowError</code>:</strong> Recursion has no stopping condition, object methods call each other repeatedly, or a cyclic object graph is traversed without protection. Check the repeated stack frames.</li>
+    <li><strong><code>NoClassDefFoundError</code>:</strong> A class existed at compile time but is missing at runtime, or its earlier initialization failed. Check the runtime classpath, packaged dependencies, and earlier cause.</li>
+    <li><strong><code>NoSuchMethodError</code>:</strong> Code was compiled against a different library version from the one loaded in production. Check dependency versions and the packaged artifact.</li>
+    <li><strong><code>ExceptionInInitializerError</code>:</strong> A static initializer or static field initialization throws an exception. Check its nested cause and avoid environment-dependent work in static initialization.</li>
+    <li><strong><code>AssertionError</code>:</strong> An explicit assertion or test assertion fails. Check the violated assumption; Java <code>assert</code> statements depend on whether assertions are enabled.</li>
+  </ul>
+
   <h2>Collections &amp; Generics</h2>
 
   <h3>Collections Framework</h3>
