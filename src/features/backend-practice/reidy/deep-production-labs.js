@@ -1,3 +1,9 @@
+import { cacheAsideLab } from './cache-aside-lab.js';
+import { cacheOperationsLab } from './cache-operations-lab.js';
+import { billingIdempotencyLab } from './billing-idempotency-lab.js';
+import { appraisalDeliveryLab } from './appraisal-delivery-lab.js';
+import { templateInvalidationLab } from './template-invalidation-lab.js';
+
 const specById = {
   'property-read-performance': ['PropertyRead', 'bounded property reads, owner authorization, batch loading, and index evidence'],
   'stable-feed-pagination': ['Feed', 'authorized keyset pagination, compound cursors, and bounded query budgets'],
@@ -18,6 +24,11 @@ const specById = {
 const java = (name, body) => `class ${name} {\n${body}\n}`;
 
 export function deepProductionLab(task, groupId) {
+  if (groupId === 'cache-aside-service') return cacheAsideLab(task);
+  if (groupId === 'cache-operations') return cacheOperationsLab(task);
+  if (groupId === 'billing-idempotency') return billingIdempotencyLab(task);
+  if (groupId === 'validated-appraisal-delivery') return appraisalDeliveryLab(task);
+  if (groupId === 'distributed-template-invalidation') return templateInvalidationLab(task);
   const spec = specById[groupId];
   if (!spec || groupId === 'property-read-performance') return null;
   const [prefix, focus] = spec;

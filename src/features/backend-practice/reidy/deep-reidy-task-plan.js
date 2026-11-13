@@ -1,11 +1,12 @@
 import { deepProductionLab } from './deep-production-labs.js';
+import { buildCacheInsertCollisionTask } from './cache-insert-collision-lab.js';
 
 const productionGroups = [
   { id: 'property-read-performance', title: 'Build a production property search read path', sources: ['n-plus-one', 'missing-index'], focus: 'Combine N+1 elimination, bounded fetch plans, composite indexing, query plans, and measurable read/write trade-offs.' },
   { id: 'stable-feed-pagination', title: 'Build a stable, authorized property feed', sources: ['slow-pagination', 'chat-query-latency'], focus: 'Combine keyset pagination, authorization-first loading, bounded queries, and consistent not-found behavior.' },
   { id: 'safe-credit-workflow', title: 'Build a deadlock-safe credit workflow', sources: ['deadlocks', 'lock-timeouts'], focus: 'Combine deterministic lock ordering, short transactions, remote-call isolation, rollback, and idempotent retries.' },
   { id: 'bounded-dependency-retries', title: 'Build a bounded property dependency gateway', sources: ['retry-storms'], focus: 'Centralize retries, enforce deadlines, add jitter, classify failures, and prevent side-effect retries.' },
-  { id: 'coherent-rental-cache', title: 'Build a coherent distributed rental cache', sources: ['cache-stampede', 'stale-cache-race'], focus: 'Combine token-owned leases, single-flight loading, versioned keys, stale-write protection, and bounded waiters.' },
+  { id: 'cache-insert-collision', title: 'Fix concurrent rental cache insert failures', sources: ['cache-stampede'], focus: 'Reproduce the SELECT-then-INSERT race and make SQL Server insert-if-absent safe under parallel requests.' },
   { id: 'cache-aside-service', title: 'Build a resilient cache-aside service', sources: ['cache-decorator'], focus: 'Keep callers unchanged while adding freshness, fallback, metrics, invalidation, and provider-failure behavior.' },
   { id: 'cache-operations', title: 'Build an operable cache with a kill switch', sources: ['cache-kill-switch'], focus: 'Make disabled mode safe, observable, dependency-free, and reversible without restarting the application.' },
   { id: 'durable-event-delivery', title: 'Build durable ordered event delivery', sources: ['out-of-order-events', 'outbox-backlog'], focus: 'Combine inbox ordering, deduplication, outbox claims, at-least-once delivery, dead letters, and replay.' },
@@ -95,6 +96,7 @@ export function buildDeepReidyTasks(productionExercises, topicTasks) {
   const topicById = new Map(topicTasks.map(task => [task.sourceId || task.id, task]));
   const production = productionGroups.map((group, index) => {
     const sources = group.sources.map(source => productionById.get(source)).filter(Boolean);
+    if (group.id === 'cache-insert-collision') return buildCacheInsertCollisionTask(sources[0], index + 1);
     return mergeTasks(sources[0], sources, group.focus, group.title, index + 1, group.id);
   });
   const java = javaGroups.map((group, index) => {
