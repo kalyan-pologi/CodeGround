@@ -256,13 +256,18 @@ try {
   await until(`Boolean(document.querySelector('iframe')?.contentDocument?.querySelector('.stream-lab-grid'))`);
   const originalQuestions = (readFileSync(new URL('../src/features/backend-practice/java-stream/questions.html', import.meta.url),'utf8').match(/<p><b>Q:/g) || []).length;
   const streamCount = originalQuestions + 12;
+  assert.equal(streamCount, 90);
   assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelectorAll('.stream-question-button').length`), streamCount);
+  for (const [category, count] of [['CompletableFuture', 5], ['Multithreading', 10], ['Collections', 5], ['File Handling', 5], ['Date & Time', 5]]) {
+    assert.equal(await evaluate(`Array.from(document.querySelectorAll('iframe')[0].contentDocument.querySelectorAll('.sql-question-list section')).find(section => section.querySelector('h3')?.textContent === ${JSON.stringify(category)})?.querySelectorAll('button').length`), count);
+  }
   const streamPrograms = []; let runnableStreams = 0, streamAlternatives = 0;
   for (let id=1; id<=streamCount; id++) {
     await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-lab-menu').click()`);
     await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.stream-question-drawer')?.open`);
     await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-question-button[data-question-id="${id}"]').click()`);
     await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.stream-lab-grid')?.dataset.questionId === '${id}'`);
+    if (id > 60) assert.ok(await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-task-brief p')?.textContent.length > 50`));
     const runnable = await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-lab-grid').dataset.runnable === 'true'`);
     assert.equal(await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-run-button').disabled`), !runnable);
     if (!runnable) continue;
@@ -279,7 +284,7 @@ try {
       streamPrograms.push(await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-lab-code').value`));
     }
   }
-  assert.equal(runnableStreams,100); assert.equal(streamAlternatives,streamApproaches.length);
+  assert.equal(runnableStreams,90); assert.equal(streamAlternatives,streamApproaches.length);
   assert.ok(streamPrograms.length >= runnableStreams);
   await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.stream-lab-menu').click()`);
   await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.stream-question-drawer')?.open`);

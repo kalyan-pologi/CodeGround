@@ -59,7 +59,13 @@ function taskBriefFor(question) {
 }
 export default function StreamLab({ questions }) {
   const [selected,setSelected] = useState(() => readPreference('streams:selected',questions[0].id,id => questions.some(question => question.id === id)));
-  const [completed,setCompleted] = useState(() => readPreference('streams:completed:v1',[],value => Array.isArray(value) && value.every(id => questions.some(question => question.id === id))));
+  const [completed,setCompleted] = useState(() => {
+    const valid = value => Array.isArray(value) && value.every(id => Number.isInteger(id) && questions.some(question => question.id === id));
+    const current = readPreference('streams:completed:v2', null, valid);
+    if (current) return current;
+    return readPreference('streams:completed:v1', [], Array.isArray)
+      .filter(id => Number.isInteger(id) && id <= 60 && questions.some(question => question.id === id));
+  });
   const [query,setQuery] = useState('');
   const [validation,setValidation] = useState({ id: null, passed: false });
   const drawer=useRef(null), search=useRef(null), menu=useRef(null);
@@ -75,7 +81,7 @@ export default function StreamLab({ questions }) {
     if (!result.error) setCompleted(previous => {
       if (previous.includes(question.id)) return previous;
       const next = [...previous, question.id];
-      writePreference('streams:completed:v1', next);
+      writePreference('streams:completed:v2', next);
       return next;
     });
     return result;

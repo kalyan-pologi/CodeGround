@@ -10,13 +10,13 @@ const end = html.indexOf('<h2>', start + 10);
 const section = html.slice(start, end < 0 ? undefined : end);
 const decode = value => value.replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"');
 const snippets = [...section.matchAll(/<pre><code>([\s\S]*?)<\/code><\/pre>/g)].map(match => decode(match[1]));
-assert.equal(snippets.length, 13, 'CompletableFuture question count changed unexpectedly');
+assert.equal(snippets.length, 5, 'CompletableFuture question count changed unexpectedly');
 const expectedOutputs = new Map([
-  [0, 'message = Hello\nlength = 5'],
-  [1, 'pipeline: result=HELLO WORLD'],
-  [2, 'value = Hello World\nvalid = true'],
-  [4, 'thenCombine: Hi, Maya!'],
-  [9, 'allOf: All tasks done\ncombined = Hi Maya / Hello World']
+  [0, 'message = Hello (5)'],
+  [1, 'combined = Hi, Maya!\nchained = Hi again'],
+  [2, 'all = alpha,beta\nfirst = fast'],
+  [3, 'observed = true\nrecovered = fallback\nhandled = OK'],
+  [4, 'fallback = fallback\ntimeout = timed out\ncancelled = true']
 ]);
 
 const folder = mkdtempSync(join(process.cwd(), '.tmp-completable-future-'));
