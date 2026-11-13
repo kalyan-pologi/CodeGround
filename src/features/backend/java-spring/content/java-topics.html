@@ -363,6 +363,35 @@
 
   <h3>Future and CompletableFuture</h3>
   <p>Types representing asynchronous computation results. Use case: non-blocking operations, parallel processing, reactive programming.</p>
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>CompletableFuture: important methods, inputs, and return types</caption>
+      <thead>
+        <tr><th scope="col">Method</th><th scope="col">Input</th><th scope="col">Return type</th><th scope="col">Purpose</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>runAsync()</code></td><td><code>Runnable</code></td><td><code>CompletableFuture&lt;Void&gt;</code></td><td>Start an asynchronous task without a result.</td></tr>
+        <tr><td><code>supplyAsync()</code></td><td><code>Supplier&lt;T&gt;</code></td><td><code>CompletableFuture&lt;T&gt;</code></td><td>Start an asynchronous task that returns a result.</td></tr>
+        <tr><td><code>thenApply()</code></td><td><code>Function&lt;T, R&gt;</code></td><td><code>CompletableFuture&lt;R&gt;</code></td><td>Transform a successful result.</td></tr>
+        <tr><td><code>thenCompose()</code></td><td><code>Function&lt;T, CompletionStage&lt;R&gt;&gt;</code></td><td><code>CompletableFuture&lt;R&gt;</code></td><td>Chain a dependent asynchronous task and flatten its result.</td></tr>
+        <tr><td><code>thenAccept()</code></td><td><code>Consumer&lt;T&gt;</code></td><td><code>CompletableFuture&lt;Void&gt;</code></td><td>Use a successful result without returning a value.</td></tr>
+        <tr><td><code>thenRun()</code></td><td><code>Runnable</code></td><td><code>CompletableFuture&lt;Void&gt;</code></td><td>Run an action after success without using the previous result.</td></tr>
+        <tr><td><code>thenCombine()</code></td><td><code>CompletionStage&lt;U&gt;</code>, <code>BiFunction&lt;T, U, R&gt;</code></td><td><code>CompletableFuture&lt;R&gt;</code></td><td>Combine two successful results.</td></tr>
+        <tr><td><code>anyOf()</code></td><td><code>CompletableFuture&lt;?&gt;...</code></td><td><code>CompletableFuture&lt;Object&gt;</code></td><td>Complete with the first future's result or failure.</td></tr>
+        <tr><td><code>allOf()</code></td><td><code>CompletableFuture&lt;?&gt;...</code></td><td><code>CompletableFuture&lt;Void&gt;</code></td><td>Complete when all futures finish; fails if any failed.</td></tr>
+        <tr><td><code>whenComplete()</code></td><td><code>BiConsumer&lt;T, Throwable&gt;</code></td><td><code>CompletableFuture&lt;T&gt;</code></td><td>Observe success or failure; normally preserve the outcome.</td></tr>
+        <tr><td><code>exceptionally()</code></td><td><code>Function&lt;Throwable, T&gt;</code></td><td><code>CompletableFuture&lt;T&gt;</code></td><td>Recover from failure with a replacement value.</td></tr>
+        <tr><td><code>handle()</code></td><td><code>BiFunction&lt;T, Throwable, R&gt;</code></td><td><code>CompletableFuture&lt;R&gt;</code></td><td>Transform either a result or a failure.</td></tr>
+        <tr><td><code>orTimeout()</code></td><td><code>long</code>, <code>TimeUnit</code></td><td><code>CompletableFuture&lt;T&gt;</code></td><td>Complete the same future exceptionally after a timeout.</td></tr>
+        <tr><td><code>completeOnTimeout()</code></td><td><code>T</code>, <code>long</code>, <code>TimeUnit</code></td><td><code>CompletableFuture&lt;T&gt;</code></td><td>Complete the same future with a fallback value after a timeout.</td></tr>
+        <tr><td><code>cancel()</code></td><td><code>boolean</code></td><td><code>boolean</code></td><td>Cancel an unfinished future; this does not interrupt its task.</td></tr>
+        <tr><td><code>isCancelled()</code></td><td>None</td><td><code>boolean</code></td><td>Check whether the future was cancelled.</td></tr>
+        <tr><td><code>join()</code></td><td>None</td><td><code>T</code></td><td>Wait for the result; failures use unchecked exceptions.</td></tr>
+        <tr><td><code>get()</code></td><td>None</td><td><code>T</code></td><td>Wait for the result; declares checked exceptions.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Reading the table:</strong> Generic input types are simplified. <code>thenCompose()</code> accepts a function returning a <code>CompletionStage</code>; <code>anyOf()</code> can finish with a failure; <code>join()</code> throws <code>CompletionException</code> for computation failures, while <code>get()</code> declares <code>ExecutionException</code> and <code>InterruptedException</code>.</p>
 
   <h3>Virtual Threads (Java 21+)</h3>
   <p>Lightweight threads for high-concurrency applications. Use case: scalable server applications, reactive programming, I/O intensive tasks.</p>

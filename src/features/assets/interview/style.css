@@ -301,6 +301,49 @@ body {
   margin-bottom: 4px;
 }
 
+.note-body .note-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  margin: 12px 0 16px;
+}
+
+.note-body .note-methods-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.note-body .note-methods-table caption {
+  text-align: left;
+  color: #f1f5f9;
+  font-weight: 700;
+  padding-bottom: 10px;
+}
+
+.note-body .note-methods-table th,
+.note-body .note-methods-table td {
+  text-align: left;
+  vertical-align: top;
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.note-body .note-methods-table th {
+  color: #93c5fd;
+  font-weight: 700;
+}
+
+.note-body .note-methods-table td {
+  color: #cbd5e1;
+}
+
+.note-body .note-methods-table code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
 .note-body b,
 .note-body strong {
   color: #f1f5f9;
