@@ -1,0 +1,15 @@
+<h3>Question: What is the difference between @RestController and @Controller internally, and what happens when a request reaches a REST endpoint?</h3>
+<h3>Short answer</h3>
+<p><code>@RestController</code> is effectively <code>@Controller</code> plus <code>@ResponseBody</code> for handler methods, so return values are written through HTTP message converters. A normal controller usually resolves a view unless a method uses <code>@ResponseBody</code>.</p>
+<h3>Request flow</h3><ol><li>Filters and security process the request.</li><li><code>DispatcherServlet</code> selects a handler through mappings.</li><li>Argument resolvers bind path, query, headers, and JSON body.</li><li>Validation and controller logic run.</li><li>Return-value handlers serialize the response and exception resolvers map failures.</li></ol>
+<p>Measure each stage with tracing when an endpoint is slow; controller execution time is not the whole request time.</p>
+<blockquote>I distinguish handler selection, argument conversion, business work, serialization, and filters because each can be the bottleneck.</blockquote>
+<h3>Failure and performance points</h3><p>A malformed JSON body fails during message conversion before the controller runs. Validation errors are different from authorization failures and domain conflicts, so map them to stable response types. Large JSON serialization, filters, security checks, and lazy entity traversal can dominate time after the service method itself is fast.</p>
+<h3>Follow-up questions</h3><ul><li>Where should request validation happen?</li><li>Why should controllers return DTOs rather than entities?</li><li>How do exception resolvers turn an exception into an HTTP response?</li></ul>
+<h3>Minimal controller example</h3><pre><code>@RestController
+@RequestMapping("/orders")
+class OrderController {
+  @GetMapping("/{id}") OrderView get(@PathVariable long id) { return service.find(id); }
+}</code></pre>
+<p>Production code should add authorization, validation, a stable error contract, and a service boundary rather than placing database work in the controller.</p>
+<h3>Interview-ready answer</h3><blockquote><code>@RestController</code> combines controller registration with response-body serialization. A request passes filters and security, handler mapping, argument conversion, validation, business logic, serialization, and exception resolution, so I measure each stage when latency is high.</blockquote>

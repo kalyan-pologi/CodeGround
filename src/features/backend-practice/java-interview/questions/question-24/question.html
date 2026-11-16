@@ -1,4 +1,4 @@
-<h3>Question: How does @Transactional work internally in Spring, and why might transactions fail because of self-invocation, private methods, exception handling, propagation, or isolation?</h3>
+<h3>Question: A @Transactional operation partially fails. How does Spring decide rollback, and why do self-invocation, private methods, exception handling, propagation, and isolation matter?</h3>
 <h3>Short answer</h3>
 <p>In Spring's default proxy mode, an external call enters a transactional proxy. The proxy asks a transaction manager to begin or join a transaction, invokes the target method, then commits or rolls back according to the outcome. A call from one method to another on <code>this</code> bypasses the proxy. Private methods cannot be intercepted by the usual proxy call path. The default rollback rule is for unchecked exceptions and <code>Error</code>, not every checked exception.</p>
 

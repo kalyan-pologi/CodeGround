@@ -1,0 +1,15 @@
+<h3>Question: How do you make a scheduled Spring job safe when multiple application instances run, and how do you avoid duplicate execution?</h3>
+<h3>Short answer</h3>
+<p><code>@Scheduled</code> runs independently in every instance unless coordination is added. Make the job idempotent, then use a shared lock or scheduler such as a database lock, ShedLock, Quartz, or a queue with one consumer when only one execution should run.</p>
+<h3>Design checklist</h3><ol><li>Use a stable job key and an execution record or lease.</li><li>Set a lock duration shorter than the job's worst-case time or renew the lease.</li><li>Make retries safe and record success, failure, and ownership.</li><li>Decide whether missed schedules should be skipped, replayed, or coalesced.</li></ol>
+<blockquote>Distributed scheduling is a coordination problem. A local JVM flag cannot prevent duplicate work after horizontal scaling or a restart.</blockquote>
+<h3>Failure cases</h3><p>A lock holder can crash midway, a clock can drift, or a job can run longer than its schedule interval. Use a lease with expiry, renew it for long work, and make each item operation idempotent. Store a job execution ID so operators can distinguish a retry from a duplicate schedule.</p>
+<h3>Follow-up questions</h3><ul><li>What happens if the lock expires while work is still running?</li><li>When is a queue better than a scheduled task?</li><li>How do you test duplicate execution and crash recovery?</li></ul>
+<h3>Minimal lock example</h3><pre><code>@Scheduled(cron = "0 */5 * * * *")
+void run() {
+  if (lockProvider.tryLock("invoice-reconciliation", Duration.ofMinutes(4))) {
+    try { reconcileIdempotently(); } finally { lockProvider.release(); }
+  }
+}</code></pre>
+<p>The lock provider must be shared across instances. The business operation still needs an idempotency key or execution record because a crash can happen after the side effect and before lock release.</p>
+<h3>Interview-ready answer</h3><blockquote><code>@Scheduled</code> runs in every instance. I combine a shared lease or scheduler with idempotent work, execution records, bounded lock duration, and a clear policy for missed or overlapping runs.</blockquote>

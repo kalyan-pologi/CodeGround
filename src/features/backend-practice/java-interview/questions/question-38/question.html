@@ -1,4 +1,4 @@
-<h3>Question: How would you scale a microservices application to handle a sudden 10x traffic spike using load balancing, autoscaling, caching, rate limiting, messaging, and performance testing?</h3>
+<h3>Question: Traffic suddenly increases by 10×. How would you protect and scale a microservices system using load balancing, autoscaling, caching, admission control, messaging, and load tests?</h3>
 <h3>Short answer</h3>
 <p>Measure the baseline bottleneck and protect the system before simply adding replicas. A load balancer spreads traffic, autoscaling adds stateless capacity, caching removes repeated safe reads, rate limits and admission control keep overload explicit, and messaging buffers work that can be processed asynchronously. Database connections, external APIs, and Kafka partitions may remain bottlenecks even when application pods scale.</p>
 

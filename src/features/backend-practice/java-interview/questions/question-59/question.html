@@ -1,4 +1,4 @@
-<h3>Question: Design and implement an idempotent payment REST API using Spring Boot, database transactions, and unique constraints to prevent duplicate charges.</h3>
+<h3>Question: Design an idempotent payment REST API that remains safe when clients retry, requests race, and the provider response is uncertain.</h3>
 <h3>Short answer</h3>
 <p>Require a stable <code>Idempotency-Key</code> per logical payment and scope it to the authenticated merchant. In one database transaction, claim that key with a unique constraint, store a fingerprint of the amount/currency, create one <code>PENDING</code> payment, and write one outbox command. An identical retry returns the same payment ID/status; reusing the key with different details returns 409. A worker later calls the payment provider with the same stable provider-side key and reconciles uncertain outcomes.</p>
 

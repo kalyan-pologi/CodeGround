@@ -1,0 +1,11 @@
+<h3>Question: How does Spring Boot manage dependency versions with its BOM, and what are the differences between a normal JAR and an executable fat JAR?</h3>
+<h3>Short answer</h3>
+<p>Spring Boot's dependency-management BOM aligns versions tested together, so applications normally declare dependencies without repeating versions. A normal JAR contains application classes; an executable Boot JAR contains application classes, nested dependencies, and a launcher that builds the runtime classpath.</p>
+<h3>Production checks</h3><ul><li>Inspect the resolved dependency tree for conflicts and overrides.</li><li>Use reproducible builds and scan the packaged artifact.</li><li>Do not assume a dependency version override is compatible with the Boot release.</li><li>Keep build metadata and runtime Java version aligned.</li></ul>
+<blockquote>The BOM reduces version drift; the executable JAR changes packaging and launch behavior but does not remove the need for dependency and vulnerability management.</blockquote>
+<h3>Build and runtime diagnosis</h3><p>When a method exists at compile time but not at runtime, inspect the resolved tree and packaged JAR for version skew. Compare the Java runtime used by the build and deployment. Reproducible dependency locking, SBOM generation, and vulnerability scanning should run before the artifact is promoted.</p>
+<h3>Follow-up questions</h3><ul><li>What happens when a direct dependency overrides a BOM version?</li><li>How does the Boot launcher find nested JARs?</li><li>Why should dependency versions be upgraded as a tested set?</li></ul>
+<h3>Minimal verification commands</h3><pre><code>./mvnw dependency:tree
+java -Djarmode=tools -jar app.jar list-layers</code></pre>
+<p>Use the equivalent Gradle dependency report when applicable, then scan the exact packaged artifact that will be deployed.</p>
+<h3>Interview-ready answer</h3><blockquote>The Boot BOM aligns tested dependency versions, while an executable JAR packages application classes, dependencies, and a launcher. I inspect the resolved tree and artifact for version skew, runtime mismatch, and vulnerabilities before release.</blockquote>

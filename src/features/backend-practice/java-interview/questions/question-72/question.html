@@ -1,0 +1,14 @@
+<h3>Question: How does Spring Boot configure logging by default, and how do you change logging safely in production?</h3>
+<h3>Short answer</h3>
+<p>Boot provides a logging facade and a default backend through its starters, with console output and level defaults suitable for development. Production logging should be structured, centralized, configurable at runtime where safe, and free of secrets or unbounded payloads.</p>
+<h3>Operational approach</h3><ul><li>Set package-specific levels instead of enabling global debug.</li><li>Include correlation or trace IDs.</li><li>Sample noisy logs and rotate or ship them centrally.</li><li>Change levels through controlled configuration and revert after diagnosis.</li></ul>
+<blockquote>Logging is part of the diagnostic path; I change the smallest package scope, preserve request correlation, and avoid turning an incident into a logging outage.</blockquote>
+<h3>Production example</h3><p>For a slow request, temporarily enable debug logging for the affected package or dependency, include a trace ID, and sample repeated messages. Avoid logging full authorization headers, payment payloads, or large response bodies. Restore normal levels after collecting evidence and alert on logging volume.</p>
+<h3>Follow-up questions</h3><ul><li>What belongs in a structured log?</li><li>How do logs, metrics, and traces complement one another?</li><li>How would you diagnose missing logs from one container?</li></ul>
+<h3>Minimal configuration</h3><pre><code>logging:
+  level:
+    com.example.orders: INFO
+  pattern:
+    console: '%d %-5level [%X{traceId}] %logger - %msg%n'</code></pre>
+<p>Prefer the deployment's structured logging format when the platform parses JSON, and protect trace identifiers and user data from accidental disclosure.</p>
+<h3>Interview-ready answer</h3><blockquote>Boot supplies a default logging facade and backend through its starters. In production I use structured, correlated, centrally collected logs, change the smallest package scope during diagnosis, and prevent secrets or unbounded payloads from entering the stream.</blockquote>

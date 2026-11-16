@@ -1,4 +1,4 @@
-<h3>Question: A Spring Boot API becomes slow under high traffic even though CPU utilization is low. How would you investigate thread contention, connection pools, blocking calls, and resource exhaustion?</h3>
+<h3>Question: A Spring Boot API suddenly becomes 5× slower even though CPU utilization is low. How would you locate the bottleneck across threads, pools, blocking calls, and dependencies?</h3>
 <h3>Short answer</h3>
 <p>Low CPU with high latency usually means requests are waiting rather than computing. Check where the time goes: servlet worker queue, locks, database connection acquisition, SQL execution, downstream HTTP calls, and retry storms. Correlate request traces with pool utilization, thread dumps, and p95/p99 latency before increasing thread counts.</p>
 

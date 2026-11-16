@@ -1,0 +1,11 @@
+<h3>Question: How does Actuator work internally, which endpoints should be exposed, and why is Spring Boot suitable for cloud-native applications?</h3>
+<h3>Short answer</h3>
+<p>Actuator contributes management endpoints through auto-configuration and exposes health, metrics, mappings, and other operational views according to configuration and security rules. Spring Boot suits cloud-native systems through externalized configuration, stateless services, health probes, metrics, fast packaging, and embedded servers.</p>
+<h3>Safe exposure</h3><ul><li>Expose only health and required metrics publicly.</li><li>Protect environment, beans, mappings, and shutdown-capable endpoints.</li><li>Separate liveness from readiness so dependency failures do not cause restart loops.</li><li>Export metrics and traces to the platform's observability system.</li></ul>
+<blockquote>Actuator is an operational interface, not a public debugging API. Its endpoints must be deliberately exposed and secured.</blockquote>
+<h3>Readiness versus liveness</h3><p>Liveness answers whether the process should be restarted; readiness answers whether it should receive traffic. A temporary database outage should usually remove an instance from readiness rather than create a restart loop. Metrics should include request latency, error rate, pool saturation, JVM memory, and dependency health.</p>
+<h3>Follow-up questions</h3><ul><li>Which Actuator endpoints are safe to expose publicly?</li><li>How do Micrometer metrics reach Prometheus?</li><li>Why should health checks avoid expensive dependency calls?</li></ul>
+<h3>Minimal Actuator configuration</h3><pre><code>management.endpoints.web.exposure.include=health,info,prometheus
+management.endpoint.health.probes.enabled=true</code></pre>
+<p>Put sensitive management endpoints on a protected network or security boundary and avoid exposing environment or bean details to the public internet.</p>
+<h3>Interview-ready answer</h3><blockquote>Actuator contributes secured operational endpoints through auto-configuration. I expose only what the platform needs, separate liveness from readiness, export metrics and traces, and use externalized configuration and stateless processes to support cloud-native deployment.</blockquote>

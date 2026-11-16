@@ -1,0 +1,13 @@
+<h3>Question: What is SpringFactoriesLoader, how did auto-configuration imports evolve, and how does Spring Boot discover configuration classes?</h3>
+<h3>Short answer</h3>
+<p>Spring's factory loading mechanism reads provider metadata from dependencies and instantiates declared implementations. Older Boot versions used <code>META-INF/spring.factories</code> for auto-configuration; modern Boot uses an auto-configuration imports metadata file while retaining factory loading for other extension points.</p>
+<h3>Why it matters</h3>
+<p>Auto-configuration is discovered from dependency metadata, then filtered by conditions such as class presence, properties, bean absence, and web application type. Inspect the condition evaluation report when a configuration unexpectedly matches or backs off.</p>
+<h3>Common mistakes</h3><ul><li>Treating every class on the classpath as an active bean.</li><li>Debugging only the final exception instead of the condition report.</li><li>Using internal metadata mechanisms as application APIs.</li></ul>
+<blockquote>The key idea is metadata-driven discovery followed by conditional evaluation; classpath presence alone does not guarantee that a bean is created.</blockquote>
+<h3>How to debug auto-configuration</h3><ol><li>Run with the condition evaluation report enabled.</li><li>Find the positive and negative matches for the configuration.</li><li>Check missing classes, properties, bean definitions, and application type.</li><li>Prefer a documented customization or replacement bean over copying internal auto-configuration.</li></ol>
+<h3>Production example</h3><p>A database auto-configuration can back off because an application-defined <code>DataSource</code> exists, while a missing driver can prevent it from matching at all. The report tells you which condition changed instead of requiring guesswork from the final bean error.</p>
+<h3>Follow-up questions</h3><ul><li>What is the difference between a factory provider and a bean?</li><li>Why should auto-configuration be conditional?</li><li>How do you write a custom starter safely?</li></ul>
+<h3>Minimal diagnostic</h3><pre><code>java -jar app.jar --debug
+# inspect the condition evaluation report for positive and negative matches</code></pre>
+<h3>Interview-ready answer</h3><blockquote>Boot discovers framework configuration from dependency metadata, then evaluates conditions for classes, properties, application type, and existing beans. I use the condition report to explain why an auto-configuration matched or backed off instead of guessing from the final exception.</blockquote>

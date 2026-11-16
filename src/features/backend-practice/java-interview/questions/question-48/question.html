@@ -1,4 +1,4 @@
-<h3>Question: How would you investigate intermittent production failures using centralized logging, metrics, distributed tracing, root-cause analysis, and rollback strategies?</h3>
+<h3>Question: A production failure is intermittent and hard to reproduce. How would you use logs, metrics, traces, mitigation, rollback, and root-cause analysis to investigate it?</h3>
 <h3>Short answer</h3>
 <p>Intermittent failures require correlated evidence from the exact failing requests. Start with scope and impact, compare errors and latency against deploys and dependency changes, then use structured logs, metrics, and traces to find the failing hop. Preserve evidence before restarts, mitigate with rollback or traffic shift when needed, and validate the root cause with a reproducible mechanism—not merely the last error message.</p>
 

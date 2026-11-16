@@ -1,4 +1,4 @@
-<h3>Question: How would you prevent duplicate payment processing across multiple microservice instances using idempotency keys, unique constraints, conditional updates, and retry handling?</h3>
+<h3>Question: The same payment request reaches multiple instances. How would you guarantee idempotent processing with keys, constraints, conditional updates, and safe retries?</h3>
 <h3>Short answer</h3>
 <p>A client sends a stable idempotency key for one logical payment. Every instance uses the same database uniqueness constraint, scoped to merchant/account, to claim that key. Store the request fingerprint, payment state, and eventual response; duplicates with the same payload return the original result, while the same key with a different payload is rejected. Use conditional state transitions and the payment provider's idempotency support so network retries cannot charge twice.</p>
 

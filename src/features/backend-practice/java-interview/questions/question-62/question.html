@@ -1,0 +1,14 @@
+<h3>Question: How does Spring Boot load external configuration, resolve property precedence, and bind values with @Value and @ConfigurationProperties?</h3>
+<h3>Short answer</h3>
+<p>Boot builds an Environment from ordered property sources such as command-line arguments, environment variables, profile-specific files, application files, and test overrides. Higher-priority sources win. Use <code>@ConfigurationProperties</code> for grouped, validated configuration and <code>@Value</code> for a small isolated value.</p>
+<h3>Diagnostic approach</h3>
+<ol><li>List the active profiles and effective property source.</li><li>Check spelling, relaxed binding, and environment-variable naming.</li><li>Use Actuator's environment/configuration views only with secured access.</li><li>Prefer immutable configuration objects and fail fast on required values.</li></ol>
+<h3>Common mistakes</h3><ul><li>Hard-coding secrets in files.</li><li>Using <code>@Value</code> for a large nested configuration tree.</li><li>Assuming the file in the packaged JAR overrides deployment environment variables.</li></ul>
+<blockquote>I would identify the winning property source first, then verify binding and validation. Configuration should be external, typed, observable enough to diagnose, and protected from secret leakage.</blockquote>
+<h3>Precedence and binding details</h3><p>Command-line arguments and deployment environment overrides commonly outrank packaged files. Profile-specific documents override their base document when that profile is active. Relaxed binding maps names such as <code>PAYMENTS_TIMEOUT</code> to a kebab-case property. Constructor-bound configuration makes required settings explicit and testable.</p>
+<h3>Production example</h3><p>If a timeout is 30 seconds in production even though the file says 2 seconds, compare the effective Environment with container variables, Helm values, command-line arguments, and remote configuration. Never print the value of a password or token while debugging.</p>
+<h3>Follow-up questions</h3><ul><li>When should you use <code>@ConfigurationProperties</code>?</li><li>How do you validate a required property?</li><li>How do you prevent secret values from appearing in Actuator output?</li></ul>
+<h3>Minimal binding example</h3><pre><code>@ConfigurationProperties("payments")
+public record PaymentProperties(Duration timeout, URI endpoint) { }</code></pre>
+<p>Register it with configuration-properties scanning and validate required fields at startup. Test the effective environment for each deployment profile.</p>
+<h3>Interview-ready answer</h3><blockquote>Boot merges ordered property sources into an Environment, with deployment overrides winning over packaged defaults. I use typed, validated <code>@ConfigurationProperties</code> for groups of settings, then inspect the effective source when production differs from local.</blockquote>

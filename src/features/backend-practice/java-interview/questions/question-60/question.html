@@ -1,4 +1,4 @@
-<h3>Question: Design a Kafka-based order processing workflow with retries, dead-letter topics, idempotent consumers, and database consistency.</h3>
+<h3>Question: Design a Kafka order workflow that survives consumer crashes, retries, dead-letter routing, replay, and database/Kafka consistency problems.</h3>
 <h3>Short answer</h3>
 <p>Publish order events from a transactional outbox so a committed order change is not lost between the database and Kafka. Key records by order ID for per-order partition ordering. A consumer records each event ID under a unique constraint and applies a legal order-state transition in the same local database transaction. Commit the Kafka offset after that transaction succeeds; bounded transient retries and a monitored dead-letter topic handle failures. Replay must remain idempotent.</p>
 

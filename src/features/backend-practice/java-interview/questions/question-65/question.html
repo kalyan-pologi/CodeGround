@@ -1,0 +1,12 @@
+<h3>Question: What is the difference between @SpringBootApplication, @ComponentScan, @EnableAutoConfiguration, and @Import, and how do you exclude auto-configuration?</h3>
+<h3>Short answer</h3>
+<p><code>@SpringBootApplication</code> combines application configuration, component scanning, and auto-configuration. <code>@ComponentScan</code> finds application components. <code>@EnableAutoConfiguration</code> imports conditional framework defaults. <code>@Import</code> explicitly registers configuration or components. Exclude an unwanted auto-configuration through the annotation or the documented property.</p>
+<h3>Decision rule</h3><ul><li>Use scanning for your component packages.</li><li>Use import for an intentional module boundary.</li><li>Use auto-configuration for conditional framework defaults.</li><li>Exclude only when you replace the behavior or the dependency is not appropriate.</li></ul>
+<p>After an exclusion, verify that required replacement beans, health checks, and failure handling still exist.</p>
+<blockquote>I would use explicit imports for composition and exclusions as a last-mile customization, then confirm the resulting bean graph with the condition report.</blockquote>
+<h3>Example decision</h3><p>If a service needs the default MVC stack plus one custom converter, keep Boot auto-configuration and provide the converter bean. If it must replace the server or security chain, exclude only the relevant default and register the complete replacement. A broad exclusion can remove health, metrics, or infrastructure beans that other code assumes exist.</p>
+<h3>Follow-up questions</h3><ul><li>Where does component scanning start?</li><li>What happens when two configuration classes define the same bean name?</li><li>How do conditional beans back off for user-defined beans?</li></ul>
+<h3>Minimal exclusion example</h3><pre><code>@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
+class Application { }</code></pre>
+<p>Use an exclusion only when the application supplies a complete replacement or deliberately has no datasource. Verify startup, health, and metrics after the change.</p>
+<h3>Interview-ready answer</h3><blockquote><code>@SpringBootApplication</code> combines configuration, component scanning, and auto-configuration. I use explicit imports for composition, exclusions sparingly, and the condition report to verify the resulting bean graph.</blockquote>

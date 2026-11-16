@@ -1,0 +1,14 @@
+<h3>Question: What are the most common Spring Boot performance mistakes, and how would you identify them with metrics, traces, and profiling?</h3>
+<h3>Short answer</h3>
+<p>Common mistakes include unbounded thread pools, oversized request concurrency, N+1 queries, holding database connections during remote calls, missing timeouts, excessive retries, synchronous work on event-loop threads, large payloads, and exposing expensive debug logging.</p>
+<h3>Investigation order</h3><ol><li>Start with throughput, error rate, p50/p95/p99 latency, saturation, and dependency timings.</li><li>Use distributed traces to locate the slow segment.</li><li>Use thread dumps, pool metrics, SQL plans, allocation profiles, and GC data to confirm the cause.</li><li>Apply one bounded change and compare production-like load results.</li></ol>
+<p>Do not treat CPU as the only capacity signal: low CPU can mean threads are waiting on I/O, locks, pools, or rate limits.</p>
+<blockquote>I optimize from observed wait time and saturation, not from a generic list of framework settings.</blockquote>
+<h3>Concrete diagnostic examples</h3><ul><li>Low CPU plus high latency: inspect thread dumps, pool wait, locks, and remote I/O.</li><li>Fast SQL plus slow API: inspect N+1 queries, mapping, serialization, filters, and network time.</li><li>Peak-only failures: inspect queueing, rate limits, connection caps, GC pauses, and p99 latency.</li><li>Memory growth: compare allocation profiles, heap occupancy after GC, caches, and retained references.</li></ul>
+<h3>Follow-up questions</h3><ul><li>Why can adding threads reduce throughput?</li><li>How do you choose a useful load-test workload?</li><li>Which metric proves that a fix improved the system?</li></ul>
+<h3>Minimal measurement checklist</h3><pre><code>http_server_requests_seconds{quantile="0.99"}
+hikaricp_connections_pending
+jvm_gc_pause_seconds
+process_cpu_usage</code></pre>
+<p>Pair aggregate metrics with traces and thread or heap profiles. A successful change reduces tail latency or saturation without shifting the bottleneck to a dependency.</p>
+<h3>Interview-ready answer</h3><blockquote>I begin with p95/p99 latency, throughput, errors, and saturation, then trace the slow segment and confirm it with thread, pool, SQL, allocation, or GC data. I apply one bounded change and verify it under production-like load rather than tuning blindly.</blockquote>

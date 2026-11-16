@@ -1,0 +1,11 @@
+<h3>Question: How does Spring exception translation work from JDBC or Hibernate exceptions to Spring DataAccessException types?</h3>
+<h3>Short answer</h3>
+<p>Repository infrastructure and exception-translation post-processors convert vendor-specific persistence exceptions into a consistent unchecked <code>DataAccessException</code> hierarchy. The translated type communicates categories such as integrity violations, connection failures, timeouts, and concurrency conflicts.</p>
+<h3>How to use it</h3><ul><li>Log the root cause and constraint or SQL state.</li><li>Map expected conflicts to a stable API response such as 409.</li><li>Retry only transient, safe-to-repeat operations.</li><li>Do not catch every data-access exception and return success.</li></ul>
+<blockquote>Translation gives service code a portable abstraction, but diagnosis still requires the vendor error and the operation's transaction context.</blockquote>
+<h3>Concurrency and API mapping</h3><p>A unique-key conflict may be an expected idempotency race, while a foreign-key violation may be a client or data-integrity error. A deadlock or transient connection failure may be retryable only when the operation is safe and the transaction is restarted from a clean boundary. Do not retry a transaction by continuing to use a rollback-only persistence context.</p>
+<h3>Follow-up questions</h3><ul><li>Why is <code>DataIntegrityViolationException</code> useful for race-safe writes?</li><li>How do you map a persistence conflict to HTTP 409?</li><li>Why is logging only the translated message insufficient?</li></ul>
+<h3>Minimal mapping example</h3><pre><code>@ExceptionHandler(DataIntegrityViolationException.class)
+ResponseEntity&lt;ApiError&gt; conflict() { return ResponseEntity.status(409).body(ApiError.conflict()); }</code></pre>
+<p>Keep the vendor SQL state and constraint name in protected logs, while returning a stable and safe client response.</p>
+<h3>Interview-ready answer</h3><blockquote>Spring translates vendor persistence failures into a portable unchecked hierarchy. I use the translated category for service behavior, retain the root cause for diagnosis, and retry only transient operations from a clean transaction.</blockquote>

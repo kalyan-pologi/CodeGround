@@ -1,4 +1,4 @@
-<h3>Question: How would you handle failed Kafka messages using retries, retry topics, dead-letter topics, poison-message handling, manual acknowledgment, and safe event replay?</h3>
+<h3>Question: A Kafka message fails after consumption. How would you classify the failure, retry safely, route poison messages, commit offsets, and replay without duplicate side effects?</h3>
 <h3>Short answer</h3>
 <p>Classify failures. Retry temporary dependencies with bounded attempts and backoff; send permanently invalid or exhausted records to a dead-letter topic (DLT) with enough context to diagnose them. Acknowledge/commit the original offset only after successful processing or confirmed durable handoff to the retry/DLT path. Make consumers idempotent because crashes and rebalances can replay records.</p>
 

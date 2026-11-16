@@ -1,0 +1,12 @@
+<h3>Question: How does Spring Boot detect and start embedded Tomcat, and what is the precedence order for server.port?</h3>
+<h3>Short answer</h3>
+<p>When servlet web classes and an embedded Tomcat implementation are on the classpath, conditional web-server auto-configuration creates a server factory and starts it during application-context refresh. The effective port comes from the highest-priority property source, commonly command-line arguments or deployment environment overrides, followed by configured application and profile files.</p>
+<h3>How to troubleshoot</h3><ol><li>Check the effective <code>server.port</code>, bind address, and container port mapping.</li><li>Check whether another process already owns the port.</li><li>Check readiness and ingress configuration separately from the local listener.</li><li>Use a random test port to avoid test collisions.</li></ol>
+<blockquote>Embedded Tomcat is selected by classpath and conditional configuration; the port is a configuration result, so I verify the winning property source and the network path independently.</blockquote>
+<h3>Startup details</h3><p>During context refresh, Boot creates the web-server factory and applies customizers before calling the server lifecycle. A port of <code>0</code> asks the operating system for a free port, which is useful in tests. Binding to <code>127.0.0.1</code> inside a container can make the process unreachable even when the port is correct; production services normally bind to the container interface.</p>
+<h3>Follow-up questions</h3><ul><li>How is the actual random test port discovered?</li><li>Why can a health check fail while the server is listening?</li><li>How do TLS termination and the embedded server interact?</li></ul>
+<h3>Minimal configuration example</h3><pre><code>server:
+  address: 0.0.0.0
+  port: 8080</code></pre>
+<p>In a container, map the service port separately from the process port and verify that readiness probes use the same effective route.</p>
+<h3>Interview-ready answer</h3><blockquote>Boot selects embedded Tomcat from servlet and container classes on the classpath, creates its server factory during context refresh, and starts it. I diagnose port problems by checking property precedence, bind address, container mapping, and readiness independently.</blockquote>

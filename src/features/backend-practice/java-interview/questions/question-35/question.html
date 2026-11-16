@@ -1,4 +1,4 @@
-<h3>Question: How would you prevent cascading failures in microservices using circuit breakers, retries, exponential backoff, timeouts, bulkheads, fallbacks, and Resilience4j?</h3>
+<h3>Question: Retries are making a downstream outage worse. How would you prevent a cascading failure using deadlines, backoff, circuit breakers, bulkheads, fallbacks, and Resilience4j?</h3>
 <h3>Short answer</h3>
 <p>Put an end-to-end deadline on a request, use short per-call timeouts, retry only transient and safe operations with bounded attempts and jitter, and stop calling a failing dependency with a circuit breaker. Bulkheads limit how many threads/connections one dependency can consume. A fallback should be explicitly safe and truthful; returning stale cached data may be fine for a catalog but not for a payment confirmation.</p>
 

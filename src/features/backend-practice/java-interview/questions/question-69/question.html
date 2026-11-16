@@ -1,0 +1,12 @@
+<h3>Question: How does Spring Boot auto-configure a DataSource, and how would you diagnose connection-pool exhaustion?</h3>
+<h3>Short answer</h3>
+<p>Boot detects a JDBC driver and datasource properties, then creates a pooled <code>DataSource</code> when no user datasource is present. Pool exhaustion means requests are waiting for connections, often because transactions are slow, connections leak, the pool is undersized, or the database is saturated.</p>
+<h3>First checks</h3><ol><li>Active, idle, pending, acquisition-time, and timeout metrics.</li><li>Transaction duration and code paths that hold connections while calling remote services.</li><li>Slow queries, database locks, server connection limits, and leak detection.</li><li>Pool size versus database capacity; increasing it blindly can worsen overload.</li></ol>
+<blockquote>I would identify whether connections are unavailable, held too long, or rejected by the database before changing pool size.</blockquote>
+<h3>Safe tuning</h3><p>Set acquisition and query timeouts so waiting is bounded. Size the pool from database capacity and measured transaction time, not from request-thread count. Keep transactions short and never hold a database connection while waiting on a remote HTTP call. Monitor leak detection warnings and close resources through framework-managed templates.</p>
+<h3>Follow-up questions</h3><ul><li>Why can increasing the pool make the database slower?</li><li>Which metric separates pool wait from SQL time?</li><li>How do read and write pools change the design?</li></ul>
+<h3>Minimal pool configuration</h3><pre><code>spring.datasource.hikari.maximum-pool-size=20
+spring.datasource.hikari.connection-timeout=2000
+spring.datasource.hikari.leak-detection-threshold=5000</code></pre>
+<p>Choose values from database capacity and measured transaction time. Treat leak detection as a diagnostic aid, not a substitute for closing resources.</p>
+<h3>Interview-ready answer</h3><blockquote>Boot creates a pooled DataSource when a driver and properties are present and no user datasource replaces it. For exhaustion I inspect active, idle, pending, acquisition, transaction, query, lock, and database-capacity metrics before tuning the pool.</blockquote>

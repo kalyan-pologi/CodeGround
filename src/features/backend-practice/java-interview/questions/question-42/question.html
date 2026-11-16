@@ -1,4 +1,4 @@
-<h3>Question: Kafka consumer lag keeps increasing even though all consumers are running. How would you diagnose partition limitations, processing bottlenecks, database latency, and consumer configurations?</h3>
+<h3>Question: Kafka consumer lag keeps increasing while consumers appear healthy. How would you distinguish partition limits, hot keys, processing bottlenecks, database latency, retries, and rebalances?</h3>
 <h3>Short answer</h3>
 <p>Lag grows when records arrive faster than the group can finish and commit them. “Running” does not mean productive: consumers may be idle because there are too few partitions, blocked on a database, retrying poison messages, rebalancing repeatedly, or committing slowly. Compare per-partition incoming rate, processing rate, lag, and dependency latency before adding consumers.</p>
 

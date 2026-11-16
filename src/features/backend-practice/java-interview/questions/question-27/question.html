@@ -1,4 +1,4 @@
-<h3>Question: A Spring Boot application works locally but fails or performs poorly in production. How would you troubleshoot profiles, configuration, Actuator, logging, startup, connection pools, and resource limitations?</h3>
+<h3>Question: A Spring Boot application works locally but fails or performs poorly in production. How would you isolate configuration, startup, pool, observability, and resource differences?</h3>
 <h3>Short answer</h3>
 <p>Compare the production environment with local assumptions before changing code. Confirm the active profile and resolved non-secret configuration, startup failure cause, dependency reachability, health/readiness, database pool state, thread/memory/CPU limits, and latency by dependency. Use structured logs, metrics, and traces to narrow the difference; reproduce with production-like limits and configuration.</p>
 

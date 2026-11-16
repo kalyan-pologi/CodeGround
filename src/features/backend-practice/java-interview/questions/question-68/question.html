@@ -1,0 +1,11 @@
+<h3>Question: How does @Configuration differ from a normal class, and what is the complete Spring bean lifecycle?</h3>
+<h3>Short answer</h3>
+<p><code>@Configuration</code> marks a class as a source of bean definitions and lets Spring preserve container semantics when one <code>@Bean</code> method calls another. A bean is instantiated, dependencies are injected, post-processors run, initialization callbacks execute, and later destruction callbacks run for managed scopes.</p>
+<h3>Important details</h3><ul><li>Constructor injection happens before initialization callbacks.</li><li>Post-processors may wrap the bean in an AOP proxy.</li><li>Prototype destruction is not managed like singleton destruction.</li><li>Do not perform slow remote calls in constructors or initialization callbacks.</li></ul>
+<blockquote>The lifecycle is a framework-managed sequence; application correctness should rely on explicit dependencies and lifecycle contracts, not incidental creation order.</blockquote>
+<h3>Lifecycle traps</h3><p>Calling a proxied method from a constructor or initialization callback can bypass advice because the proxy is not ready or the call stays inside the target object. Circular constructor dependencies fail early, while field or setter injection may defer the symptom but usually reduces clarity. Use constructor injection and explicit lifecycle events for startup work.</p>
+<h3>Follow-up questions</h3><ul><li>What does a <code>BeanPostProcessor</code> do?</li><li>When does an AOP proxy appear?</li><li>Who destroys prototype-scoped objects?</li></ul>
+<h3>Minimal lifecycle example</h3><pre><code>@Bean(initMethod = "connect", destroyMethod = "close")
+Client client() { return new Client(); }</code></pre>
+<p>Keep initialization bounded and local. Remote migrations and long calls belong in explicit startup workflows or readiness-controlled jobs.</p>
+<h3>Interview-ready answer</h3><blockquote>A configuration class defines managed beans with container semantics. Spring creates the bean, injects dependencies, runs post-processors and initialization callbacks, may create a proxy, and later invokes destruction callbacks for managed scopes.</blockquote>

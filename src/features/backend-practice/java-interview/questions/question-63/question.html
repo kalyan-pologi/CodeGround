@@ -1,0 +1,15 @@
+<h3>Question: How do Spring profiles work, and what happens when application.yml and application.properties both define the same property?</h3>
+<h3>Short answer</h3>
+<p>Profiles select environment-specific beans and configuration documents. Profile-specific files are applied when the profile is active. If two property files define the same key at the same precedence, the later or more specifically loaded property source wins according to Boot's documented configuration ordering; do not rely on file format alone.</p>
+<h3>Safe design</h3>
+<ul><li>Use one canonical format per service when possible.</li><li>Keep profile files focused on environment differences.</li><li>Activate profiles through deployment configuration, not source-code defaults.</li><li>Verify the effective value with tests and a secured configuration diagnostic.</li></ul>
+<h3>Interview follow-up</h3><p><strong>Can profiles replace secrets management?</strong> No. Profiles select configuration; secrets belong in a secret store or protected runtime injection mechanism.</p>
+<blockquote>I would avoid ambiguous duplicate keys and verify the final Environment rather than guessing from filenames.</blockquote>
+<h3>Failure modes</h3><p>A profile may be inactive, a profile group may activate an unexpected profile, or an environment variable may override a carefully reviewed file. Duplicate keys across YAML and properties files create maintenance risk even when Boot has a deterministic ordering. Treat one source as authoritative and test the effective configuration for each deployment profile.</p>
+<h3>Interview follow-up</h3><ul><li>How do you activate a profile in Kubernetes?</li><li>How do profile-specific beans differ from profile-specific properties?</li><li>What belongs in a secrets manager instead of a profile file?</li></ul>
+<blockquote>My rule is to make profile activation explicit, keep one owner for each setting, and verify the final resolved value in an integration test.</blockquote>
+<h3>Minimal profile example</h3><pre><code>@Profile("prod")
+@Bean
+PaymentClient productionClient() { return new PaymentClient(); }</code></pre>
+<p>Keep profile selection outside application code where possible, and test that the intended bean exists for every deployment profile.</p>
+<h3>Interview-ready answer</h3><blockquote>Profiles select environment-specific beans and documents. Duplicate keys are resolved by property-source precedence, so I avoid ambiguous definitions and verify the final Environment rather than assuming YAML or properties wins.</blockquote>
