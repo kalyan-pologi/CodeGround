@@ -147,18 +147,9 @@
 <p>Intercepts requests before/after handler execution. Use case: authentication, logging, request preprocessing, response modification. Sits in the Spring servlet chain after the DispatcherServlet, so it has access to Spring beans and the request context, unlike servlet filters. Implement <code>preHandle</code> to run before the handler, <code>postHandle</code> after a successful handler return, and <code>afterCompletion</code> after the response is written for cleanup.</p>
 
 <figure class="note-figure">
-  <img src="assets/img/spring-boot-request-lifecycle-diagram.png" alt="Spring Boot request lifecycle from client request through filters, DispatcherServlet, controller, service, repository, and response">
-  <figcaption>Spring Boot request lifecycle: from the client request through filters, interceptors, controllers, services, repositories, and response conversion</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/spring-mvc-request-flow-diagram.png" alt="Spring MVC request flow showing HTTP request through Servlet Container, Servlet Filter, DispatcherServlet, HandlerInterceptor, and Controller">
-  <figcaption>Spring MVC request flow lifecycle</figcaption>
-</figure>
-
-<figure class="note-figure">
   <img src="assets/img/filter-vs-spring-interceptor-vs-feign-interceptor-comparison.png" alt="Comparison table of Servlet Filter, Spring HandlerInterceptor, and Feign Interceptor">
-  <figcaption>Filter vs Spring interceptor vs Feign interceptor</figcaption>
+  <figcaption>Spring MVC request pipeline and Filter, HandlerInterceptor, and Feign Interceptor comparison.</figcaption>
+</figure>
 </figure>
 
 <h3>@RestController</h3>
@@ -235,18 +226,8 @@
 <p>Holds security context for the current thread. Use case: authentication information access, user details retrieval, security context.</p>
 
 <figure class="note-figure">
-  <img src="assets/img/spring-security-authentication-architecture-diagram.png" alt="Diagram of Spring Security authentication architecture, filters, and context holder">
-  <figcaption>Spring Security authentication architecture</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/spring-security-authentication-flow-table.png" alt="Table describing the Spring Security authentication flow step by step">
-  <figcaption>Spring Security authentication flow</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/spring-security-authorization-flow-table.png" alt="Table describing the Spring Security authorization flow step by step">
-  <figcaption>Spring Security authorization flow</figcaption>
+  <img src="assets/img/spring-security-authentication-architecture-diagram.png" alt="Combined Spring Security authentication and authorization flow showing filters, authentication providers, SecurityContextHolder, URL rules, method security, and authorities">
+  <figcaption>Spring Security authentication and authorization: identity first, permission checks second.</figcaption>
 </figure>
 
 <h3>CORS Configuration</h3>
@@ -378,23 +359,8 @@
 <p>Manages cache instances and operations. Use case: cache configuration, cache lifecycle, multi-cache management.</p>
 
 <figure class="note-figure">
-  <img src="assets/img/spring-redis-caching-config-flow-diagram.png" alt="Diagram of Spring configuration flow when using Redis as the cache provider">
-  <figcaption>Spring + Redis caching configuration flow</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/caching-strategies-full-table.png" alt="Full comparison table of caching strategies such as cache-aside, read-through, write-through, and write-behind">
-  <figcaption>Caching strategies, full comparison</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/top-5-caching-strategies-diagram.png" alt="Diagram summarizing the top 5 caching strategies">
-  <figcaption>Top 5 caching strategies</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/redis-use-cases-table.png" alt="Table of common Redis use cases beyond caching, such as session storage and rate limiting">
-  <figcaption>Redis use cases</figcaption>
+  <img src="assets/img/spring-redis-caching-config-flow-diagram.png" alt="Combined Spring and Redis diagram showing configuration flow, caching strategies, and Redis use cases">
+  <figcaption>Spring + Redis: configuration, caching strategies, TTL, stampede prevention, and common use cases.</figcaption>
 </figure>
 
 <h2>Spring Integration &amp; Messaging (Kafka/RabbitMQ)</h2>
@@ -412,13 +378,8 @@
 <p>Abstraction for message communication. Use case: asynchronous messaging, loose coupling, integration patterns.</p>
 
 <figure class="note-figure">
-  <img src="assets/img/kafka-flow-detailed-table.png" alt="Detailed table of the Kafka producer to broker to consumer message flow">
-  <figcaption>Kafka message flow, detailed</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/kafka-topic-partitions-consumer-groups-diagram.png" alt="Diagram of Kafka topics, partitions, and consumer groups">
-  <figcaption>Kafka topics, partitions, and consumer groups</figcaption>
+  <img src="assets/img/kafka-flow-detailed-table.png" alt="Combined Spring Kafka producer to consumer flow with brokers, partitions, consumer groups, offsets, ordering, retries, and dead-letter topics">
+  <figcaption>Spring Kafka: producer flow, partitions, consumer groups, offsets, ordering, retries, and dead-letter topics.</figcaption>
 </figure>
 
 <figure class="note-figure">
@@ -520,18 +481,8 @@
 <p>@Transactional only takes effect when the method is public, it is called via the Spring proxy (i.e. from a different bean, not a self-invocation), the bean itself is Spring-managed, and the thrown exception type is one that supports rollback.</p>
 
 <figure class="note-figure">
-  <img src="assets/img/spring-transaction-propagation-types-table.png" alt="Table of Spring transaction propagation types such as REQUIRED, REQUIRES_NEW, NESTED, and MANDATORY">
-  <figcaption>Transaction propagation types</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/spring-transactional-attributes-table.png" alt="Table of @Transactional attributes such as isolation, timeout, readOnly, and rollbackFor">
-  <figcaption>@Transactional attributes</figcaption>
-</figure>
-
-<figure class="note-figure">
-  <img src="assets/img/spring-transactional-when-it-will-not-work-table.png" alt="Table listing common cases where @Transactional silently does not work, such as self-invocation and private methods">
-  <figcaption>Cases where @Transactional will not work</figcaption>
+  <img src="assets/img/spring-transaction-propagation-types-table.png" alt="Combined Spring transaction diagram showing propagation modes, transactional attributes, and proxy rollback traps">
+  <figcaption>Spring transactions: propagation, attributes, and cases where transactional proxy advice is bypassed.</figcaption>
 </figure>
 
 <h2>Testing</h2>
@@ -622,54 +573,12 @@
   <img src="assets/img/spring-boot-production-readiness-interviews.png" alt="Spring Boot production readiness and senior-level interview topics covering architecture, configuration, observability, performance, incidents, resilience, deployment, security, and system design">
 </figure>
 
-<h2>Real-World Architecture Reference</h2>
-<p>Metrics and configuration tables from a production Kafka-based fraud and credit risk platform
-  (see <a href="#proj-citibank">Citibank project write-up</a>), useful for grounding Spring/Kafka
-  topics in a concrete real system.</p>
+<h2>Real-World Kafka Metrics Reference</h2>
+<p>Sample metrics and configuration tables for grounding Spring and Kafka topics in a concrete production-style platform.</p>
 
 <figure class="note-figure">
-  <img src="assets/img/citibank-kafka-fraud-credit-risk-architecture-diagram.png" alt="Citibank Kafka fraud and credit risk architecture diagram">
-  <figcaption>Fraud and credit risk architecture</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-system-scale-performance-metrics-table.png" alt="Citibank system scale and performance metrics table">
-  <figcaption>System scale and performance</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-kafka-cluster-topics-metrics-table.png" alt="Citibank Kafka cluster and topics metrics table">
-  <figcaption>Kafka cluster and topics</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-kafka-producer-configuration-table.png" alt="Citibank Kafka producer configuration table">
-  <figcaption>Kafka producer configuration</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-kafka-consumer-configuration-table.png" alt="Citibank Kafka consumer configuration table">
-  <figcaption>Kafka consumer configuration</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-postgresql-database-metrics-table.png" alt="Citibank PostgreSQL database metrics table">
-  <figcaption>PostgreSQL database metrics</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-redis-state-caching-metrics-table.png" alt="Citibank Redis state and caching metrics table">
-  <figcaption>Redis state and caching</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-threading-concurrency-metrics-table.png" alt="Citibank threading and concurrency metrics table">
-  <figcaption>Threading and concurrency</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-deployment-scaling-metrics-table.png" alt="Citibank deployment and scaling metrics table">
-  <figcaption>Deployment and scaling</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-reliability-failure-handling-metrics-table.png" alt="Citibank reliability and failure handling metrics table">
-  <figcaption>Reliability and failure handling</figcaption>
-</figure>
-<figure class="note-figure">
-  <img src="assets/img/citibank-monitoring-observability-metrics-table.png" alt="Citibank monitoring and observability metrics table">
-  <figcaption>Monitoring and observability</figcaption>
+  <img src="assets/img/kafka-platform-metrics-reference-complete.png" alt="Combined Kafka platform metrics reference showing scale, Kafka, PostgreSQL, Redis, threading, deployment, reliability, and observability values">
+  <figcaption>Kafka platform metrics reference: sample values, configuration, scaling, reliability, and observability.</figcaption>
 </figure>
 
 <hr>

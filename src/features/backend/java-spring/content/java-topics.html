@@ -32,7 +32,66 @@
   <p>Pattern matching for string operations. Use case: data validation, text parsing, search and replace operations.</p>
 
   <h3>Date and Time API</h3>
-  <p>Modern date/time handling via <code>LocalDate</code>, <code>LocalTime</code>, and <code>LocalDateTime</code>. Use case: date calculations, formatting, timezone handling.</p>
+  <p>Java 17's <code>java.time</code> API provides immutable, thread-safe types for dates, times, time zones, durations, periods, and formatting. Choose a type based on whether the value represents a calendar date, a local clock value, a zoned time, or an exact instant.</p>
+
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>Java 17 Date and Time: core classes and methods</caption>
+      <thead><tr><th scope="col">Class / method</th><th scope="col">Purpose</th><th scope="col">Example or behavior</th></tr></thead>
+      <tbody>
+        <tr><td><code>LocalDate.now()</code></td><td>Current date without time zone</td><td><code>2026-11-16</code></td></tr>
+        <tr><td><code>LocalTime.now()</code></td><td>Current local time without date or zone</td><td><code>15:30:00</code></td></tr>
+        <tr><td><code>LocalDateTime.now()</code></td><td>Date and time without a zone</td><td><code>2026-11-16T15:30</code></td></tr>
+        <tr><td><code>ZonedDateTime.now()</code></td><td>Date, time, offset, and zone ID</td><td><code>2026-11-16T15:30-06:00[America/Chicago]</code></td></tr>
+        <tr><td><code>Instant.now()</code></td><td>Exact moment on the UTC timeline</td><td><code>2026-11-16T21:30:00Z</code></td></tr>
+        <tr><td><code>LocalDate.of(...)</code></td><td>Create a specific calendar date</td><td><code>LocalDate.of(2026, 11, 16)</code></td></tr>
+        <tr><td><code>LocalDate.parse(text)</code></td><td>Parse ISO date text</td><td><code>LocalDate.parse("2026-11-16")</code></td></tr>
+        <tr><td><code>plusDays / minusDays</code></td><td>Add or subtract days</td><td>Returns a new immutable value.</td></tr>
+        <tr><td><code>plusMonths / minusYears</code></td><td>Add or subtract calendar units</td><td>Returns a new immutable value.</td></tr>
+        <tr><td><code>Period.between(d1, d2)</code></td><td>Difference between dates</td><td>Years, months, and days.</td></tr>
+        <tr><td><code>Duration.between(t1, t2)</code></td><td>Elapsed time difference</td><td>Seconds and smaller time units.</td></tr>
+        <tr><td><code>DateTimeFormatter.ofPattern(...)</code></td><td>Create a custom formatter</td><td><code>dd-MM-yyyy</code></td></tr>
+        <tr><td><code>date.format(formatter)</code></td><td>Date or time to text</td><td><code>"16-11-2026"</code></td></tr>
+        <tr><td><code>parse(text, formatter)</code></td><td>Text to a date or time</td><td>Use the same expected pattern and locale.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>Date and Time formatting patterns</caption>
+      <thead><tr><th scope="col">Pattern</th><th scope="col">Meaning</th><th scope="col">Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>yyyy</code> / <code>YYYY</code></td><td>Calendar year / week-based year</td><td>Use <code>yyyy</code> for ordinary dates.</td></tr>
+        <tr><td><code>MM</code> / <code>MMM</code> / <code>MMMM</code></td><td>Numeric, short, or full month</td><td><code>11</code> / <code>Nov</code> / <code>November</code></td></tr>
+        <tr><td><code>dd</code></td><td>Day of month</td><td><code>16</code></td></tr>
+        <tr><td><code>EEE</code> / <code>EEEE</code></td><td>Short or full weekday</td><td><code>Mon</code> / <code>Monday</code></td></tr>
+        <tr><td><code>HH</code> / <code>hh</code></td><td>24-hour or 12-hour clock</td><td><code>15</code> / <code>03</code></td></tr>
+        <tr><td><code>mm</code> / <code>ss</code> / <code>SSS</code></td><td>Minutes, seconds, milliseconds</td><td><code>30</code> / <code>45</code> / <code>123</code></td></tr>
+        <tr><td><code>a</code></td><td>AM or PM marker</td><td><code>PM</code></td></tr>
+        <tr><td><code>XXX</code> / <code>VV</code></td><td>UTC offset or zone ID</td><td><code>-06:00</code> / <code>America/Chicago</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>Common Date and Time formats</caption>
+      <thead><tr><th scope="col">Format</th><th scope="col">Use</th><th scope="col">Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>yyyy-MM-dd</code></td><td>ISO-style date</td><td><code>2026-11-16</code></td></tr>
+        <tr><td><code>MM/dd/yyyy</code></td><td>US date</td><td><code>11/16/2026</code></td></tr>
+        <tr><td><code>dd-MM-yyyy</code></td><td>Day-month-year</td><td><code>16-11-2026</code></td></tr>
+        <tr><td><code>dd MMM yyyy</code></td><td>Readable date</td><td><code>16 Nov 2026</code></td></tr>
+        <tr><td><code>MMMM dd, yyyy</code></td><td>Full month date</td><td><code>November 16, 2026</code></td></tr>
+        <tr><td><code>HH:mm:ss</code></td><td>24-hour time</td><td><code>15:30:45</code></td></tr>
+        <tr><td><code>hh:mm a</code></td><td>12-hour time</td><td><code>03:30 PM</code></td></tr>
+        <tr><td><code>yyyy-MM-dd'T'HH:mm:ss</code></td><td>ISO-style local date-time</td><td><code>2026-11-16T15:30:45</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p><strong>Practical rule:</strong> Use <code>LocalDate</code> for dates such as birthdays, <code>LocalDateTime</code> only when a zone is not part of the domain value, <code>ZonedDateTime</code> for user-facing zoned schedules, and <code>Instant</code> for timestamps stored or exchanged across services. Avoid <code>YYYY</code> for ordinary calendar dates, and inject a <code>Clock</code> when time-dependent code needs deterministic tests.</p>
 
   <h2>Object-Oriented Programming</h2>
 
@@ -182,7 +241,61 @@
   <p>Exception types that require different handling approaches: checked exceptions must be declared or caught, unchecked exceptions don't. Use case: error handling strategy, API design, code reliability.</p>
 
   <h3>File I/O</h3>
-  <p>Reading from and writing to files using streams. Use case: data persistence, configuration files, log files, data exchange.</p>
+
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>Java 17 file handling: important classes, methods, and behavior</caption>
+      <thead>
+        <tr><th scope="col">Concept / method</th><th scope="col">Purpose</th><th scope="col">Important behavior</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>File</code></td><td>Legacy file API</td><td>Prefer <code>Path</code> and <code>Files</code> for new code.</td></tr>
+        <tr><td><code>Path.of("a.txt")</code></td><td>Represents a path</td><td>Describes a location; it does not create a file.</td></tr>
+        <tr><td><code>Files.exists(path)</code></td><td>Check existence</td><td>Returns a boolean; the result can change immediately after the check.</td></tr>
+        <tr><td><code>createFile</code></td><td>Create one file</td><td>Throws <code>FileAlreadyExistsException</code> if the file exists.</td></tr>
+        <tr><td><code>createDirectory</code></td><td>Create one directory</td><td>Its parent must already exist.</td></tr>
+        <tr><td><code>createDirectories</code></td><td>Create nested directories</td><td>Creates missing parents and accepts an existing directory.</td></tr>
+        <tr><td><code>readString</code> / <code>writeString</code></td><td>Read or write small text files</td><td>Use an explicit charset such as UTF-8; writing replaces content by default and does not create missing parents.</td></tr>
+        <tr><td><code>readAllLines</code></td><td>Read text as a list</td><td>Loads the complete file into memory.</td></tr>
+        <tr><td><code>Files.lines</code></td><td>Process text lazily</td><td>Returns a stream that must be closed.</td></tr>
+        <tr><td><code>BufferedReader</code></td><td>Read large text files</td><td>Efficient line-by-line access; <code>readLine()</code> returns <code>null</code> at EOF.</td></tr>
+        <tr><td><code>BufferedWriter</code></td><td>Write large text files</td><td>Buffers character output; close or flush it to publish buffered data.</td></tr>
+        <tr><td><code>InputStream</code> / <code>OutputStream</code></td><td>Read or write bytes</td><td>Use for PDFs, images, ZIP files, and other binary content.</td></tr>
+        <tr><td><code>Reader</code> / <code>Writer</code></td><td>Read or write characters</td><td>Use for text; decoding and encoding require a known charset.</td></tr>
+        <tr><td><code>FileInputStream</code></td><td>Read file bytes</td><td><code>read()</code> returns <code>-1</code> at EOF.</td></tr>
+        <tr><td><code>FileOutputStream</code></td><td>Write file bytes</td><td>Truncates by default; an append constructor preserves existing bytes.</td></tr>
+        <tr><td><code>BufferedInputStream</code> / <code>BufferedOutputStream</code></td><td>Buffer binary I/O</td><td>Reduces frequent underlying reads and writes.</td></tr>
+        <tr><td><code>readAllBytes</code></td><td>Read a complete binary file</td><td>Avoid for large files because the byte array consumes heap memory.</td></tr>
+        <tr><td><code>Files.copy</code></td><td>Copy a file or stream</td><td>Fails when the destination exists unless <code>REPLACE_EXISTING</code> is supplied.</td></tr>
+        <tr><td><code>Files.move</code></td><td>Move or rename</td><td>Use <code>REPLACE_EXISTING</code> deliberately; atomicity depends on the file system.</td></tr>
+        <tr><td><code>delete</code> / <code>deleteIfExists</code></td><td>Delete a path</td><td><code>delete</code> throws when missing; <code>deleteIfExists</code> returns <code>false</code>.</td></tr>
+        <tr><td><code>CREATE</code> / <code>CREATE_NEW</code></td><td>Control creation</td><td><code>CREATE_NEW</code> fails if the target already exists; neither option creates parent directories.</td></tr>
+        <tr><td><code>APPEND</code> / <code>TRUNCATE_EXISTING</code></td><td>Control writes</td><td>Append preserves content; truncate clears an existing file before writing.</td></tr>
+        <tr><td><code>InputStream.transferTo</code></td><td>Copy between streams</td><td>Streams bytes incrementally without creating one large in-memory buffer.</td></tr>
+        <tr><td><code>try-with-resources</code></td><td>Close resources safely</td><td>Works with <code>AutoCloseable</code> and also preserves suppressed close exceptions.</td></tr>
+        <tr><td><code>IOException</code></td><td>General I/O failure</td><td>Handle or declare it and preserve the root cause in logs.</td></tr>
+        <tr><td><code>NoSuchFileException</code></td><td>Missing path</td><td>Common when a file or required parent directory does not exist.</td></tr>
+        <tr><td><code>FileAlreadyExistsException</code></td><td>Existing target</td><td>Common with <code>createFile</code> and <code>CREATE_NEW</code>.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Spring Boot file handling</h3>
+  <p>For web applications, keep large transfers streaming and enforce limits before writing to storage.</p>
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>Spring Boot file handling choices</caption>
+      <thead><tr><th scope="col">Scenario</th><th scope="col">Recommended choice</th><th scope="col">Reason</th></tr></thead>
+      <tbody>
+        <tr><td>Upload a small file</td><td><code>MultipartFile</code></td><td>Convenient multipart abstraction with validation.</td></tr>
+        <tr><td>Upload a large file</td><td><code>MultipartFile.getInputStream()</code></td><td>Stream to storage instead of converting to a large <code>byte[]</code>.</td></tr>
+        <tr><td>Download a stored file</td><td><code>ResponseEntity&lt;Resource&gt;</code></td><td>Supports file-backed streaming and content headers.</td></tr>
+        <tr><td>Generate a large response</td><td><code>StreamingResponseBody</code></td><td>Writes incrementally without buffering the whole response.</td></tr>
+        <tr><td>Very large object transfer</td><td>S3 presigned URL</td><td>Moves upload/download traffic away from the application.</td></tr>
+        <tr><td>Multipart limits</td><td><code>spring.servlet.multipart.max-file-size</code> and <code>max-request-size</code></td><td>Set separate per-file and whole-request limits, for example 50MB and 55MB.</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <h3>Serialization</h3>
   <p>Converting objects to byte streams for storage or transmission. Use case: object persistence, network communication, caching.</p>
@@ -397,13 +510,8 @@
   <p>Lightweight threads for high-concurrency applications. Use case: scalable server applications, reactive programming, I/O intensive tasks.</p>
 
   <figure class="note-figure">
-    <img src="assets/img/java-concurrency-cheat-sheet-collections-1.png" alt="Java concurrency cheat sheet part 1 covering thread-safe collections">
-    <figcaption>Concurrency cheat sheet (1 of 2): thread-safe collection choices and their tradeoffs.</figcaption>
-  </figure>
-
-  <figure class="note-figure">
-    <img src="assets/img/java-concurrency-cheat-sheet-collections-2.png" alt="Java concurrency cheat sheet part 2 covering thread-safe collections">
-    <figcaption>Concurrency cheat sheet (2 of 2): more thread-safe collection choices and their tradeoffs.</figcaption>
+    <img src="assets/img/java-concurrency-cheat-sheet-complete.png" alt="Complete Java concurrency cheat sheet with 23 collections and concurrency utilities, their behavior, use cases, and examples">
+    <figcaption>Concurrency reference: 23 collections and concurrency utilities with behavior, use cases, and examples.</figcaption>
   </figure>
 
   <h2>JVM Internals &amp; Memory Management</h2>
