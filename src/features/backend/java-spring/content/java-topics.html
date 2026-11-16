@@ -411,17 +411,52 @@
   <h3>JVM (Java Virtual Machine)</h3>
   <p>The runtime environment that executes Java bytecode. Use case: platform independence, memory management, security.</p>
 
+  <figure class="note-figure">
+    <img src="assets/img/java-jvm-process-memory.png" alt="Original JVM process memory diagram showing shared heap, metaspace, code cache, and per-thread stack memory">
+    <figcaption>JVM process memory: shared regions versus per-thread memory.</figcaption>
+  </figure>
+
   <h3>Garbage Collection</h3>
   <p>Automatic memory management by reclaiming unused objects. Use case: memory optimization, preventing memory leaks, performance tuning.</p>
 
+  <figure class="note-figure">
+    <img src="assets/img/java-garbage-collector-comparison.png" alt="Comparison of Java garbage collectors by strengths, typical workloads, and caveats">
+    <figcaption>Garbage collectors should be selected from workload measurements and pause goals.</figcaption>
+  </figure>
+
+  <figure class="note-figure">
+    <img src="assets/img/java-heap-generations-lifecycle.png" alt="Java heap object lifecycle from Eden through survivor spaces to old generation">
+    <figcaption>Heap generations: object allocation, survivor spaces, and promotion.</figcaption>
+  </figure>
+
   <h3>Memory Management</h3>
   <p>Understanding heap, stack, method area, and garbage collection. Use case: performance tuning, memory leak prevention, application optimization.</p>
+
+  <figure class="note-figure">
+    <img src="assets/img/java-stack-frame-method-execution.png" alt="Java stack frame diagram showing frame metadata, operand stack, and local variable array">
+    <figcaption>Stack frame structure: local variables, operand stack, and runtime metadata.</figcaption>
+  </figure>
+
+  <figure class="note-figure">
+    <img src="assets/img/java-metaspace-code-cache.png" alt="JVM metaspace and code cache diagram showing class metadata and JIT compiled code">
+    <figcaption>Metaspace and code cache are JVM native-memory areas distinct from the Java heap.</figcaption>
+  </figure>
 
   <h3>OutOfMemoryError</h3>
   <p>A runtime error thrown when the JVM runs out of memory. Use case: memory debugging, performance analysis, application scaling.</p>
 
   <h3>Memory Leaks</h3>
   <p>Objects that can no longer be garbage collected but are no longer useful. Use case: performance debugging, memory optimization, long-running applications.</p>
+
+  <figure class="note-figure">
+    <img src="assets/img/java-gc-roots-reachability.png" alt="Java garbage collector roots diagram showing reachable objects and unreachable objects eligible for collection">
+    <figcaption>GC roots and reachability determine whether objects remain live.</figcaption>
+  </figure>
+
+  <figure class="note-figure">
+    <img src="assets/img/java-memory-leak-investigation.png" alt="Step-by-step Java memory leak investigation workflow using heap dumps and GC roots">
+    <figcaption>Memory-leak investigation: compare live sets after GC, inspect retained objects, and verify the fix.</figcaption>
+  </figure>
 
   <h3>Stack Overflow</h3>
   <p>An error thrown when the call stack exceeds its maximum depth. Use case: recursion debugging, algorithm optimization, stack size tuning.</p>
