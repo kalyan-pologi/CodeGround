@@ -59,6 +59,7 @@ function ReactTask({ task, onBack, onSelect }) {
   const [running, setRunning] = useState(false);
   const [failedApi, setFailedApi] = useState(false);
   const [codeHeight, setCodeHeight] = useState(420);
+  const [editorVersion, setEditorVersion] = useState(0);
   const grid = useRef(null);
   const frame = useRef(null);
   const index = reactTasks.indexOf(task);
@@ -87,13 +88,14 @@ function ReactTask({ task, onBack, onSelect }) {
     frame.current?.contentWindow?.postMessage({ type: 'react-practice-api-failure', enabled }, '*');
   }
   function reset() {
-    if (code !== task.solution && !window.confirm('Reset your code to the default solution?')) return;
     setCode(task.solution);
+    setEditorVersion(version => version + 1);
     setPreview(''); setError('');
   }
   function loadSolution() {
     if (code !== task.solution && !window.confirm('Replace your draft with the solution?')) return;
     setCode(task.solution);
+    setEditorVersion(version => version + 1);
     setPreview(''); setError('');
   }
   function resizePreview(event) {
@@ -122,7 +124,7 @@ function ReactTask({ task, onBack, onSelect }) {
       </section>
       <section className="react-task-panel react-code" aria-label="React code editor">
         <div className="react-pane-heading"><strong>App.jsx</strong><span>{saveStatus}</span><button onClick={reset}>Reset</button><button className="react-primary" onClick={runPreview} disabled={running}>{running ? 'Preparing…' : '▶ Run preview'}</button></div>
-        <div className="react-editor"><Suspense fallback={<p>Loading editor…</p>}><CodeEditor task={{ id: `react-${task.id}`, language: 'javascript' }} code={code} onChange={setCode} /></Suspense></div>
+        <div className="react-editor"><Suspense fallback={<p>Loading editor…</p>}><CodeEditor key={editorVersion} task={{ id: `react-${task.id}`, language: 'javascript' }} code={code} onChange={setCode} /></Suspense></div>
       </section>
       <div className="react-horizontal-divider" role="separator" aria-label="Resize live preview" aria-orientation="horizontal" aria-valuemin="220" aria-valuemax="900" aria-valuenow={Math.round(codeHeight)} tabIndex="0"
         onPointerDown={event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); }}
