@@ -51,8 +51,7 @@ function previewDocument(source, failedApi) {
 }
 
 function ReactTask({ task, onBack, onSelect }) {
-  const draftTask = { ...task, starter: task.solution };
-  const { code, setCode, saveStatus } = useExerciseDraft(draftTask, 'react');
+  const { code, setCode, saveStatus } = useExerciseDraft(task, 'react');
   const [view, setView] = useState('problem');
   const [preview, setPreview] = useState('');
   const [error, setError] = useState('');
@@ -88,7 +87,7 @@ function ReactTask({ task, onBack, onSelect }) {
     frame.current?.contentWindow?.postMessage({ type: 'react-practice-api-failure', enabled }, '*');
   }
   function reset() {
-    setCode(task.solution);
+    setCode(task.starter);
     setEditorVersion(version => version + 1);
     setPreview(''); setError('');
   }
