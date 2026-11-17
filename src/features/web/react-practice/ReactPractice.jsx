@@ -144,7 +144,7 @@ export default function ReactPractice({ initialSelectedId }) {
   const task = reactTasks.find(item => item.id === selectedId);
   if (task) return <ReactTask key={task.id} task={task} onBack={() => setSelectedId(null)} onSelect={setSelectedId} />;
   return <main className="react-practice react-task-list">
-    <header><div><p className="react-meta">Web / React</p><h1>React coding tasks</h1><p>Five practical lender and trainer exercises covering components, state, routing, API services, and UI performance. Task 5 includes an Angular/RxJS follow-up from the job description.</p></div><span>5 tasks</span></header>
-    <ol>{reactTasks.map(item => <li key={item.id}><button onClick={() => setSelectedId(item.id)}><span>{item.id.toString().padStart(2, '0')}</span><strong>{item.title}</strong><small>{item.topic} · {item.difficulty}</small><span aria-hidden="true">→</span></button></li>)}</ol>
+    <header><div><p className="react-meta">Web / React</p><h1>React coding tasks</h1><p>Five practical lender and trainer exercises covering components, state, routing, API services, and UI performance.</p></div><span>5 tasks</span></header>
+    <ol>{reactTasks.map(item => <li key={item.id}><button onClick={() => setSelectedId(item.id)}><span>{item.id.toString().padStart(2, '0')}</span><strong>{item.title}</strong><small>{item.topic}</small><span aria-hidden="true">→</span></button></li>)}</ol>
   </main>;
 }

@@ -294,8 +294,6 @@ function ChecklistHeader() {
     ],
     expected: 'Run preview → Ada and Ben. Add Cara → appears. Edit Cara → updated name. Delete Cara → removed. Simulate failure → an error appears for the next request.',
     notes: 'The preview provides an in-memory mock for GET, POST, PUT, and DELETE /api/employees. It represents a Spring Boot REST controller and works offline.',
-    followUpTitle: 'Angular/RxJS follow-up',
-    followUp: 'Angular/RxJS version: create an EmployeeService using HttpClient. For a live search, pipe input changes through debounceTime(300), distinctUntilChanged(), and switchMap() so stale requests are canceled. Render with the async pipe or clean up subscriptions.',
     hints: ['Create request helpers for GET, POST, PUT, and DELETE. Each helper should check response.ok.', 'Keep form state separate from the server list; refresh the list after a successful mutation.', 'Create an AbortController in the effect and abort it in cleanup.'],
     starter: `async function getEmployees(signal) { /* GET /api/employees */ }
 async function createEmployee(name) { /* POST /api/employees */ }
