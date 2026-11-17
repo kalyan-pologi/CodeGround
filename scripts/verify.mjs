@@ -10,7 +10,27 @@ import { topics } from '../src/features/backend-practice/java-backend/data/topic
 import { productionScenarios } from '../src/features/backend-practice/reidy/production-scenarios.js';
 import { productionExercises } from '../src/features/backend-practice/reidy/production-exercises.js';
 import { reidyStoryScenarios } from '../src/features/backend-practice/reidy/reidy-story-scenarios.js';
+import ts from 'typescript';
+import { reactTasks } from '../src/features/web/react-practice/tasks.js';
 const root = fileURLToPath(new URL('../', import.meta.url));
+assert.equal(reactTasks.length, 5, 'React practice should contain five tasks');
+assert.equal(new Set(reactTasks.map(task => task.id)).size, reactTasks.length);
+for (const task of reactTasks) {
+  assert.ok(task.requirements.length >= 4 && task.hints.length >= 3, `React task ${task.id} needs requirements and hints`);
+  for (const variant of ['starter', 'solution']) {
+    const result = ts.transpileModule(task[variant], {
+      fileName: 'App.jsx', reportDiagnostics: true,
+      compilerOptions: { jsx: ts.JsxEmit.React, target: ts.ScriptTarget.ES2020, module: ts.ModuleKind.None }
+    });
+    const errors = result.diagnostics?.filter(item => item.category === ts.DiagnosticCategory.Error) || [];
+    assert.equal(errors.length, 0, `React task ${task.id} ${variant} has invalid JSX: ${errors.map(item => ts.flattenDiagnosticMessageText(item.messageText, ' ')).join('; ')}`);
+    const reactRuntime = {
+      createContext: defaultValue => ({ defaultValue }),
+      useContext: context => context.defaultValue
+    };
+    assert.equal(typeof new Function('React', result.outputText + '\nreturn App;')(reactRuntime), 'function', `React task ${task.id} ${variant} must define App`);
+  }
+}
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/data/catalog.json'), 'utf8'));
 const resolveFeatureNote = (base, file) => {
   const directory = path.join(root, base);

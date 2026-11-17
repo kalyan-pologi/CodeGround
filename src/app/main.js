@@ -29,10 +29,10 @@ const groups = {
   backend: [['Java & Spring', featureCatalog.backend['java-spring']], ['Tooling', featureCatalog.backend.tooling]],
   practice: [['Java Interview Questions', ['java-interview-questions']], ['Reidy Tasks', ['@tasks']], ['Java Backend Tasks', ['@workspace']], ['Java Core Tasks', ['java-snippets']], ['SQL', ['sql-snippets']], ['Java & Spring Practice MCQs', ['@debugging']]],
   devops: [['Commands', featureCatalog.devops.commands], ['Infrastructure', featureCatalog.devops.infrastructure], ['Cloud', featureCatalog.devops.cloud]],
-  web: [['Fundamentals', featureCatalog.web.fundamentals], ['Frameworks', featureCatalog.web.frameworks]],
+  web: [['Fundamentals', featureCatalog.web.fundamentals], ['Frameworks', ['react', '@react-tasks', ...featureCatalog.web.frameworks.filter(id => id !== 'react')]]],
   home: [['Getting started', ['@overview', ...featureCatalog.home['getting-started'].filter(id => id !== 'home')]], ['Project write-ups', featureCatalog.home['project-writeups']], ['Project stories & questions', featureCatalog.home['project-stories']]]
 };
-const names = { '@overview': 'Overview', '@tasks': 'Reidy Tasks', '@workspace': 'Java Backend Tasks', '@debugging': 'Java & Spring Practice MCQs', 'java-interview-questions': 'Java Interview Questions', 'java-snippets': 'Java Core Tasks', 'sql-snippets': 'SQL' };
+const names = { '@overview': 'Overview', '@tasks': 'Reidy Tasks', '@workspace': 'Java Backend Tasks', '@debugging': 'Java & Spring Practice MCQs', '@react-tasks': 'React Coding Tasks', 'java-interview-questions': 'Java Interview Questions', 'java-snippets': 'Java Core Tasks', 'sql-snippets': 'SQL' };
 const labels = { backend: 'Java, Spring Boot & design principles', practice: 'Build skills through project work', devops: 'Commands, containers & cloud', web: 'Frontend fundamentals & frameworks', sd: 'Architecture & distributed systems', genai: 'Models, retrieval & AI applications' };
 const escape = value => String(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 const initials = email => {
@@ -146,7 +146,7 @@ function currentActive(tab) {
   const [path] = location.hash.slice(1).split('?');
   const [selectedTab, repo, id] = path.split('/');
   if (selectedTab !== tab) return '';
-  return repo === 'debugging' ? '@debugging' : repo === 'workspace' ? '@workspace' : ['tasks', 'project-coding', 'incidents'].includes(repo) ? '@tasks' : id || '@overview';
+  return repo === 'react-tasks' ? '@react-tasks' : repo === 'debugging' ? '@debugging' : repo === 'workspace' ? '@workspace' : ['tasks', 'project-coding', 'incidents'].includes(repo) ? '@tasks' : id || '@overview';
 }
 document.querySelectorAll('[data-tab]').forEach(button => {
   button.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') openDropdown(button.dataset.tab); });
@@ -169,7 +169,7 @@ document.addEventListener('keydown', event => { if (event.key === 'Escape' && op
 window.addEventListener('resize', () => closeDropdown());
 
 function sidebarLink(tab, repo, id, activeId) {
-  const href = id === '@overview' ? '#home' : id === '@tasks' ? '#practice/tasks' : id === '@workspace' ? '#practice/workspace' : id === '@debugging' ? '#practice/debugging' : noteRoute(getNote(repo, id) || { repo, id });
+  const href = id === '@overview' ? '#home' : id === '@tasks' ? '#practice/tasks' : id === '@workspace' ? '#practice/workspace' : id === '@debugging' ? '#practice/debugging' : id === '@react-tasks' ? '#web/react-tasks' : noteRoute(getNote(repo, id) || { repo, id });
   return `<a class="side-link ${id === activeId ? 'active' : ''}" href="${href}" ${id === activeId ? 'aria-current="page"' : ''}>${escape(names[id] || getNote(repo, id)?.title || id)}</a>`;
 }
 function renderDropdown(tab, activeId) {
@@ -260,6 +260,12 @@ function showWorkspace(project = false, topicTasks = false, scenarioId = '', tas
   const frame = main.querySelector('iframe');
   frame.addEventListener('load', () => frame.contentDocument?.addEventListener('pointerdown', () => closeDropdown()));
 }
+function showReactWorkspace(taskId = '') {
+  const params = new URLSearchParams({ bank: 'react' });
+  if (taskId) params.set('task', taskId);
+  main.innerHTML = `<div class="reader"><iframe class="note-frame" title="React Coding Tasks" src="${import.meta.env.BASE_URL}practice.html?${params}"></iframe></div>`;
+  main.querySelector('iframe').addEventListener('load', event => event.target.contentDocument?.addEventListener('pointerdown', () => closeDropdown()));
+}
 function showSearch(query) {
   const normalizedQuery = query.toLowerCase();
   const matches = searchIndex.filter(entry => entry.text.includes(normalizedQuery)).map(entry => entry.note);
@@ -320,6 +326,7 @@ function router() {
   else if (tab === 'practice' && repo === 'project-coding') showWorkspace(true);
   else if (tab === 'practice' && (!repo || repo === 'tasks')) showWorkspace(true, true, new URLSearchParams(queryString).get('scenario') || (id === 'production' ? 'n-plus-one' : ''), new URLSearchParams(queryString).get('task') || '');
   else if (tab === 'practice' && repo === 'task-board') location.replace('#practice/tasks');
+  else if (tab === 'web' && repo === 'react-tasks') showReactWorkspace(new URLSearchParams(queryString).get('task') || '');
   else if (repo && id) showNote(repo, id, version);
   else { location.replace(defaultRoute(tab)); }
 }

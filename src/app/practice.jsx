@@ -6,6 +6,7 @@ const CodingPractice = lazy(() => import('../components/practice/CodingPractice'
 const McqPractice = lazy(() => import('../components/practice/McqPractice'));
 const DebuggingPractice = lazy(() => import('../features/backend-practice/debugging/DebuggingPractice'));
 const TaskWorkbench = lazy(() => import('../components/workspace/TaskWorkbench'));
+const ReactPractice = lazy(() => import('../features/web/react-practice/ReactPractice'));
 
 function Practice({ project, codingQuestions, debuggingQuestions, taskList }) {
   const [mode, setMode] = useState('coding');
@@ -30,6 +31,11 @@ const root = createRoot(document.getElementById('root'));
 root.render(<p role="status">Loading practice…</p>);
 async function start() {
   const bankName = new URLSearchParams(location.search).get('bank');
+  if (bankName === 'react') {
+    const taskId = Number(new URLSearchParams(location.search).get('task'));
+    root.render(<React.StrictMode><Suspense fallback={<p role="status">Loading React tasks…</p>}><ReactPractice initialSelectedId={taskId} /></Suspense></React.StrictMode>);
+    return;
+  }
   if (bankName === 'debugging') {
     const { mcqs } = await import('../features/backend-practice/java-backend/data/mcqs');
     root.render(<Suspense fallback={<p role="status">Loading debugging questions…</p>}><DebuggingPractice questions={mcqs} /></Suspense>);
