@@ -271,6 +271,12 @@
   },
   {
     "repo": "interview",
+    "id": "react-interview-questions",
+    "title": "React Interview Questions",
+    "file": "features/web/frameworks/content/react-interview-questions.html"
+  },
+  {
+    "repo": "interview",
     "id": "redux",
     "title": "Redux",
     "file": "features/web/frameworks/content/redux.html"

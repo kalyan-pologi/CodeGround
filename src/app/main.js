@@ -231,6 +231,11 @@ async function showNote(repo, id, version) {
           if (version === routeVersion && frame.contentDocument === doc) mountInterviewQuestionDrawer(doc);
         });
       }
+      if (repo === 'interview' && id === 'react-interview-questions') {
+        import('../features/web/frameworks/react-interview-questions-runner.js').then(({ mountReactInterviewQuestionDrawer }) => {
+          if (version === routeVersion && frame.contentDocument === doc) mountReactInterviewQuestionDrawer(doc);
+        });
+      }
       doc.addEventListener('click', event => {
         const link = event.target.closest('a');
         if (!link) return;

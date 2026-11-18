@@ -1,0 +1,160 @@
+<div class="section-header">
+  <div class="tag">React interview preparation</div>
+  <h1>React Interview Questions</h1>
+  <p>Ten broad questions for a Java full stack interview. Each answer connects React decisions to a real training or lending application.</p>
+</div>
+
+<div class="note-body">
+  <h1>React Interview Questions</h1>
+  <p>Select a question to load its detailed answer.</p>
+</div>
+
+<div data-react-question="1">
+  <h2>Short answer</h2>
+  <p>React components are reusable UI units that combine rendering and behavior. A component receives input through props, owns local state when necessary, and composes with child components. A good architecture gives each component one clear responsibility while keeping API calls and shared state in appropriate layers.</p>
+  <h2>Core explanation</h2>
+  <p>Props flow from parent to child and should be treated as read-only. State belongs to the component or the nearest common parent that needs to coordinate it. When two components need the same state, lift it to their common parent. Use callbacks to send events back upward, and use composition to avoid creating deeply coupled components.</p>
+  <h2>Practical example</h2>
+  <p>A lender training page might contain a page shell, course search, course list, course card, enrollment form, and pagination component. The page coordinates the selected course and data loading. The search component owns input interaction, while the service layer communicates with Spring Boot.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>When should a component be split?</b> Split it when it has unrelated responsibilities, is reused, or becomes difficult to test.</li><li><b>How does a child communicate with a parent?</b> The parent passes a callback prop and the child calls it for an event.</li><li><b>Should every component have state?</b> No. Keep state as close as possible to where it is used.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Putting rendering, API calls, validation, and navigation into one large component.</li><li>Duplicating the same state in multiple components.</li><li>Mutating props or state directly.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I design React screens as reusable components with focused responsibilities. Data flows down through props and events flow up through callback props. I keep shared state in the nearest common parent, use Context only for genuinely cross-cutting data, and keep REST communication in service functions. This makes the UI easier to test, reuse, and change.”</p>
+</div>
+
+<div data-react-question="2">
+  <h2>Short answer</h2>
+  <p>State management is the process of storing, updating, and sharing data that affects the UI. Local state is best for one component, lifted state coordinates nearby components, Context handles cross-cutting values, and a global store is useful when many distant features need predictable shared updates.</p>
+  <h2>Core explanation</h2>
+  <p>Keep server data, UI state, form state, and session state conceptually separate. Avoid storing values that can be derived from other state. Use functional updates when the next value depends on the previous value. For complex transitions, use a reducer with explicit actions. Context provides a transport mechanism; it is not automatically a complete state-management solution.</p>
+  <h2>Practical example</h2>
+  <p>A course page can keep the search text locally, keep the selected course in its page component, provide the signed-in trainer through Context, and keep server results in a query or service layer. A global store may be justified if many screens coordinate enrollment, permissions, and cached updates.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>When is Context appropriate?</b> Theme, locale, authentication, and stable application-wide settings are common examples.</li><li><b>When would you use a reducer?</b> When state transitions are related, numerous, or need to be tested as actions.</li><li><b>Why avoid unnecessary global state?</b> It increases coupling and can cause broad re-renders.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Putting every input and server response into one global store.</li><li>Keeping duplicate copies of the same entity.</li><li>Using Context for rapidly changing, high-volume data without considering render cost.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I start with local state and lift it only when components need to coordinate. I use reducers for complex transitions and Context for cross-cutting values such as authentication or theme. I avoid duplicating derived data and choose a global store only when multiple distant features need predictable shared updates.”</p>
+</div>
+
+<div data-react-question="3">
+  <h2>Short answer</h2>
+  <p>Hooks let function components use state, effects, refs, memoization, and reusable logic. The most important rules are to call hooks only at the top level and only from React components or custom hooks. Effects synchronize with external systems and must declare the values they use.</p>
+  <h2>Core explanation</h2>
+  <p>Use state hooks for UI data, effect hooks for network requests and subscriptions, refs for values that should persist without causing a render, and memoization hooks only after measuring a real cost. An effect cleanup should cancel a request, remove an event listener, or unsubscribe from a stream. A custom hook packages behavior, not UI markup.</p>
+  <h2>Practical example</h2>
+  <p>A staff search hook can own loading, error, cancellation, and results while the page decides how to render them. When the trainer changes the search term, the hook can cancel the previous request so stale results do not replace newer results.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>What causes an effect to run again?</b> A dependency change, according to the dependency array.</li><li><b>What is a stale closure?</b> A callback reading values captured from an older render.</li><li><b>When should useMemo or useCallback be used?</b> When referential stability or an expensive calculation provides a measured benefit.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Leaving dependencies out to silence a linter.</li><li>Using effects for calculations that can happen during rendering.</li><li>Calling hooks conditionally.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I use hooks to keep component behavior explicit and reusable. State handles UI values, effects synchronize with APIs or subscriptions, refs hold persistent non-rendering values, and custom hooks extract shared behavior. I follow the top-level hook rules and always clean up subscriptions, listeners, and in-flight requests.”</p>
+</div>
+
+<div data-react-question="4">
+  <h2>Short answer</h2>
+  <p>A controlled form keeps input values in React state and updates them through change handlers. This gives the application one source of truth for validation, submission, reset behavior, and server responses.</p>
+  <h2>Core explanation</h2>
+  <p>A production form should distinguish field values, validation errors, submission status, and server errors. Validate required fields before sending, disable duplicate submissions, preserve useful input after a failure, and clear or redirect only after a successful response. For large dynamic forms, a form library can reduce repetitive state handling without hiding the underlying concepts.</p>
+  <h2>Practical example</h2>
+  <p>An instructor registration form can validate the trainer name and work email locally, send the request to Spring Boot, display field-level validation returned by the server, and show a success route only after the backend confirms the registration.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>What is an uncontrolled input?</b> The DOM owns its current value and React reads it through a ref or form submission.</li><li><b>When should validation run?</b> Common choices are on blur, on change after interaction, and on submit; the choice should avoid noisy errors.</li><li><b>How do you prevent duplicate requests?</b> Track submission state and disable the submit action while the request is active.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Clearing the form before knowing whether the request succeeded.</li><li>Showing only a generic error when the server returned field-specific errors.</li><li>Allowing multiple submissions during a slow request.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“For most business forms I use controlled inputs so React owns the values and validation state. I validate client-side for fast feedback, still trust server validation as the authority, prevent duplicate submissions, preserve values after failures, and reset or navigate only after a successful API response.”</p>
+</div>
+
+<div data-react-question="5">
+  <h2>Short answer</h2>
+  <p>React uses keys to identify list items between renders. A stable key lets React preserve the correct component instance and update only the items that changed. Keys should represent the item identity, usually a database ID.</p>
+  <h2>Core explanation</h2>
+  <p>During reconciliation, React compares the previous and next element trees. Keys help it match items when rows are inserted, removed, or reordered. Using an array index as a key can attach the wrong local state to a row after a reorder, which is especially risky for editable forms and checkboxes.</p>
+  <h2>Practical example</h2>
+  <p>In a staff list, use the employee ID as the key. If a trainer edits one row, the input state stays with that employee even when the list is filtered or sorted. An index key can make an edited value appear to move to a different employee.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>Must keys be globally unique?</b> They must be unique among siblings in the rendered list.</li><li><b>Can a key be the array index?</b> Only when the list is static, never reordered, and never has insertion or deletion.</li><li><b>Does the key become a component prop?</b> No. Pass the ID separately if the component needs it.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Using random values as keys, which forces remounts.</li><li>Using indexes for editable or sortable lists.</li><li>Assuming keys are only performance hints; they also affect state preservation.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“Keys give React stable identity for sibling elements during reconciliation. I use the backend entity ID for employee or course rows. This lets React preserve the right component state when data is inserted, deleted, filtered, or reordered. I avoid indexes for dynamic or editable lists because they can associate state with the wrong row.”</p>
+</div>
+
+<div data-react-question="6">
+  <h2>Short answer</h2>
+  <p>Routing maps URLs to React views and lets users navigate without a full page reload. A production router handles nested layouts, route parameters, protected routes, lazy loading, and navigation state.</p>
+  <h2>Core explanation</h2>
+  <p>Routes should represent user-facing resources, not implementation details. A route can load a page, read an ID, fetch its data, and render a not-found or error state. Protected routes must check authentication and permissions before exposing a screen. Deep links must also be supported by the web server so a refresh does not return a 404.</p>
+  <h2>Practical example</h2>
+  <p>A training application may have a course list route, a course detail route, an enrollment route, and an admin staff route. A trainer can move from the list to a detail page while the URL remains shareable and browser Back returns to the previous view.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>What is a protected route?</b> A route that checks session and authorization before rendering its content.</li><li><b>Where should route data load?</b> In a route-level loader or page effect, with explicit loading and error UI.</li><li><b>Why can refresh fail on a client route?</b> The server must serve the application entry point for unknown frontend paths.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Relying only on hidden buttons instead of enforcing authorization on the backend.</li><li>Not handling missing route parameters or deleted records.</li><li>Putting all navigation state into unrelated global state.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I use routes to make application views addressable and navigable. Each route handles its parameters, loading state, errors, and authorization boundary. Protected routes improve the user experience, but Spring Boot must still enforce permissions. I also configure the server for deep links and use lazy loading for larger route areas.”</p>
+</div>
+
+<div data-react-question="7">
+  <h2>Short answer</h2>
+  <p>React integrates with Spring Boot through HTTP calls to REST endpoints. The frontend should isolate request logic in service functions and represent loading, success, empty, validation-error, and server-error states explicitly.</p>
+  <h2>Core explanation</h2>
+  <p>For CRUD, map UI actions to POST, GET, PUT or PATCH, and DELETE operations. Check response status before parsing data, normalize error messages, cancel obsolete requests, and refresh or update the local list after a successful mutation. Authentication headers, CORS policy, pagination, sorting, and consistent DTOs should be agreed with the backend contract.</p>
+  <h2>Practical example</h2>
+  <p>A staff admin page loads trainers from Spring Boot, posts a new trainer, updates an existing trainer, and deletes a trainer. The UI keeps the current list when a mutation fails, shows the backend validation message, and disables the action while it is in progress.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>How do you handle CORS?</b> Configure an explicit allowed-origin policy in Spring Boot or use a same-origin gateway in production.</li><li><b>How do you avoid stale responses?</b> Abort old requests or track request identity before applying results.</li><li><b>When use optimistic updates?</b> For low-risk operations where immediate feedback matters and rollback is well defined.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Assuming a network response is successful because the request completed.</li><li>Putting fetch calls directly in many components.</li><li>Dropping server validation details and showing only “Something went wrong.”</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I keep Spring Boot communication in a service layer and make each screen model loading, success, empty, validation, and failure states. I check HTTP status, cancel stale requests, send authentication consistently, and update the list only after a successful mutation. The backend remains responsible for authorization and data validation.”</p>
+</div>
+
+<div data-react-question="8">
+  <h2>Short answer</h2>
+  <p>React performance work starts with measurement. The main tools are reducing unnecessary renders, keeping list identity stable, memoizing only expensive work, splitting large bundles, and limiting the amount of data rendered at once.</p>
+  <h2>Core explanation</h2>
+  <p>React.memo can skip a child render when props are unchanged. useMemo can cache an expensive derived value, and useCallback can preserve a callback reference when that matters to a memoized child. Pagination, virtualization, debouncing, lazy routes, and smaller API payloads often provide more benefit than adding memoization everywhere.</p>
+  <h2>Practical example</h2>
+  <p>A course catalog with thousands of courses should request pages or use virtualization rather than render every row. Search input can be debounced, filtering can be measured with the React Profiler, and a course detail route can be lazy loaded.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>Why can memoization hurt?</b> Comparisons and cache maintenance add work and complexity.</li><li><b>What causes a child to re-render?</b> Its state or context changes, its parent renders, or its props receive new references.</li><li><b>How do you find the bottleneck?</b> Use the React Profiler, browser performance tools, network timing, and real user metrics.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Adding useMemo and useCallback without measuring.</li><li>Rendering huge lists without pagination or virtualization.</li><li>Optimizing React while the real bottleneck is a slow database query.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I measure first with the React Profiler and browser tools. I reduce work by limiting API payloads and rendered rows, debouncing input, splitting routes, and using stable keys. I use memoization when an expensive calculation or child render is proven to matter, rather than treating it as a default rule.”</p>
+</div>
+
+<div data-react-question="9">
+  <h2>Short answer</h2>
+  <p>Production React error handling combines local validation, API error states, error boundaries for render failures, retry behavior, logging, and tests. The goal is to give users a useful recovery path while preserving enough context for diagnosis.</p>
+  <h2>Core explanation</h2>
+  <p>Error boundaries catch rendering and lifecycle errors in a subtree, but they do not replace handling rejected API promises. A service should normalize HTTP failures, the UI should show an appropriate message, and telemetry should capture a correlation ID without exposing sensitive data. Tests should cover successful, empty, slow, invalid, and failed paths.</p>
+  <h2>Practical example</h2>
+  <p>If a trainer list request fails, keep the last known list when safe, show a retry action, and report the request ID. If a course card throws during rendering, an error boundary can isolate that card or page instead of blanking the entire application.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>Do error boundaries catch API errors?</b> No. Handle promise failures explicitly.</li><li><b>What should be logged?</b> Route, operation, request ID, safe error details, and timing; never secrets or unnecessary personal data.</li><li><b>How do you test errors?</b> Mock rejected responses, non-2xx statuses, malformed payloads, and retry recovery.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Showing a blank screen for every failure.</li><li>Logging tokens or personal data.</li><li>Testing only the successful path.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I handle validation and API failures at the operation boundary, use error boundaries for render failures, and provide recovery actions such as retry or navigation. I preserve safe existing data when possible, log a correlation ID with useful context, and test success, empty, validation, timeout, and server-error scenarios.”</p>
+</div>
+
+<div data-react-question="10">
+  <h2>Short answer</h2>
+  <p>For a complete React and Spring Boot feature, I start with the user flow and API contract, divide the UI into focused components, choose state ownership, implement loading and error states, connect CRUD operations, protect the route, and verify behavior with tests and measurements.</p>
+  <h2>Core explanation</h2>
+  <p>The design should define the resource, validation rules, permissions, route states, response shapes, and failure behavior before implementation. The frontend should not duplicate backend authorization rules, and the backend should not rely on the frontend for security. A feature is complete when its normal path, empty state, failure path, accessibility, tests, and observability are considered.</p>
+  <h2>Practical example</h2>
+  <p>For a trainer management feature, define the list, create, edit, and delete endpoints first. Build the route page, form, list, and reusable row components. Add Context only for shared session data, keep API calls in a service, handle validation and retries, add authorization in Spring Security, and test the full workflow.</p>
+  <h2>Common follow-up questions and answers</h2>
+  <ul><li><b>How do you decide state ownership?</b> Start local, lift to the nearest shared owner, and use Context or a store only for cross-cutting needs.</li><li><b>How do you handle a partial failure?</b> Keep confirmed data, show the failed operation, and offer retry or rollback based on the operation.</li><li><b>How do you prove quality?</b> Use focused component and integration tests, API contract checks, browser validation, and production metrics.</li></ul>
+  <h2>Common mistakes</h2>
+  <ul><li>Starting with components before agreeing on the API contract.</li><li>Treating frontend route protection as authorization.</li><li>Ignoring empty, slow, unauthorized, and partial-failure states.</li></ul>
+  <h2>Interview-ready answer</h2>
+  <p>“I begin with the user flow and Spring Boot API contract, then design focused React components and explicit state ownership. I separate service calls from rendering, handle loading, empty, validation, authorization, and failure states, and keep security enforcement on the backend. I finish with tests for the workflow and measure performance before optimizing.”</p>
+</div>

@@ -17,7 +17,7 @@ export const featureCatalog = {
   },
   web: {
     fundamentals: ['html', 'css', 'javascript', 'typescript', 'frontend-quickref'],
-    frameworks: ['react', 'redux', 'angular']
+    frameworks: ['react', 'react-interview-questions', 'redux', 'angular']
   }
 };
 
