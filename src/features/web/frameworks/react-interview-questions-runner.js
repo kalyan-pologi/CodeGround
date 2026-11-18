@@ -25,7 +25,8 @@ function addStyle(doc) {
 function loadSections(doc, html) {
   const template = doc.createElement('template');
   template.innerHTML = html;
-  return [...template.content.querySelectorAll('[data-react-question]')];
+  const answers = template.content.querySelector('#react-interview-answers');
+  return answers ? [...answers.content.querySelectorAll('[data-react-question]')] : [...template.content.querySelectorAll('[data-react-question]')];
 }
 
 export function mountReactInterviewQuestionDrawer(doc) {
@@ -62,7 +63,7 @@ export function mountReactInterviewQuestionDrawer(doc) {
       if (!source) { status.textContent = 'Answer not available yet.'; return; }
       const clone = source.cloneNode(true);
       clone.removeAttribute('data-react-question');
-      article.replaceChildren(title, clone);
+      article.replaceChildren(title, ...[...clone.childNodes]);
     }).catch(() => {
       if (current === requestVersion && article.isConnected) status.textContent = 'Could not load this answer. Please try again.';
     });
