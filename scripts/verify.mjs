@@ -47,6 +47,10 @@ for (const [index, service] of awsServices.entries()) {
 }
 const awsHome = fs.readFileSync(path.join(root, 'src/features/devops/cloud/content/aws.html'), 'utf8');
 for (const service of awsServices) assert.match(awsHome, new RegExp(`class="aws-service-card" href="#${service}"`), `AWS overview must link to ${service}`);
+assert.equal((awsHome.match(/class="aws-sizing-table"/g) || []).length, 1, 'AWS overview needs the production sizing table');
+for (const label of ['5k users', '10k users', '50k users', '100k users']) assert.match(awsHome, new RegExp(label.replace(' ', '\\s+')), `AWS sizing table needs ${label}`);
+assert.equal((awsHome.match(/class="aws-sizing-table"/g) || []).length, 1, 'AWS overview needs one combined sizing table');
+assert.ok((awsHome.match(/<small>~[^<]+<\/small>/g) || []).length >= 36, 'AWS sizing table needs user, request, volume, or concurrency envelopes');
 const resolveFeatureNote = (base, file) => {
   const directory = path.join(root, base);
   const match = fs.readdirSync(directory, { recursive: true }).find(entry => path.basename(entry) === path.basename(file));
