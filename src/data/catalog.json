@@ -1510,5 +1510,59 @@
     "id": "aws",
     "title": "AWS",
     "file": "features/devops/cloud/content/aws.html"
+  },
+  {
+    "repo": "aws",
+    "id": "iam",
+    "title": "IAM",
+    "file": "features/aws/content/iam.html"
+  },
+  {
+    "repo": "aws",
+    "id": "ec2",
+    "title": "EC2",
+    "file": "features/aws/content/ec2.html"
+  },
+  {
+    "repo": "aws",
+    "id": "s3",
+    "title": "S3",
+    "file": "features/aws/content/s3.html"
+  },
+  {
+    "repo": "aws",
+    "id": "rds",
+    "title": "RDS",
+    "file": "features/aws/content/rds.html"
+  },
+  {
+    "repo": "aws",
+    "id": "secrets-manager",
+    "title": "Secrets Manager",
+    "file": "features/aws/content/secrets-manager.html"
+  },
+  {
+    "repo": "aws",
+    "id": "ecr",
+    "title": "ECR",
+    "file": "features/aws/content/ecr.html"
+  },
+  {
+    "repo": "aws",
+    "id": "ecs",
+    "title": "ECS",
+    "file": "features/aws/content/ecs.html"
+  },
+  {
+    "repo": "aws",
+    "id": "lambda",
+    "title": "Lambda",
+    "file": "features/aws/content/lambda.html"
+  },
+  {
+    "repo": "aws",
+    "id": "cloudwatch",
+    "title": "CloudWatch",
+    "file": "features/aws/content/cloudwatch.html"
   }
 ]

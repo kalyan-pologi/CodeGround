@@ -1,0 +1,38 @@
+.aws-lesson .section-header{border-bottom:1px solid #34453f;padding-bottom:24px}
+.aws-lesson .section-header .tag{color:#94c4ad!important;letter-spacing:1.3px!important}
+.aws-lesson .section-header p{max-width:760px}
+.aws-lesson .aws-topic{margin:42px 0 0}
+.aws-lesson .aws-topic h2{margin:0 0 18px!important;padding:0 0 12px!important;border:0!important;border-bottom:1px solid #34453f!important;background:none!important;font-size:21px!important}
+.aws-lesson .aws-topic h3{margin:23px 0 10px!important;color:#b9d5c8!important;font-size:16px!important}
+.aws-lesson .aws-topic p,.aws-lesson .aws-topic li{line-height:1.8!important}
+.aws-lesson .aws-topic ul,.aws-lesson .aws-topic ol{padding-left:22px}
+.aws-lesson .aws-topic li{margin:8px 0}
+.aws-lesson .aws-callout{padding:16px 19px;margin:22px 0;border-left:3px solid #8ac9a8;background:#172b27;border-radius:0 8px 8px 0}
+.aws-lesson .aws-callout p{margin:6px 0 0}
+.aws-lesson .aws-flow{display:flex;align-items:stretch;gap:8px;margin:20px 0;overflow-x:auto}
+.aws-lesson .aws-flow span{flex:1;min-width:125px;padding:15px 12px;border:1px solid #365448;background:#172a27;border-radius:8px;text-align:center;font-size:12px;line-height:1.55}
+.aws-lesson .aws-flow b{display:block;color:#d9eee3;margin-bottom:5px}
+.aws-lesson .aws-flow em{align-self:center;color:#86c8a5;font-size:18px;font-style:normal}
+.aws-lesson table{border-collapse:collapse;width:100%;margin:20px 0;font-size:13px}
+.aws-lesson th,.aws-lesson td{padding:12px 14px;text-align:left;vertical-align:top;border:1px solid #32443e}
+.aws-lesson th{background:#1b3029;color:#d7eee1}
+.aws-lesson td{color:#bdcbc5}
+.aws-lesson .aws-qa{counter-reset:qa;list-style:none;padding:0}
+.aws-lesson .aws-qa li{padding:15px 18px;margin:10px 0;border:1px solid #32443e;border-radius:8px;background:#16231f}
+.aws-lesson .aws-qa li p{margin:8px 0 0}
+.aws-lesson .aws-qa li p{font-size:14px!important;line-height:1.9!important;color:#c7d8cf!important}
+.aws-lesson .aws-answer-expansion p{font-size:14px!important;line-height:1.9!important}
+.aws-lesson details{border:1px solid #365448;border-radius:8px;padding:12px 16px;margin:16px 0;background:#172a27}
+.aws-lesson summary{cursor:pointer;color:#bde8cf;font-weight:600}
+.aws-lesson .aws-revision{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;list-style:none;padding:0}
+.aws-lesson .aws-revision li{margin:0;padding:11px 14px;border:1px solid #32443e;border-radius:7px;background:#16231f}
+.aws-lesson pre{margin:16px 0 21px}
+.aws-lesson .aws-service-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:26px 0 38px}
+.aws-lesson .aws-service-card{display:block;padding:19px 20px;border:1px solid #365448;border-radius:10px;background:#16251f;color:#d7e8de!important;text-decoration:none}
+.aws-lesson .aws-service-card:hover,.aws-lesson .aws-service-card:focus-visible{background:#1e352a;border-color:#75ad8c;outline:none}
+.aws-lesson .aws-service-card span{font-size:10px;color:#8fb6a4;letter-spacing:.8px;text-transform:uppercase}
+.aws-lesson .aws-service-card h2{margin:8px 0 7px!important;padding:0!important;border:0!important;background:none!important;color:#e6f3eb!important;font-size:19px!important}
+.aws-lesson .aws-service-card p{margin:0 0 16px;color:#b2c7ba!important;font-size:13px!important;line-height:1.6!important}
+.aws-lesson .aws-service-card strong{font-size:12px;color:#acdcbc}
+@media(max-width:700px){.aws-lesson .aws-flow{display:block}.aws-lesson .aws-flow span{display:block;margin:0}.aws-lesson .aws-flow em{display:block;text-align:center;transform:rotate(90deg);line-height:1.5}.aws-lesson .aws-revision{grid-template-columns:1fr}.aws-lesson table{display:block;overflow-x:auto}}
+@media(max-width:700px){.aws-lesson .aws-service-grid{grid-template-columns:1fr}}

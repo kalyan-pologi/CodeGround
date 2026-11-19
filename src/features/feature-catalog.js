@@ -15,6 +15,7 @@ export const featureCatalog = {
     infrastructure: ['docker', 'kubernetes', 'minikube'],
     cloud: ['aws', 'azure']
   },
+  aws: ['iam', 'ec2', 's3', 'rds', 'secrets-manager', 'ecr', 'ecs', 'lambda', 'cloudwatch'],
   web: {
     fundamentals: ['html', 'css', 'javascript', 'typescript', 'frontend-quickref'],
     frameworks: ['react', 'react-interview-questions', 'redux', 'angular']

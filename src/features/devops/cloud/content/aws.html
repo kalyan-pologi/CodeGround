@@ -1,14 +1,15 @@
-<div class="section-header">
-  <div class="tag">DevOps · Cloud</div>
-  <h1>AWS Services for Spring Boot</h1>
-  <p>A quick reference for AWS services, their purpose, and how they connect to Spring Boot applications.</p>
-</div>
+<div class="section-header"><div class="tag">DevOps · Cloud · AWS</div><h1>AWS for Spring Boot</h1><p>Follow a realistic microservice deployment from identity and compute to storage, containers, event processing, and monitoring. Select a service to open its full lesson.</p></div>
 <div class="note-body">
-  <h2>AWS service reference</h2>
-  <figure class="note-figure">
-    <a href="assets/img/aws-services-for-spring-boot-table.png" target="_blank" rel="noopener noreferrer" aria-label="Open the AWS services table at full size">
-      <img src="assets/img/aws-services-for-spring-boot-table.png" alt="AWS reference covering EC2, S3, IAM, Lambda, ECS, EKS, Fargate, RDS, DynamoDB, VPC, Route 53, CloudFront, load balancers, Secrets Manager, CloudWatch, SQS, and SNS, with Spring Boot integration examples">
-    </a>
-    <figcaption>AWS services used alongside Spring Boot. Select the image to view it at full size.</figcaption>
-  </figure>
+  <div class="aws-callout"><strong>Learning path</strong><p>IAM → EC2 → S3 → RDS → Secrets Manager → ECR → ECS → Lambda → CloudWatch. Each lesson covers purpose, internals, Reidy.AI usage, implementation, architecture, failure cases, interview questions, comparisons, and revision notes.</p></div>
+  <div class="aws-service-grid" aria-label="AWS service lessons">
+    <a class="aws-service-card" href="#iam"><span>01 · Identity</span><h2>IAM</h2><p>Controls which people and workloads may call AWS APIs. Start here to understand roles and least privilege.</p><strong>Open IAM →</strong></a>
+    <a class="aws-service-card" href="#ec2"><span>02 · Compute</span><h2>EC2</h2><p>Virtual machines for running Spring Boot when you need direct control over the host and runtime.</p><strong>Open EC2 →</strong></a>
+    <a class="aws-service-card" href="#s3"><span>03 · Storage</span><h2>S3</h2><p>Private object storage for appraisal PDFs and other files, with keys stored in your database.</p><strong>Open S3 →</strong></a>
+    <a class="aws-service-card" href="#rds"><span>04 · Data</span><h2>RDS</h2><p>Managed relational databases for appraisal records, transactions, backups, and failover.</p><strong>Open RDS →</strong></a>
+    <a class="aws-service-card" href="#secrets-manager"><span>05 · Security</span><h2>Secrets Manager</h2><p>Encrypted storage and rotation for database credentials and external API tokens.</p><strong>Open Secrets Manager →</strong></a>
+    <a class="aws-service-card" href="#ecr"><span>06 · Delivery</span><h2>ECR</h2><p>A private registry for versioned Spring Boot container images that ECS can pull.</p><strong>Open ECR →</strong></a>
+    <a class="aws-service-card" href="#ecs"><span>07 · Containers</span><h2>ECS</h2><p>Runs and scales containerized services with task definitions, health checks, and deployments.</p><strong>Open ECS →</strong></a>
+    <a class="aws-service-card" href="#lambda"><span>08 · Events</span><h2>Lambda</h2><p>Runs bounded background work when events arrive, such as processing an uploaded report.</p><strong>Open Lambda →</strong></a>
+    <a class="aws-service-card" href="#cloudwatch"><span>09 · Operations</span><h2>CloudWatch</h2><p>Collects logs and metrics, then turns them into dashboards and actionable alarms.</p><strong>Open CloudWatch →</strong></a>
+  </div>
 </div>

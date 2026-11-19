@@ -5,6 +5,7 @@ import catalog from '../data/catalog.json';
 import { fetchText, loadNoteContent } from '../services/note-content.js';
 import { featureCatalog } from '../features/feature-catalog.js';
 import readerStyles from '../styles/reader.css?inline';
+import awsStyles from '../features/aws/aws-notes.css?inline';
 import interviewLibraryStyles from '../features/assets/interview/style.css?inline';
 import systemDesignStyles from '../features/system-design/assets/style.css?inline';
 import genaiStyles from '../features/genai/assets/style.css?inline';
@@ -87,6 +88,7 @@ async function loadLibraryNavigation(repo) {
   } catch { /* Catalog-based topic links remain available if source navigation cannot load. */ }
 }
 function tabFor(note) {
+  if (note.repo === 'aws') return 'devops';
   if (note.repo !== 'interview') return note.repo;
   for (const [tab, sections] of Object.entries(groups)) if (sections.some(([, ids]) => ids.includes(note.id))) return tab;
   return 'home';
@@ -146,7 +148,7 @@ function currentActive(tab) {
   const [path] = location.hash.slice(1).split('?');
   const [selectedTab, repo, id] = path.split('/');
   if (selectedTab !== tab) return '';
-  return repo === 'react-tasks' ? '@react-tasks' : repo === 'debugging' ? '@debugging' : repo === 'workspace' ? '@workspace' : ['tasks', 'project-coding', 'incidents'].includes(repo) ? '@tasks' : id || '@overview';
+  return repo === 'aws' ? 'aws' : repo === 'react-tasks' ? '@react-tasks' : repo === 'debugging' ? '@debugging' : repo === 'workspace' ? '@workspace' : ['tasks', 'project-coding', 'incidents'].includes(repo) ? '@tasks' : id || '@overview';
 }
 document.querySelectorAll('[data-tab]').forEach(button => {
   button.addEventListener('pointerenter', event => { if (event.pointerType === 'mouse') openDropdown(button.dataset.tab); });
@@ -208,7 +210,9 @@ async function showNote(repo, id, version) {
   try {
     const html = await loadNoteContent(note);
     if (version !== routeVersion) return;
-    main.innerHTML = `<div class="reader"><div class="reader-bar"><span>${escape(tabs[slugs.indexOf(tabFor(note))])} / ${escape(note.title)}</span></div><iframe class="note-frame" data-note="${escape(`${repo}/${id}`)}" title="${escape(note.title)}"></iframe></div>`;
+    const awsPage = repo === 'aws' || (repo === 'interview' && id === 'aws');
+    const awsSidebar = awsPage ? `<nav class="aws-sidebar" aria-label="AWS services"><div class="aws-sidebar-heading">AWS learning path</div><a href="#devops/interview/aws" ${repo === 'interview' ? 'aria-current="page"' : ''}><span class="aws-step">⌂</span>Overview</a>${featureCatalog.aws.map((service, index) => `<a href="#devops/aws/${service}" ${service === id && repo === 'aws' ? 'aria-current="page"' : ''}><span class="aws-step">${String(index + 1).padStart(2, '0')}</span>${escape(getNote('aws', service)?.title || service)}</a>`).join('')}</nav>` : '';
+    main.innerHTML = `<div class="reader ${awsPage ? 'aws-reader' : ''}">${awsSidebar}<div class="reader-content"><div class="reader-bar"><span>${awsPage ? 'DevOps / AWS' : escape(tabs[slugs.indexOf(tabFor(note))])} / ${escape(note.title)}</span></div><iframe class="note-frame" data-note="${escape(`${repo}/${id}`)}" title="${escape(note.title)}"></iframe></div></div>`;
     const base = new URL(import.meta.env.BASE_URL, location.href).href;
     const libraryStyles = repo === 'sd' ? systemDesignStyles : repo === 'genai' ? genaiStyles : interviewLibraryStyles;
     const frame = main.querySelector('iframe');
@@ -241,14 +245,15 @@ async function showNote(repo, id, version) {
         if (!link) return;
         const href = link.getAttribute('href') || '';
         const hash = href.startsWith('#') ? href.slice(1) : '';
-        if (hash && getNote(repo, hash)) { event.preventDefault(); location.hash = noteRoute(getNote(repo, hash)); }
+        if (awsPage && hash && getNote('aws', hash)) { event.preventDefault(); location.hash = noteRoute(getNote('aws', hash)); }
+        else if (hash && getNote(repo, hash)) { event.preventDefault(); location.hash = noteRoute(getNote(repo, hash)); }
         else if (hash) {
           const target = doc.getElementById(hash);
           if (target) { event.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
         } else if (/^https?:/.test(href)) { link.target = '_blank'; link.rel = 'noopener noreferrer'; }
       });
     };
-    frame.srcdoc = `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${base}"><style>${libraryStyles}</style><style>${readerStyles}</style></head><body><main id="main"><div class="section active">${html}</div></main></body></html>`;
+    frame.srcdoc = `<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base href="${base}"><style>${libraryStyles}</style><style>${readerStyles}</style>${awsPage ? `<style>${awsStyles}</style>` : ''}</head><body><main id="main"><div class="section active ${awsPage ? 'aws-lesson' : ''}">${html}</div></main></body></html>`;
   } catch (error) {
     if (version === routeVersion) main.innerHTML = `<div class="error">${escape(error.message)} <a href="#home">Return home</a></div>`;
   }

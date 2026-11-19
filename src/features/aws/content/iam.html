@@ -1,0 +1,60 @@
+<div class="section-header"><div class="tag">AWS learning path · 01 / 09</div><h1>IAM</h1><p>Give each person and workload only the AWS permissions it needs. Follow one report upload from an ECS task to a private S3 bucket.</p></div>
+<div class="note-body">
+<section class="aws-topic"><h2>01 · What &amp; Why</h2>
+<p>Identity and Access Management (IAM) decides <strong>who can make an AWS request</strong> and <strong>which actions that identity may perform</strong>. The Appraisal Service may upload a PDF to S3; that does not mean it should be able to delete the bucket.</p>
+<table><thead><tr><th>Concept</th><th>Purpose</th><th>Example</th></tr></thead><tbody><tr><td>User</td><td>Long lived identity for a person or legacy integration</td><td>Developer with console access</td></tr><tr><td>Group</td><td>Collection of IAM users</td><td>Developers sharing a permission set</td></tr><tr><td>Role</td><td>Assumable identity that supplies temporary credentials</td><td>ECS task role for the Appraisal Service</td></tr><tr><td>Policy</td><td>JSON rules that allow or deny actions on resources</td><td><code>s3:PutObject</code> for one bucket prefix</td></tr></tbody></table>
+<div class="aws-callout"><strong>Remember</strong><p>A role is an identity. A permissions policy says what it can do. A trust policy says who can assume the role.</p></div></section>
+<section class="aws-topic"><h2>02 · How it works</h2>
+<p>On ECS, the SDK obtains temporary credentials for the task role through the container credentials endpoint. It signs the S3 request. AWS then evaluates the applicable identity policy, bucket policy, organization controls, and explicit denies.</p>
+<div class="aws-flow"><span><b>Spring Boot</b>Calls S3 SDK</span><em>→</em><span><b>Task role</b>Temporary credentials</span><em>→</em><span><b>S3</b>Evaluates access</span><em>→</em><span><b>Result</b>Allow or deny</span></div>
+<p>An explicit deny wins over an allow. Credentials expire, so use the SDK default provider chain to refresh them rather than caching access keys yourself.</p></section>
+<section class="aws-topic"><h2>03 · Reidy.AI usage</h2>
+<p><strong>Example deployment pattern:</strong> The Appraisal Service generates a report PDF and uploads it under <code>appraisals/</code>. The Report Service downloads the PDF. Give each ECS service its own task role, scoped to the actions and object prefixes it needs. This illustrates a possible deployment, not a claim about the current project configuration.</p>
+<ol><li>React asks the API to create an appraisal report.</li><li>Spring Boot generates the PDF.</li><li>The Appraisal Service uploads the object using its ECS task role.</li><li>Only after S3 succeeds, the service stores the object key in RDS.</li></ol></section>
+<section class="aws-topic"><h2>04 · Implementation</h2>
+<p>Attach this permissions policy to the Appraisal Service task role. The resource ARN targets objects, not the bucket itself.</p>
+<pre><code>{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["s3:PutObject"],
+    "Resource": "arn:aws:s3:::reidy-reports/appraisals/*"
+  }]
+}</code></pre>
+<p>Configure the ECS task definition with <code>taskRoleArn</code>. Keep image pulling and log publishing on the separate <code>executionRoleArn</code>. In Java, omit hardcoded credentials and let the SDK use its default provider chain.</p>
+<pre><code>@Bean
+S3Client s3Client(@Value("${aws.region}") String region) {
+    return S3Client.builder()
+        .region(Region.of(region))
+        .build();
+}
+
+@Service
+class ReportStorageService {
+    private final S3Client s3;
+    ReportStorageService(S3Client s3) { this.s3 = s3; }
+
+    void upload(String reportId, Path pdf) {
+        s3.putObject(PutObjectRequest.builder()
+                .bucket("reidy-reports")
+                .key("appraisals/" + reportId + ".pdf")
+                .build(), RequestBody.fromFile(pdf));
+    }
+}</code></pre>
+<p>The AWS SDK for Java v2 supplies credentials at request time. For local development, use a configured AWS profile or SSO session rather than putting keys in <code>application.yml</code>.</p></section>
+<section class="aws-topic"><h2>05 · Architecture flow</h2>
+<div class="aws-flow"><span><b>React</b>Requests report</span><em>→</em><span><b>ECS task</b>Uses IAM role</span><em>→</em><span><b>S3</b>Stores private PDF</span><em>→</em><span><b>RDS</b>Stores object key</span></div>
+<p>The task role authorizes application access to S3. The execution role lets ECS pull from ECR and send logs to CloudWatch. They serve different callers even though both attach to a task definition.</p></section>
+<section class="aws-topic"><h2>06 · Edge cases</h2>
+<table><thead><tr><th>Symptom</th><th>Check and recovery</th></tr></thead><tbody><tr><td><code>AccessDenied</code> despite an allow</td><td>Check bucket policy, explicit denies, SCPs, object ARN, and KMS permissions.</td></tr><tr><td>Wrong role used</td><td>Inspect task definition roles and verify credentials inside the running task.</td></tr><tr><td>Keys leaked</td><td>Disable or rotate them, review CloudTrail activity, and remove them from code and logs.</td></tr><tr><td>Permission is too broad</td><td>Replace <code>s3:*</code> on <code>*</code> with required actions and resource ARNs.</td></tr><tr><td>Local code cannot authenticate</td><td>Use an AWS profile or SSO; verify account and region before testing.</td></tr></tbody></table></section>
+<section class="aws-topic"><h2>07 · Follow-up questions</h2>
+<ul><li><strong>Who can assume a role?</strong> Its trust policy defines permitted principals and conditions.</li><li><strong>What is STS?</strong> Security Token Service issues temporary credentials when roles are assumed.</li><li><strong>What if both allow and deny match?</strong> Explicit deny wins.</li><li><strong>How do you audit API use?</strong> Inspect supported events in CloudTrail.</li><li><strong>Does an IAM allow guarantee S3 access?</strong> No. Resource policy, organization controls, and KMS can still block it.</li></ul></section>
+<section class="aws-topic"><h2>08 · Top 5 interview questions</h2>
+<ol class="aws-qa"><li><strong>What is IAM?</strong><p>IAM controls AWS identities and permissions. I use roles for workloads and narrowly scoped policies for the resources they call.</p></li><li><strong>User versus role?</strong><p>A user is a long lived identity. A role is assumed to obtain temporary credentials, which is the usual choice for ECS and EC2 workloads.</p></li><li><strong>What is least privilege?</strong><p>Grant only the actions and resources a workload needs, such as <code>s3:PutObject</code> for one reports prefix.</p></li><li><strong>How does Spring Boot get AWS credentials on ECS?</strong><p>The default credentials provider chain discovers temporary task role credentials, so the application does not need embedded access keys.</p></li><li><strong>Task role versus execution role?</strong><p>The task role is for application code. The execution role is for ECS infrastructure actions such as pulling from ECR and publishing logs.</p></li></ol></section>
+<section class="aws-topic"><h2>09 · Service comparisons</h2>
+<table><thead><tr><th>Service</th><th>Use it for</th><th>Relationship to IAM</th></tr></thead><tbody><tr><td>IAM</td><td>Identity, roles, and authorization</td><td>Defines who may request AWS actions.</td></tr><tr><td>Secrets Manager</td><td>Storing and rotating secret values</td><td>IAM controls who may read a secret.</td></tr><tr><td>Organizations SCP</td><td>Account level permission guardrails</td><td>Can limit what IAM identities may do, even when a policy allows it.</td></tr></tbody></table></section>
+<section class="aws-topic"><h2>10 · Quick revision notes</h2>
+<ul class="aws-revision"><li>Role = assumable identity.</li><li>Policy = permissions.</li><li>Trust policy = who can assume a role.</li><li>STS = temporary credentials.</li><li>Explicit deny overrides allow.</li><li>ECS task role serves application code.</li><li>ECS execution role serves ECS infrastructure.</li><li>Prefer least privilege and no embedded keys.</li></ul>
+<p><a href="#ec2">Next: EC2 →</a></p></section>
+<section class="aws-topic aws-answer-expansion"><h2>Interview answer depth</h2><p><strong>IAM:</strong> Explain the policy evaluation model: identity policy, resource policy, permissions boundary, SCP, and explicit deny. Then connect it to the design: an ECS task role receives only the S3 prefix permissions required by the service.</p><p><strong>Roles:</strong> Contrast temporary role credentials with long-lived user keys, and mention trust policies and STS. This demonstrates that you understand both authentication and authorization.</p><p><strong>Least privilege:</strong> Give a concrete ARN and action rather than saying “limited access.” Explain how you would review CloudTrail and remove unused actions after observing the service.</p><p><strong>Spring Boot:</strong> Describe the AWS SDK default provider chain and why credentials stay out of <code>application.yml</code>. Mention local profiles or SSO for development and task roles in ECS.</p><p><strong>Operations:</strong> Separate task and execution roles, then explain how you would investigate <code>AccessDenied</code> without broadening permissions as a first response.</p></section>
+</div>

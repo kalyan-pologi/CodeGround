@@ -72,6 +72,18 @@ export async function loadNoteContent(note) {
     original = doc.body.innerHTML;
   }
   original = rewriteAssets(original, note.repo);
+  if (note.repo === 'aws') {
+    const doc = new DOMParser().parseFromString(original, 'text/html');
+    const expansion = doc.querySelector('.aws-answer-expansion');
+    const answers = [...doc.querySelectorAll('.aws-qa li p')];
+    const details = expansion ? [...expansion.querySelectorAll('p')] : [];
+    answers.forEach((answer, index) => {
+      const detail = details[index];
+      if (detail) answer.innerHTML = `${answer.innerHTML} ${detail.innerHTML}`;
+    });
+    expansion?.remove();
+    original = doc.body.innerHTML;
+  }
   if (isStreams) return approaches.addStreamApproaches(original + supplement);
   if (note.repo === 'interview' && note.id === 'java-topics') {
     const doc = new DOMParser().parseFromString(original, 'text/html');
@@ -87,14 +99,14 @@ export async function loadNoteContent(note) {
   }
   if (note.repo !== 'interview' || note.id !== 'proj-accenture') return original;
 
-  // Keep the imported source intact while showing the shared AWS reference in DevOps.
+  // Keep the imported source intact while linking to the AWS learning path in DevOps.
   const doc = new DOMParser().parseFromString(original, 'text/html');
   const table = doc.querySelector('img[src$="aws-services-for-spring-boot-table.png"]')?.closest('figure');
   if (table) {
     const reference = doc.createElement('p');
     const link = doc.createElement('a');
     link.href = '#aws';
-    link.textContent = 'AWS services reference → DevOps / AWS';
+    link.textContent = 'AWS learning path → DevOps / AWS';
     reference.append(link);
     table.replaceWith(reference);
   }

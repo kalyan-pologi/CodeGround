@@ -1,0 +1,39 @@
+<div class="section-header"><div class="tag">AWS learning path · 07 / 09</div><h1>ECS</h1><p>Deploy and operate Spring Boot containers with task definitions, services, health checks, and scaling.</p></div><div class="note-body">
+<section class="aws-topic"><h2>01 · What &amp; Why</h2><p>Amazon Elastic Container Service orchestrates containers. A task definition describes the image, CPU, memory, ports, environment, and roles. A service keeps the desired number of tasks running and manages deployments. Fargate supplies serverless container capacity; the EC2 launch type runs tasks on instances you manage.</p></section>
+<section class="aws-topic"><h2>02 · How it works</h2><p>ECS schedules tasks in a cluster, pulls the image using the execution role, starts containers, and registers healthy tasks with a load balancer. A rolling deployment starts replacement tasks and removes old tasks according to deployment limits. Service Auto Scaling changes desired count using demand metrics.</p><div class="aws-flow"><span><b>Task definition</b>Image and settings</span><em>→</em><span><b>ECS service</b>Maintains count</span><em>→</em><span><b>Fargate task</b>Runs container</span><em>→</em><span><b>ALB</b>Routes traffic</span></div></section>
+<section class="aws-topic"><h2>03 · Reidy.AI usage</h2><p><strong>Example deployment pattern:</strong> The Appraisal API and Report API run as separate ECS services in private subnets. Each gets its own task role and secret access. A public ALB routes HTTPS requests to the API tasks; S3 stores PDFs and RDS stores records. This is a realistic design example, not a claim about the current infrastructure.</p></section>
+<section class="aws-topic"><h2>04 · Implementation</h2><p>Build the image, push it to ECR, register a task definition, then create an ECS service linked to an ALB target group. Configure the Spring Boot port and readiness endpoint consistently in the container definition and load balancer.</p><pre><code># application.yml
+server:
+  port: 8080
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# task definition fields (illustrative)
+"taskRoleArn": "arn:aws:iam::ACCOUNT:role/appraisal-task",
+"executionRoleArn": "arn:aws:iam::ACCOUNT:role/ecs-execution",
+"containerDefinitions": [{
+  "name": "appraisal-api",
+  "image": "ACCOUNT.dkr.ecr.REGION.amazonaws.com/appraisal@sha256:DIGEST",
+  "portMappings": [{"containerPort": 8080}]
+}]</code></pre><pre><code>@RestController
+@RequestMapping("/api/appraisals")
+class AppraisalController {
+    private final ReportService reports;
+    AppraisalController(ReportService reports) { this.reports = reports; }
+
+    @GetMapping("/{id}")
+    ResponseEntity&lt;ReportStatus&gt; status(@PathVariable UUID id) {
+        return ResponseEntity.ok(reports.status(id));
+    }
+}</code></pre><p>This controller delegates business state to a service. The ALB should use the separate Actuator readiness endpoint for health checks, not a business request.</p><p>The task role serves application SDK calls. The execution role serves image pulls, log delivery, and supported startup secret retrieval. Use a CloudWatch log configuration and explicit CPU and memory limits.</p></section>
+<section class="aws-topic"><h2>05 · Architecture flow</h2><div class="aws-flow"><span><b>ALB</b>HTTPS and health</span><em>→</em><span><b>ECS tasks</b>Spring Boot APIs</span><em>→</em><span><b>RDS / S3</b>Records and PDFs</span></div><p>ECR provides the image. Secrets Manager provides credentials. CloudWatch receives logs and metrics. IAM determines each task's permitted calls.</p></section>
+<section class="aws-topic"><h2>06 · Edge cases</h2><table><thead><tr><th>Failure</th><th>Investigation</th></tr></thead><tbody><tr><td>Task stops immediately</td><td>Read stop reason and CloudWatch logs; check JVM memory and startup configuration.</td></tr><tr><td>Image pull fails</td><td>Check ECR URI, digest, execution role, and network or VPC endpoints.</td></tr><tr><td>ALB target unhealthy</td><td>Check port, health path, startup grace period, and security groups.</td></tr><tr><td>Deployment stalls</td><td>Review minimum healthy percent, capacity, failed health checks, and task events.</td></tr><tr><td>Scaling overloads RDS</td><td>Account for all task connection pools and use backpressure or RDS Proxy if needed.</td></tr></tbody></table></section>
+<section class="aws-topic"><h2>07 · Follow-up questions</h2><ul><li><strong>Task versus service?</strong> A task is a running copy; a service maintains copies and deploys updates.</li><li><strong>Task role versus execution role?</strong> Application permissions versus ECS infrastructure permissions.</li><li><strong>What is Fargate?</strong> Managed compute capacity for containers without managing EC2 hosts.</li><li><strong>How do tasks discover each other?</strong> Use an ALB or supported service discovery mechanisms.</li><li><strong>How do you rollback?</strong> Deploy the previous task definition and image digest after diagnosing health.</li></ul></section>
+<section class="aws-topic"><h2>08 · Top 5 interview questions</h2><ol class="aws-qa"><li><strong>What is ECS?</strong><p>It is AWS container orchestration. I define a task and use a service to keep the required number healthy.</p></li><li><strong>How do you deploy Spring Boot?</strong><p>Push an image to ECR, register a task definition, and update a service behind an ALB.</p></li><li><strong>How do you provide AWS access?</strong><p>Attach a scoped task role; keep ECR pull and log permissions on the execution role.</p></li><li><strong>How does ECS handle failure?</strong><p>A service starts replacement tasks, while health checks keep failing tasks out of traffic.</p></li><li><strong>How do you scale safely?</strong><p>Scale task count with metrics, then verify database connections, downstream limits, and load balancer health.</p></li></ol></section>
+<section class="aws-topic"><h2>09 · Service comparisons</h2><table><thead><tr><th>Choice</th><th>Best fit</th></tr></thead><tbody><tr><td>ECS on Fargate</td><td>Containers without host management.</td></tr><tr><td>ECS on EC2</td><td>Containers with control over instance fleet and capacity.</td></tr><tr><td>EKS</td><td>Kubernetes APIs and ecosystem are required.</td></tr><tr><td>Lambda</td><td>Short event driven handlers rather than a long running API.</td></tr></tbody></table></section>
+<section class="aws-topic"><h2>10 · Quick revision notes</h2><ul class="aws-revision"><li>Task definition describes runtime.</li><li>Task is a running copy.</li><li>Service maintains desired count.</li><li>Fargate removes host management.</li><li>Execution role pulls ECR image.</li><li>Task role serves app code.</li><li>ALB health gates traffic.</li><li>Scale with downstream capacity in mind.</li></ul><p><a href="#lambda">Next: Lambda →</a></p></section>
+<section class="aws-topic aws-answer-expansion"><h2>Interview answer depth</h2><p><strong>ECS:</strong> Distinguish cluster, task definition, task, service, target group, and capacity provider. This shows how a desired count becomes running traffic-serving containers.</p><p><strong>Spring Boot:</strong> Describe ECR image pull, port mapping, ALB readiness, graceful shutdown, task role, execution role, and CloudWatch logs in one deployment narrative.</p><p><strong>Failure:</strong> A service replaces stopped tasks, but a crash loop can continue. Use stop reasons, health checks, deployment events, and memory metrics to find the cause.</p><p><strong>Scaling:</strong> Task count affects RDS connections, downstream APIs, and queue consumers. Set autoscaling limits with those dependencies in mind.</p><p><strong>Fargate versus EC2:</strong> Fargate removes host operations; ECS on EC2 offers more capacity and host control. The application container contract remains similar.</p></section>
+</div>

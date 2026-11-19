@@ -32,6 +32,21 @@ for (const task of reactTasks) {
   }
 }
 const catalog = JSON.parse(fs.readFileSync(path.join(root, 'src/data/catalog.json'), 'utf8'));
+const awsServices = ['iam', 'ec2', 's3', 'rds', 'secrets-manager', 'ecr', 'ecs', 'lambda', 'cloudwatch'];
+const awsSections = ['What &amp; Why', 'How it works', 'Reidy.AI usage', 'Implementation', 'Architecture flow', 'Edge cases', 'Follow-up questions', 'Top 5 interview questions', 'Service comparisons', 'Quick revision notes'];
+for (const [index, service] of awsServices.entries()) {
+  const note = catalog.find(item => item.repo === 'aws' && item.id === service);
+  assert.ok(note, `Missing AWS catalog entry: ${service}`);
+  const html = fs.readFileSync(path.join(root, 'src', note.file), 'utf8');
+  const headings = [...html.matchAll(/<h2>\d{2} · ([^<]+)<\/h2>/g)].map(match => match[1]);
+  assert.deepEqual(headings, awsSections, `${service} must follow the ten-section learning path`);
+  assert.match(html, /<pre><code>/, `${service} needs an implementation example`);
+  const qa = html.match(/<ol class="aws-qa">([\s\S]*?)<\/ol>/)?.[1] || '';
+  assert.equal((qa.match(/<li>/g) || []).length, 5, `${service} needs five interview questions`);
+  assert.match(html, new RegExp(`AWS learning path · 0${index + 1} / 09`));
+}
+const awsHome = fs.readFileSync(path.join(root, 'src/features/devops/cloud/content/aws.html'), 'utf8');
+for (const service of awsServices) assert.match(awsHome, new RegExp(`class="aws-service-card" href="#${service}"`), `AWS overview must link to ${service}`);
 const resolveFeatureNote = (base, file) => {
   const directory = path.join(root, base);
   const match = fs.readdirSync(directory, { recursive: true }).find(entry => path.basename(entry) === path.basename(file));
