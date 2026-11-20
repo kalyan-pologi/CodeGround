@@ -6,16 +6,38 @@
 
 <div class="note-body">
   <h2>Test Methods & Assertions</h2>
-  <p>A test method is annotated with <code>@Test</code> and contains the logic and assertions that
-    verify expected behavior, for example
-    <code>@Test void testAdd() { assertEquals(5, calculator.add(2, 3)); }</code>. Common
-    assertions:</p>
-  <ul>
-    <li><code>assertEquals(expected, actual)</code>, compare values</li>
-    <li><code>assertTrue(condition)</code> / <code>assertFalse(condition)</code>, boolean checks</li>
-    <li><code>assertNull(object)</code> / <code>assertNotNull(object)</code>, null checks</li>
-    <li><code>assertThrows(Exception.class, () -> method())</code>, exception testing</li>
-  </ul>
+  <p>A test method is annotated with <code>@Test</code> and uses assertions to verify observable
+    behavior. Prefer assertions that explain the business rule being protected, for example
+    <code>@Test void testAdd() { assertEquals(5, calculator.add(2, 3)); }</code>.</p>
+
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>JUnit 5 assertion reference</caption>
+      <thead>
+        <tr><th>Assertion</th><th>What it verifies</th><th>Example and practical detail</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>assertEquals(expected, actual)</code></td><td>Two values are equal.</td><td><code>assertEquals(5, calculator.add(2, 3));</code> Use the expected value first so failure messages read naturally.</td></tr>
+        <tr><td><code>assertNotEquals(unexpected, actual)</code></td><td>Two values must differ.</td><td><code>assertNotEquals(oldToken, newToken);</code> Useful for uniqueness or state-change checks.</td></tr>
+        <tr><td><code>assertTrue(condition)</code><br><code>assertFalse(condition)</code></td><td>A boolean rule is true or false.</td><td><code>assertTrue(user.isActive());</code> Prefer a domain predicate over asserting an internal field.</td></tr>
+        <tr><td><code>assertNull(value)</code><br><code>assertNotNull(value)</code></td><td>A result is absent or present.</td><td><code>assertNotNull(response.body());</code> Use for optional results, response bodies, and generated IDs.</td></tr>
+        <tr><td><code>assertSame(expected, actual)</code><br><code>assertNotSame(unexpected, actual)</code></td><td>Two references point to the same or different object.</td><td><code>assertSame(cachedUser, cache.get(id));</code> Use identity checks only when object identity is part of the contract.</td></tr>
+        <tr><td><code>assertArrayEquals(expected, actual)</code></td><td>Arrays contain equal values in the same order.</td><td><code>assertArrayEquals(new byte[]{1, 2}, payload);</code> Better than <code>assertEquals</code> for arrays.</td></tr>
+        <tr><td><code>assertIterableEquals(expected, actual)</code></td><td>Two iterables contain equal elements in order.</td><td><code>assertIterableEquals(List.of("A", "B"), result);</code> Works across iterable implementations.</td></tr>
+        <tr><td><code>assertLinesMatch(expected, actual)</code></td><td>Text lines match, including supported patterns.</td><td><code>assertLinesMatch(List.of("id=\\d+"), lines);</code> Helpful for logs, reports, and generated text.</td></tr>
+        <tr><td><code>assertThrows(type, executable)</code></td><td>The expected exception type is thrown.</td><td><code>var ex = assertThrows(IllegalArgumentException.class, () -> service.create(""));</code> Capture it to assert the message or error code.</td></tr>
+        <tr><td><code>assertDoesNotThrow(executable)</code></td><td>A valid operation completes without an exception.</td><td><code>assertDoesNotThrow(() -> validator.validate(request));</code> Also assert the returned result when possible.</td></tr>
+        <tr><td><code>assertAll(executables...)</code></td><td>Several related assertions run together.</td><td><code>assertAll(() -> assertEquals("Ada", user.name()), () -> assertTrue(user.active()));</code> Reports all failures together.</td></tr>
+        <tr><td><code>assertTimeout(duration, executable)</code></td><td>Code completes within a time limit.</td><td><code>assertTimeout(Duration.ofSeconds(1), () -> service.load());</code> Good for bounded performance checks.</td></tr>
+        <tr><td><code>assertTimeoutPreemptively(duration, executable)</code></td><td>Code is interrupted when it exceeds the limit.</td><td><code>assertTimeoutPreemptively(Duration.ofMillis(250), task);</code> Avoid around transactions or thread-local context.</td></tr>
+        <tr><td><code>assertInstanceOf(type, value)</code><br><code>assertNotInstanceOf(type, value)</code></td><td>A value has or does not have the expected runtime type.</td><td><code>var event = assertInstanceOf(PaymentEvent.class, message);</code> The first form returns the typed value.</td></tr>
+        <tr><td><code>fail(message)</code></td><td>Stops a test explicitly on an invalid path.</td><td><code>fail("Unsupported status: " + status);</code> Useful for exhaustive branches.</td></tr>
+        <tr><td>Assertion message overloads</td><td>Adds context to a failure.</td><td><code>assertEquals(expected, actual, () -> "userId=" + userId);</code> Use a supplier when building the message is expensive.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Rule of thumb:</strong> assert the public result, state transition, emitted event, or durable side effect.
+    Avoid asserting private implementation details unless they are part of the contract.</p>
 
   <h2>Test Lifecycle</h2>
   <p>Annotations controlling when setup and cleanup run:</p>
