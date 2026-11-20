@@ -75,33 +75,105 @@ assertThrows(UnauthorizedException.class, () -> deleteUser());</code></pre>
     <li><code>@SpringBootTest</code>, loads the full application context</li>
   </ul>
 
+  <h2>Interview & Production Essentials</h2>
+  <p>A strong test suite proves behavior at the right boundary. Keep most tests fast and
+    deterministic, then add focused integration and end-to-end coverage where wiring,
+    infrastructure, or user journeys can fail.</p>
+  <ul>
+    <li><strong>Test isolation:</strong> each test owns its data and cleanup; never depend on execution order or shared mutable state.</li>
+    <li><strong>Deterministic time:</strong> inject <code>java.time.Clock</code> instead of sleeping so expiry, scheduling, and timeout boundaries are repeatable.</li>
+    <li><strong>Failure paths:</strong> test timeouts, retries, fallbacks, malformed input, partial failures, and rollback—not only the happy path.</li>
+    <li><strong>Idempotency and concurrency:</strong> race duplicate requests and verify one durable result, safe retries, and no duplicate side effects.</li>
+    <li><strong>Contract tests:</strong> verify request/response compatibility between services so an API change fails before deployment.</li>
+    <li><strong>Realistic infrastructure:</strong> use Testcontainers for database constraints, migrations, messaging, and serialization behavior that mocks or H2 can hide.</li>
+    <li><strong>Test strength:</strong> use mutation testing or deliberate small code changes to confirm that meaningful tests actually fail when behavior breaks.</li>
+    <li><strong>CI feedback:</strong> separate fast unit tests from slower tagged integration tests, and quarantine flaky tests with an owner and a fix deadline.</li>
+  </ul>
+  <p><strong>Interview framing:</strong> explain what each test isolates, which production failure it protects against,
+    and why the chosen boundary gives the best confidence-to-runtime tradeoff.</p>
+
   <h2>Performance Testing</h2>
   <p><code>@Timeout(value = 5, unit = TimeUnit.SECONDS)</code> fails a test if it takes longer than
     the given duration, useful for catching accidental performance regressions or hangs.</p>
 
   <h2>Quick Reference</h2>
-  <pre><code>class UserServiceTest {
+  <pre><code>import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.*;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+@Tag("unit") // Select this group in CI
+@ExtendWith(MockitoExtension.class) // Creates and injects Mockito mocks
+class UserServiceTest {
+
+    @Mock UserRepository repository; // Fake external dependency
+    @Mock EmailSender emailSender;
+    @InjectMocks UserService userService; // Class being tested
+    @Captor ArgumentCaptor&lt;User&gt; userCaptor; // Inspect a mock argument
+
     @BeforeEach
-    void setUp() { /* setup */ }
+    void setUp() {
+        // Keep each test independent; avoid shared mutable state.
+        reset(repository, emailSender);
+    }
+
+    @AfterEach
+    void tearDown() {
+        // Close files, containers, or other resources here if needed.
+    }
 
     @Test
-    void shouldCreateUser() {
-        // Given
-        String name = "John";
-        // When
-        User user = userService.create(name);
-        // Then
-        assertNotNull(user);
-        assertEquals(name, user.getName());
+    @Timeout(value = 1, unit = TimeUnit.SECONDS) // Catches hangs and regressions
+    void createsUserAndSendsWelcomeEmail() {
+        // Given: controlled dependency behavior
+        when(repository.save(any(User.class))).thenAnswer(invocation -&gt; invocation.getArgument(0));
+
+        // When: call the unit under test
+        User saved = userService.create("John", "john@example.com");
+
+        // Then: assert the result and important side effects
+        assertAll(
+            () -&gt; assertNotNull(saved),
+            () -&gt; assertEquals("John", saved.name()),
+            () -&gt; assertEquals("john@example.com", saved.email())
+        );
+        verify(repository).save(userCaptor.capture());
+        verify(emailSender).send("john@example.com");
+        assertEquals("John", userCaptor.getValue().name());
+        verifyNoMoreInteractions(repository, emailSender);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"", " ", "null"})
-    void shouldRejectInvalidNames(String invalidName) {
+    @ValueSource(strings = {"", " ", "not-an-email"}) // Reuse one test for edge cases
+    void rejectsInvalidInput(String invalidEmail) {
         assertThrows(IllegalArgumentException.class,
-            () -> userService.create(invalidName));
+            () -&gt; userService.create("John", invalidEmail));
+        verifyNoInteractions(repository, emailSender); // Validation fails before I/O
     }
-}</code></pre>
+
+    @Test
+    void propagatesRepositoryFailureWithoutSendingEmail() {
+        // Failure-path test: production dependencies can fail
+        when(repository.save(any(User.class)))
+            .thenThrow(new IllegalStateException("database unavailable"));
+
+        assertThrows(IllegalStateException.class,
+            () -&gt; userService.create("John", "john@example.com"));
+        verifyNoInteractions(emailSender); // No side effect after a failed save
+    }
+}
+
+// These interfaces make the dependency boundaries explicit.
+record User(String name, String email) {}
+interface UserRepository { User save(User user); }
+interface EmailSender { void send(String email); }</code></pre>
 
   <p>Maven / Gradle test commands:</p>
   <pre><code># Maven
@@ -114,8 +186,8 @@ mvn test -Dgroups=unit      # Run tagged tests
 ./gradlew test --tests UserTest # Run specific test</code></pre>
 
   <figure class="note-figure">
-    <img src="assets/img/junit-mockito-annotations-cheat-sheet.png" alt="JUnit and Mockito annotations cheat sheet">
-    <figcaption>JUnit & Mockito annotations cheat sheet</figcaption>
+    <img src="assets/img/junit-testing-cheat-sheet.png" alt="JUnit and Mockito testing cheat sheet with interview and production concepts">
+    <figcaption>JUnit & Mockito testing cheat sheet — annotations, boundaries, and production practices</figcaption>
   </figure>
 
   <hr>

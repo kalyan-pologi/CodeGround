@@ -471,7 +471,7 @@ body {
 }
 
 .note-figure img {
-  max-width: 520px;
+  max-width: 100%;
   width: 100%;
   border-radius: 8px;
   border: 1px solid var(--border);
