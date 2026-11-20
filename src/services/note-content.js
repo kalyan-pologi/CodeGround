@@ -16,7 +16,7 @@ function rewriteAssets(html, repo) {
       ? '../features/genai/assets/'
       : '../features/assets/interview/';
   return html.replace(/\b(src|href)=(['"])assets\/([^'"#?]+)([^'"]*)\2/g, (match, attribute, quote, file, suffix) => {
-    const url = featureAssets[assetRoot + file];
+    const url = featureAssets[assetRoot + file] || featureAssets['../features/devops/cloud/assets/' + file];
     return url ? `${attribute}=${quote}${url}${suffix}${quote}` : match;
   });
 }

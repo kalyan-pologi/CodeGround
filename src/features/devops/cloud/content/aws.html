@@ -12,6 +12,39 @@
     <a class="aws-service-card" href="#lambda"><span>08 · Events</span><h2>Lambda</h2><p>Runs bounded background work when events arrive, such as processing an uploaded report.</p><strong>Open Lambda →</strong></a>
     <a class="aws-service-card" href="#cloudwatch"><span>09 · Operations</span><h2>CloudWatch</h2><p>Collects logs and metrics, then turns them into dashboards and actionable alarms.</p><strong>Open CloudWatch →</strong></a>
   </div>
+  <h2>Local to Production Deployment</h2>
+  <p class="aws-sizing-note">The complete deployment path starts on a local feature branch and ends with a verified production ECS release.</p>
+  <div class="aws-deploy-flow" aria-label="Jenkins to production flow">
+    <span><b>1</b>Local feature branch<br><small>Commit and push</small></span><i>→</i>
+    <span><b>2</b>Pull request<br><small>Review and approval</small></span><i>→</i>
+    <span><b>3</b>Jenkins CI<br><small>Maven test and scan</small></span><i>→</i>
+    <span><b>4</b>Docker and ECR<br><small>Push image digest</small></span><i>→</i>
+    <span><b>5</b>ECS production<br><small>Deploy and health check</small></span><i>→</i>
+    <span><b>6</b>CloudWatch<br><small>Smoke test and alarm</small></span>
+  </div>
+  <figure class="aws-architecture-image"><img src="assets/jenkins-to-aws-production.png" alt="Jenkins quality gates and deployment flow to Amazon ECR, ECS Fargate, ALB, CloudWatch, IAM, Secrets Manager, RDS, S3, and Lambda"><figcaption>Jenkins quality gates, production deployment, rollback, and ECS runtime dependencies.</figcaption></figure>
+  <div class="aws-architecture-visual" role="img" aria-label="Visual Jenkins to AWS production deployment architecture">
+    <svg viewBox="0 0 1160 470" xmlns="http://www.w3.org/2000/svg" aria-labelledby="awsDiagramTitle awsDiagramDescription">
+      <title id="awsDiagramTitle">Jenkins to AWS production deployment</title>
+      <desc id="awsDiagramDescription">A feature branch is tested by Jenkins, pushed to ECR, deployed to ECS, routed through an ALB, and monitored by CloudWatch with S3, RDS, Secrets Manager, and Lambda dependencies.</desc>
+      <defs><marker id="awsArrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#86c8a5"/></marker></defs>
+      <rect x="20" y="24" width="180" height="86" rx="10" class="aws-svg-box aws-svg-source"/><text x="110" y="57" class="aws-svg-title">Feature branch</text><text x="110" y="82" class="aws-svg-text">git push and PR</text>
+      <rect x="250" y="24" width="230" height="86" rx="10" class="aws-svg-box aws-svg-ci"/><text x="365" y="54" class="aws-svg-title">Jenkins quality gates</text><text x="365" y="78" class="aws-svg-text">tests · coverage · SAST</text><text x="365" y="97" class="aws-svg-text">CVE · code quality</text>
+      <rect x="530" y="24" width="180" height="86" rx="10" class="aws-svg-box aws-svg-registry"/><text x="620" y="57" class="aws-svg-title">Amazon ECR</text><text x="620" y="82" class="aws-svg-text">immutable image digest</text>
+      <rect x="760" y="24" width="180" height="86" rx="10" class="aws-svg-box aws-svg-runtime"/><text x="850" y="57" class="aws-svg-title">ECS Fargate</text><text x="850" y="82" class="aws-svg-text">rolling production deploy</text>
+      <rect x="990" y="24" width="150" height="86" rx="10" class="aws-svg-box aws-svg-observe"/><text x="1065" y="57" class="aws-svg-title">CloudWatch</text><text x="1065" y="82" class="aws-svg-text">logs and alarms</text>
+      <path d="M200 67 H250" class="aws-svg-arrow"/><path d="M480 67 H530" class="aws-svg-arrow"/><path d="M710 67 H760" class="aws-svg-arrow"/><path d="M940 67 H990" class="aws-svg-arrow"/>
+      <rect x="250" y="205" width="205" height="88" rx="10" class="aws-svg-box aws-svg-edge"/><text x="352" y="238" class="aws-svg-title">Application Load Balancer</text><text x="352" y="264" class="aws-svg-text">TLS · routing · health checks</text>
+      <rect x="530" y="205" width="180" height="88" rx="10" class="aws-svg-box aws-svg-app"/><text x="620" y="238" class="aws-svg-title">Spring Boot tasks</text><text x="620" y="264" class="aws-svg-text">REST APIs and workers</text>
+      <rect x="760" y="205" width="150" height="88" rx="10" class="aws-svg-box aws-svg-data"/><text x="835" y="238" class="aws-svg-title">S3</text><text x="835" y="264" class="aws-svg-text">private reports</text>
+      <rect x="960" y="205" width="160" height="88" rx="10" class="aws-svg-box aws-svg-data"/><text x="1040" y="238" class="aws-svg-title">RDS</text><text x="1040" y="264" class="aws-svg-text">metadata and status</text>
+      <path d="M850 110 V162 H352 V205" class="aws-svg-arrow"/><path d="M850 110 V205" class="aws-svg-arrow"/><path d="M620 293 V360 H835 V293" class="aws-svg-arrow"/><path d="M710 249 H960" class="aws-svg-arrow"/>
+      <rect x="250" y="365" width="205" height="70" rx="10" class="aws-svg-box aws-svg-security"/><text x="352" y="394" class="aws-svg-title">IAM and Secrets Manager</text><text x="352" y="417" class="aws-svg-text">roles and runtime config</text>
+      <rect x="530" y="365" width="180" height="70" rx="10" class="aws-svg-box aws-svg-event"/><text x="620" y="394" class="aws-svg-title">Lambda</text><text x="620" y="417" class="aws-svg-text">S3 event processing</text>
+      <path d="M455 400 H530" class="aws-svg-arrow"/><path d="M455 400 H480 V249 H530" class="aws-svg-arrow"/>
+    </svg>
+  </div>
+  <details class="aws-diagram-details" open><summary>Jenkins deployment architecture</summary><div class="aws-diagram-grid"><div><strong>Source and review</strong><span>Local workspace</span><i>→</i><span>Feature branch push</span><i>→</i><span>Pull request review</span><i>→</i><span>Merge to main</span></div><div><strong>Jenkins quality gates</strong><span>Checkout commit</span><i>→</i><span>Compile</span><i>→</i><span>Unit tests</span><i>→</i><span>Integration tests</span><i>→</i><span>JaCoCo coverage</span><i>→</i><span>Code quality</span><i>→</i><span>Dependency and CVE check</span><i>→</i><span>SAST and secret scan</span><i>→</i><span>Approval gate</span></div><div><strong>Jenkins production pipeline</strong><span>Docker build</span><i>→</i><span>Container scan</span><i>→</i><span>ECR image digest</span><i>→</i><span>ECS task definition</span><i>→</i><span>Production deploy</span></div><div><strong>Runtime and verification</strong><span>ECS Fargate tasks</span><i>→</i><span>ALB health checks</span><i>→</i><span>Smoke tests</span><i>→</i><span>CloudWatch alarms</span><i>→</i><span>Rollback if unhealthy</span></div><div><strong>Runtime dependencies</strong><span>ECS task role</span><i>→</i><span>S3 reports</span><span>RDS metadata</span><span>Secrets Manager</span><span>Lambda events</span></div></div></details>
   <h2>Production sizing guide</h2>
   <p class="aws-sizing-note">These are starting points for a Reidy.AI-style Spring Boot workload. “Users” means registered users; validate the final choice with traffic shape, peak concurrency, request latency, report generation rate, file sizes, retention, and load tests.</p>
   <div class="aws-sizing-table-wrap">
