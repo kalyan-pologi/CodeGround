@@ -77,6 +77,33 @@ void testValidEmails(String email) {
 when(paymentService.process(any())).thenReturn(true);
 verify(emailService).send("test@email.com");</code></pre>
 
+  <div class="note-table-wrap">
+    <table class="note-methods-table">
+      <caption>Mockito stubbing and verification reference</caption>
+      <thead>
+        <tr><th>Pattern</th><th>What it does</th><th>Example and when to use it</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>when(...).thenReturn(value)</code></td><td>Returns a fixed value for a non-void method.</td><td><code>when(repo.findById(id)).thenReturn(Optional.of(user));</code> The everyday stubbing pattern.</td></tr>
+        <tr><td><code>thenReturn(a, b, c)</code></td><td>Returns different values on consecutive calls.</td><td><code>when(client.status()).thenReturn("RETRY", "OK");</code> Useful for polling or retry flows.</td></tr>
+        <tr><td><code>thenThrow(exception)</code></td><td>Throws an exception from a non-void method.</td><td><code>when(repo.save(any())).thenThrow(new DataAccessException("down"));</code> Test failure handling and rollback.</td></tr>
+        <tr><td><code>thenAnswer(invocation -&gt; ...)</code></td><td>Computes the result from call arguments.</td><td><code>when(repo.save(any())).thenAnswer(i -&gt; i.getArgument(0));</code> Good for echoing or argument-dependent behavior.</td></tr>
+        <tr><td><code>thenCallRealMethod()</code></td><td>Calls the real implementation for a mocked method.</td><td><code>when(formatter.normalize(any())).thenCallRealMethod();</code> Use carefully; prefer a real object or spy when most behavior should be real.</td></tr>
+        <tr><td><code>doNothing().when(mock).voidMethod()</code></td><td>Does nothing for a void method.</td><td><code>doNothing().when(emailSender).send(anyString());</code> Usually the default, so use it mainly to make intent explicit.</td></tr>
+        <tr><td><code>doThrow(exception).when(mock).voidMethod()</code></td><td>Throws from a void method.</td><td><code>doThrow(new IOException()).when(fileStore).write(any());</code> Essential for testing void-operation failures.</td></tr>
+        <tr><td><code>doAnswer(invocation -&gt; ...)</code></td><td>Runs custom logic for a void method.</td><td><code>doAnswer(i -&gt; { callback.run(); return null; }).when(queue).publish(any());</code> Use callbacks sparingly.</td></tr>
+        <tr><td><code>doReturn(value).when(mock).method()</code></td><td>Stubs without calling the real method first.</td><td><code>doReturn(cached).when(spy).load();</code> Safer for spies when the real call has side effects or throws.</td></tr>
+        <tr><td><code>verify(mock).method()</code></td><td>Confirms a method was called once.</td><td><code>verify(emailSender).send("user@example.com");</code> Verify important side effects, not every implementation detail.</td></tr>
+        <tr><td><code>times(n) / never()</code></td><td>Checks an exact call count or that a call never happened.</td><td><code>verify(repo, times(2)).save(any());</code> / <code>verify(emailSender, never()).send(any());</code></td></tr>
+        <tr><td><code>verifyNoInteractions(mock)</code></td><td>Confirms the mock was never used.</td><td><code>verifyNoInteractions(repo);</code> Useful when validation should fail before I/O.</td></tr>
+        <tr><td><code>verifyNoMoreInteractions(mock)</code></td><td>Confirms no unexpected calls happened after known verifications.</td><td><code>verifyNoMoreInteractions(repo, emailSender);</code> Use on critical boundaries; avoid brittle over-verification.</td></tr>
+        <tr><td><code>inOrder(mock1, mock2)</code></td><td>Verifies call ordering across collaborators.</td><td><code>InOrder order = inOrder(repo, emailSender);</code> Use only when order is part of the behavior.</td></tr>
+        <tr><td><code>verify(mock, timeout(ms))</code></td><td>Waits briefly for an asynchronous interaction.</td><td><code>verify(listener, timeout(500)).onMessage(any());</code> Prefer a deterministic completion signal over arbitrary sleeps.</td></tr>
+        <tr><td><code>given(...).willReturn(...)</code></td><td>BDDMockito equivalent of <code>when(...).thenReturn(...)</code>.</td><td><code>given(repo.findById(id)).willReturn(Optional.of(user));</code> Reads naturally in Given/When/Then tests.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
   <h2>Test Organization</h2>
   <ul>
     <li><code>@Tag("unit")</code>, <code>@Tag("integration")</code>, tag tests for selective runs</li>
