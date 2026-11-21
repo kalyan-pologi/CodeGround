@@ -195,7 +195,8 @@ function renderDropdown(tab, activeId) {
     const notes = notesByRepo.get(tab) || [];
     sections = [['Getting started', ['home']], ['Topics', notes.filter(note => note.id !== 'home' && !note.id.startsWith('q-')).map(note => note.id)], ['Design questions', notes.filter(note => note.id.startsWith('q-')).map(note => note.id)]];
   }
-  topicContent.innerHTML = (sections || []).filter(([, ids]) => ids.length).map(([title, ids]) => `<section class="side-section"><h2 class="side-section-title">${escape(title)}</h2><div class="topic-list">${ids.map(link).join('')}</div></section>`).join('');
+  topicContent.innerHTML = (sections || []).filter(([, ids]) => ids.length).map(([title, ids, nested]) => `<section class="side-section"><h2 class="side-section-title">${escape(title)}</h2><div class="topic-list">${ids.map(link).join('')}${nested ? subgroup(nested.title, nested.ids, `${tab}:behavioral-questions`) : ''}</div></section>`).join('');
+  topicContent.querySelectorAll('[data-group]').forEach(detail => detail.addEventListener('toggle', () => { detail.open ? openGroups.add(detail.dataset.group) : openGroups.delete(detail.dataset.group); }));
 }
 function dashboard() {
   main.innerHTML = `<div class="page">

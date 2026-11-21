@@ -139,6 +139,12 @@
   },
   {
     "repo": "interview",
+    "id": "behavioral-index",
+    "title": "🗣️ Behavioral Questions",
+    "file": "features/home/project-stories/content/behavioral-index.html"
+  },
+  {
+    "repo": "interview",
     "id": "behavioral-stories",
     "title": "📖 Stories",
     "file": "features/home/project-stories/content/behavioral-stories.html"

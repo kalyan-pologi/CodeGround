@@ -4,7 +4,7 @@ export const featureCatalog = {
   home: {
     'getting-started': ['home', 'intro'],
     'project-writeups': ['proj-reidyai', 'proj-citibank', 'proj-accenture'],
-    'project-stories': ['behavioral-stories', 'behavioral-questions']
+    'project-stories': ['behavioral-stories', 'behavioral-questions', 'behavioral-index']
   },
   backend: {
     'java-spring': ['java-topics', 'spring-topics', 'solid-patterns'],
