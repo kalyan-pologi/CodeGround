@@ -183,11 +183,10 @@ function mountSingleQuestionReader(doc, entries) {
   body.replaceChildren(reader);
   let selection = 0;
 
-  const select = (index, shouldScroll = true) => {
+  const select = index => {
     const question = entries[index];
     if (!question) return false;
     const currentSelection = ++selection;
-    const scrollTop = doc.defaultView?.scrollY || doc.documentElement.scrollTop || 0;
     const panel = doc.createElement('article');
     panel.className = 'interview-question-answer';
     panel.id = question.id;
@@ -198,7 +197,7 @@ function mountSingleQuestionReader(doc, entries) {
     status.textContent = 'Loading answer…';
     panel.append(title, status);
     reader.replaceChildren(panel);
-    if (shouldScroll) doc.defaultView?.scrollTo(0, scrollTop);
+    doc.defaultView?.scrollTo(0, 0);
 
     fetchText(question.file).then(html => {
       if (currentSelection !== selection || !panel.isConnected) return;
@@ -258,7 +257,7 @@ function mountInterviewQuestionHome(doc, entries, questionReader) {
       button.addEventListener('click', () => {
         home.hidden = true;
         questionReader.reader.hidden = false;
-        questionReader.select(Number(entry.id.replace('interview-question-', '')) - 1, false);
+        questionReader.select(Number(entry.id.replace('interview-question-', '')) - 1);
       });
       item.append(button);
       return item;

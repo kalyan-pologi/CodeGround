@@ -83,6 +83,17 @@ try {
   await command('Input.dispatchKeyEvent', {type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27}, sessionId);
   await until(`document.querySelector('.mega-menu').hidden && document.activeElement.dataset.tab === 'backend'`);
 
+  await evaluate(`location.hash = 'practice/interview/java-interview-questions'`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelectorAll('.interview-question-home-list button').length === 75`);
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelector('.interview-question-home-list button').click()`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.interview-question-answer > h2')?.textContent === 'Short answer'`);
+  const questionVisible = `(() => { const doc = document.querySelector('iframe').contentDocument; return doc.querySelector('.interview-question-answer > h1').getBoundingClientRect().top >= doc.querySelector('.interview-question-toolbar').getBoundingClientRect().bottom; })()`;
+  assert.ok(await evaluate(questionVisible), 'Interview question heading must clear the fixed toolbar');
+  await evaluate(`document.querySelector('iframe').contentWindow.scrollTo(0, 400)`);
+  await evaluate(`document.querySelector('iframe').contentDocument.querySelector('[data-direction="next"]').click()`);
+  await until(`document.querySelector('iframe')?.contentDocument?.querySelector('.interview-question-answer > h1')?.textContent.includes('equals()')`);
+  assert.ok(await evaluate(questionVisible), 'Next interview question heading must clear the fixed toolbar after scrolling');
+
   for (const route of ['backend/interview/java-topics', 'devops/interview/docker', 'web/interview/react', 'sd/sd/home', 'genai/genai/home', 'home/interview/behavioral-stories']) {
     await evaluate(`location.hash = ${JSON.stringify(route)}`);
     const noteKey = route.split('/').slice(1).join('/');
