@@ -87,10 +87,89 @@ const interviewQuestions = [
   'What are the most common Spring Boot performance mistakes, and how would you identify them with metrics, traces, and profiling?'
 ];
 
+const questionIdsByTopic = {
+  'Java Core': [1, 2, 3, 5, 6, 10, 11],
+  JVM: [4, 18, 19, 21],
+  'Java Streams': [7, 8, 58],
+  Concurrency: [9, 12, 13, 14, 15, 16, 17, 53, 54, 55, 56, 57],
+  'Spring Boot': [20, 22, 23, 24, 25, 26, 27, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75],
+  Hibernate: [28],
+  Database: [29, 30, 31, 32, 33],
+  'System Design': [34, 36, 37, 59],
+  Microservices: [35, 38, 39],
+  Kafka: [40, 41, 42, 43, 60],
+  Redis: [44],
+  Security: [45, 46],
+  Testing: [47],
+  Observability: [48],
+  Kubernetes: [49, 50],
+  'CI/CD': [51],
+  AWS: [52]
+};
+
+const topicByQuestionId = new Map(
+  Object.entries(questionIdsByTopic).flatMap(([topic, ids]) => ids.map(id => [id, topic]))
+);
+
+const relatedTagsByTopic = {
+  'Java Core': ['Java Core', 'Fundamentals'],
+  JVM: ['JVM', 'Performance'],
+  'Java Streams': ['Java Streams', 'Collections'],
+  Concurrency: ['Concurrency', 'Multithreading'],
+  'Spring Boot': ['Spring Boot', 'Spring Framework'],
+  Hibernate: ['Hibernate', 'JPA'],
+  Database: ['Database', 'SQL'],
+  'System Design': ['System Design', 'Distributed Systems'],
+  Microservices: ['Microservices', 'Resilience'],
+  Kafka: ['Kafka', 'Messaging'],
+  Redis: ['Redis', 'Caching'],
+  Security: ['Security', 'Spring Security'],
+  Testing: ['Testing', 'JUnit'],
+  Observability: ['Observability', 'Production'],
+  Kubernetes: ['Kubernetes', 'Cloud Deployment'],
+  'CI/CD': ['CI/CD', 'DevOps'],
+  AWS: ['AWS', 'Cloud Architecture']
+};
+
+const detailTagRules = [
+  [/HashMap|ConcurrentHashMap|Hashtable|TreeMap/i, ['Collections']],
+  [/equals\(\)|hashCode|compareTo/i, ['Object Contracts']],
+  [/immutable|immutability/i, ['Immutability']],
+  [/memory|heap|stack|OutOfMemory|garbage collection|G1GC|ZGC/i, ['Memory Management']],
+  [/Streams|parallelStream/i, ['Stream API']],
+  [/CompletableFuture|Future|ExecutorService|ThreadPoolExecutor|BlockingQueue|Semaphore|CountDownLatch/i, ['Executors']],
+  [/thread|race condition|volatile|synchronized|CAS|deadlock|livelock|starvation/i, ['Thread Safety']],
+  [/Spring Boot|SpringFactoriesLoader|Spring profile|@SpringBootApplication|auto-configur/i, ['Spring Boot']],
+  [/configuration|property precedence|@Value|@ConfigurationProperties|application\.yml/i, ['Configuration']],
+  [/@Transactional|transaction|ACID|rollback|propagation|isolation/i, ['Transactions']],
+  [/REST|RestTemplate|WebClient|FeignClient|@RestController|@Controller/i, ['REST APIs']],
+  [/Hibernate|JPA|LazyInitialization|N\+1|locking|DataSource|JDBC|SQL|index|partitioning|sharding/i, ['Persistence']],
+  [/payment|idempotent|Saga|outbox/i, ['Resilience']],
+  [/microservices|distributed|circuit breaker|bulkhead|Resilience4j/i, ['Distributed Systems']],
+  [/Kafka|consumer|producer|offset|partition|dead-letter|replay/i, ['Event Driven']],
+  [/Redis|cache|TTL|eviction|cache stampede/i, ['Caching']],
+  [/authentication|authorization|OAuth2|JWT|RBAC|SQL injection|XSS|CSRF|IDOR/i, ['Application Security']],
+  [/JUnit|Mockito|Testcontainers|testing/i, ['Automated Testing']],
+  [/logs|metrics|traces|observability|root-cause/i, ['Production Diagnostics']],
+  [/Kubernetes|pod|kubectl|health checks/i, ['Container Operations']],
+  [/CI\/CD|Jenkins|deployment|rollback/i, ['Delivery']],
+  [/AWS|EC2|EKS|ALB|RDS|DynamoDB|S3|IAM|VPC/i, ['Cloud Architecture']]
+];
+
+function tagsForQuestion(title, topic) {
+  const tags = [...(relatedTagsByTopic[topic] || [topic])];
+  detailTagRules.forEach(([pattern, additions]) => {
+    if (pattern.test(title)) additions.forEach(tag => { if (!tags.includes(tag)) tags.push(tag); });
+  });
+  return tags.slice(0, 4);
+}
+
 function questionEntries() {
   return interviewQuestions.map((title, index) => ({
     id: `interview-question-${index + 1}`,
     title,
+    topic: topicByQuestionId.get(index + 1),
+    tags: tagsForQuestion(title, topicByQuestionId.get(index + 1)),
     file: `features/backend-practice/java-interview/questions/question-${String(index + 1).padStart(2, '0')}/question.html`
   }));
 }
@@ -141,8 +220,57 @@ function mountSingleQuestionReader(doc, entries) {
     return true;
   };
 
-  select(0, false);
-  return { select, count: entries.length };
+  return { select, count: entries.length, reader };
+}
+
+function mountInterviewQuestionHome(doc, entries, questionReader) {
+  const body = doc.querySelector('.note-body');
+  if (!body) return null;
+  const home = doc.createElement('section');
+  home.className = 'interview-question-home';
+  home.innerHTML = `<header class="interview-question-home-header"><div><p class="interview-question-eyebrow">Java interview preparation</p><h1>Java Interview Questions</h1></div><span class="interview-question-total">${entries.length} questions</span></header>
+    <div class="interview-question-home-filters"><input type="search" aria-label="Search interview questions" placeholder="Search by question or topic"><select aria-label="Filter by topic"><option value="">All topics</option></select><span class="interview-question-shown" aria-live="polite"></span></div>
+    <div class="interview-question-home-columns" aria-hidden="true"><span>#</span><span>Question</span></div>
+    <ol class="interview-question-home-list"></ol>`;
+  const search = home.querySelector('input');
+  const filter = home.querySelector('select');
+  const shown = home.querySelector('.interview-question-shown');
+  const list = home.querySelector('ol');
+  [...new Set(entries.map(entry => entry.topic))].sort().forEach(topic => {
+    const option = doc.createElement('option');
+    option.value = topic;
+    option.textContent = topic;
+    filter.append(option);
+  });
+  const render = () => {
+    const query = search.value.trim().toLowerCase();
+    const topic = filter.value;
+    const filtered = entries.filter(entry => (!topic || entry.topic === topic) && (!query || entry.title.toLowerCase().includes(query) || entry.tags.some(tag => tag.toLowerCase().includes(query))));
+    shown.textContent = `${filtered.length} shown`;
+    list.replaceChildren(...filtered.map(entry => {
+      const item = doc.createElement('li');
+      const button = doc.createElement('button');
+      button.type = 'button';
+      button.dataset.target = entry.id;
+      button.innerHTML = `<span class="interview-question-number">${entry.id.replace('interview-question-', '')}</span><span class="interview-question-home-title"><strong></strong><small class="interview-question-home-topic"></small></span>`;
+      button.querySelector('strong').textContent = entry.title;
+      button.querySelector('.interview-question-home-topic').textContent = entry.tags.join(' · ');
+      button.addEventListener('click', () => {
+        home.hidden = true;
+        questionReader.reader.hidden = false;
+        questionReader.select(Number(entry.id.replace('interview-question-', '')) - 1, false);
+      });
+      item.append(button);
+      return item;
+    }));
+    if (!filtered.length) list.innerHTML = '<li class="interview-question-home-empty">No questions match your search.</li>';
+  };
+  body.replaceChildren(home, questionReader.reader);
+  questionReader.reader.hidden = true;
+  search.addEventListener('input', render);
+  filter.addEventListener('change', render);
+  render();
+  return home;
 }
 
 export function mountInterviewQuestionDrawer(doc) {
@@ -152,15 +280,18 @@ export function mountInterviewQuestionDrawer(doc) {
   doc.body.dataset.interviewQuestionDrawer = 'true';
   addStyle(doc);
   const questionReader = mountSingleQuestionReader(doc, entries);
+  const home = mountInterviewQuestionHome(doc, entries, questionReader);
 
   const toolbar = doc.createElement('div');
   toolbar.className = 'interview-question-toolbar';
+  toolbar.hidden = true;
   toolbar.innerHTML = '<button type="button" aria-haspopup="dialog" aria-controls="interview-question-drawer"><span aria-hidden="true">☰</span> Interview Questions</button>';
   toolbar.style.left = '18px';
   toolbar.style.right = 'auto';
   toolbar.replaceChildren();
   toolbar.innerHTML = `<button class="interview-question-menu" type="button" aria-label="Open interview questions" aria-haspopup="dialog" aria-controls="interview-question-drawer"><span aria-hidden="true">☰</span></button>
     <strong>Java Interview Questions</strong>
+    <button class="interview-question-home-button" type="button">Questions home</button>
     <button class="interview-question-nav" type="button" data-direction="previous" aria-label="Previous question">‹</button>
     <button class="interview-question-nav" type="button" data-direction="next" aria-label="Next question">›</button>
     <span class="interview-question-count" aria-live="polite">1 / ${entries.length}</span>`;
@@ -182,8 +313,8 @@ export function mountInterviewQuestionDrawer(doc) {
   const close = drawer.querySelector('header button');
   const render = () => {
     const query = search.value.trim().toLowerCase();
-    const filtered = entries.filter(entry => entry.title.toLowerCase().includes(query));
-    list.innerHTML = filtered.map(entry => `<button type="button" data-target="${entry.id}"><span class="interview-question-dot" aria-hidden="true"></span><span>${entry.id.replace('interview-question-', '')}. ${entry.title}</span><small>Java</small></button>`).join('') || '<p class="interview-question-empty">No questions match your search.</p>';
+    const filtered = entries.filter(entry => entry.title.toLowerCase().includes(query) || entry.tags.some(tag => tag.toLowerCase().includes(query)));
+    list.innerHTML = filtered.map(entry => `<button type="button" data-target="${entry.id}"><span class="interview-question-dot" aria-hidden="true"></span><span>${entry.id.replace('interview-question-', '')}. ${entry.title}</span><small>${entry.tags.join(' · ')}</small></button>`).join('') || '<p class="interview-question-empty">No questions match your search.</p>';
   };
 
   const count = toolbar.querySelector('.interview-question-count');
@@ -196,6 +327,12 @@ export function mountInterviewQuestionDrawer(doc) {
   };
 
   toolbar.querySelector('.interview-question-menu').addEventListener('click', () => { drawer.showModal(); search.focus(); });
+  toolbar.querySelector('.interview-question-home-button').addEventListener('click', () => {
+    questionReader.reader.hidden = true;
+    home.hidden = false;
+    toolbar.hidden = true;
+    doc.defaultView?.scrollTo(0, 0);
+  });
   toolbar.querySelector('[data-direction="previous"]').addEventListener('click', () => selectQuestion(Math.max(0, activeIndex - 1)));
   toolbar.querySelector('[data-direction="next"]').addEventListener('click', () => selectQuestion(Math.min(questionReader.count - 1, activeIndex + 1)));
   close.addEventListener('click', () => drawer.close());
@@ -206,7 +343,13 @@ export function mountInterviewQuestionDrawer(doc) {
     if (!button) return;
     const index = Number(button.dataset.target.replace('interview-question-', '')) - 1;
     if (!selectQuestion(index)) return;
+    home.hidden = true;
+    questionReader.reader.hidden = false;
+    toolbar.hidden = false;
     drawer.close();
+  });
+  home.addEventListener('click', event => {
+    if (event.target.closest('[data-target]')) toolbar.hidden = false;
   });
   render();
 }
