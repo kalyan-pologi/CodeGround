@@ -28,6 +28,11 @@
 <h3>Bean Scopes</h3>
 <p>Defines bean instance creation strategy: singleton, prototype, request, session, application. Use case: state management, performance optimization, web applications.</p>
 
+<figure class="note-figure">
+  <img src="assets/img/spring-core-ioc-di-bean-lifecycle.png" alt="Spring Core architecture diagram showing ApplicationContext and BeanFactory, IoC, dependency injection, bean lifecycle, bean scopes, AOP, and integration">
+  <figcaption>Spring Core internals: containers create and wire beans, manage their lifecycle and scopes, and provide AOP and integration capabilities.</figcaption>
+</figure>
+
 <h3>@Component</h3>
 <p>Marks a class as a Spring-managed bean for component scanning. Use case: auto-detection, service layer classes, general-purpose beans.</p>
 
@@ -230,6 +235,33 @@
   <figcaption>Spring Security authentication and authorization: identity first, permission checks second.</figcaption>
 </figure>
 
+<h3>Important Security and FilterChain methods</h3>
+<div class="note-table-wrap">
+  <table>
+    <thead><tr><th>Method</th><th>Purpose</th><th>Example / note</th></tr></thead>
+    <tbody>
+      <tr><td><code>authorizeHttpRequests</code></td><td>Defines URL authorization rules.</td><td>Starts the request authorization DSL.</td></tr>
+      <tr><td><code>requestMatchers</code></td><td>Targets paths, HTTP methods, or request conditions.</td><td><code>requestMatchers("/public/**").permitAll()</code></td></tr>
+      <tr><td><code>anyRequest</code></td><td>Applies a rule to every request not matched earlier.</td><td><code>anyRequest().authenticated()</code></td></tr>
+      <tr><td><code>permitAll</code> / <code>denyAll</code></td><td>Allows or rejects a request without authentication.</td><td>Use <code>permitAll</code> for health or login endpoints carefully.</td></tr>
+      <tr><td><code>authenticated</code></td><td>Requires a valid authenticated principal.</td><td>Common default for protected APIs.</td></tr>
+      <tr><td><code>hasRole</code> / <code>hasAuthority</code></td><td>Checks roles or exact authorities.</td><td><code>hasRole("ADMIN")</code> usually maps to <code>ROLE_ADMIN</code>.</td></tr>
+      <tr><td><code>hasAnyRole</code> / <code>hasAnyAuthority</code></td><td>Allows access when the principal has at least one listed role or authority.</td><td>Useful for shared admin/support permissions.</td></tr>
+      <tr><td><code>securityMatchers</code></td><td>Limits which requests a particular <code>SecurityFilterChain</code> applies to.</td><td>Use separate chains for API, actuator, or browser routes.</td></tr>
+      <tr><td><code>csrf</code></td><td>Configures CSRF protection.</td><td>Disable only for an appropriate stateless API design.</td></tr>
+      <tr><td><code>sessionManagement</code></td><td>Configures session creation and stateless behavior.</td><td><code>SessionCreationPolicy.STATELESS</code> for JWT APIs.</td></tr>
+      <tr><td><code>SessionCreationPolicy</code></td><td>Controls when Spring Security creates or uses an HTTP session.</td><td><code>ALWAYS</code>, <code>IF_REQUIRED</code>, <code>NEVER</code>, or <code>STATELESS</code>.</td></tr>
+      <tr><td><code>oauth2ResourceServer</code></td><td>Configures bearer-token/JWT resource-server support.</td><td>Connects token decoding and authentication.</td></tr>
+      <tr><td><code>exceptionHandling</code></td><td>Configures authentication and authorization failure handlers.</td><td>Customize <code>authenticationEntryPoint</code> and <code>accessDeniedHandler</code>.</td></tr>
+      <tr><td><code>headers</code></td><td>Configures security response headers.</td><td>Set rules for frame options, HSTS, cache control, and content security policy.</td></tr>
+      <tr><td><code>requestCache</code></td><td>Stores a request so it can be resumed after authentication.</td><td>Common in browser login flows; often disabled for stateless APIs.</td></tr>
+      <tr><td><code>addFilterBefore</code> / <code>addFilterAfter</code></td><td>Places a custom filter relative to a known filter.</td><td>Put JWT extraction before <code>UsernamePasswordAuthenticationFilter</code>.</td></tr>
+      <tr><td><code>addFilterAt</code></td><td>Places a custom filter at a specific filter position.</td><td>Use carefully because ordering and replacement semantics matter.</td></tr>
+      <tr><td><code>doFilter</code> / <code>doFilterInternal</code></td><td>Processes a request inside a servlet filter.</td><td>Override <code>doFilterInternal</code> in <code>OncePerRequestFilter</code>.</td></tr>
+    </tbody>
+  </table>
+</div>
+
 <h3>CORS Configuration</h3>
 <p>Cross-Origin Resource Sharing configuration for web security. Use case: frontend-backend communication, API access, web security.</p>
 
@@ -363,6 +395,32 @@
   <figcaption>Spring + Redis: configuration, caching strategies, TTL, stampede prevention, and common use cases.</figcaption>
 </figure>
 
+<h3>Important Redis operations</h3>
+<div class="note-table-wrap">
+  <table>
+    <thead><tr><th>Operation / method</th><th>Purpose</th><th>Typical use</th></tr></thead>
+    <tbody>
+      <tr><td><code>GET</code> / <code>SET</code></td><td>Read or write a string value.</td><td>Cache a serialized object or API response.</td></tr>
+      <tr><td><code>setIfAbsent</code> / <code>SETNX</code></td><td>Writes only when the key does not already exist.</td><td>Acquire a simple distributed lock or prevent duplicate initialization.</td></tr>
+      <tr><td><code>EXPIRE</code> / <code>TTL</code></td><td>Set or inspect an entry's time-to-live.</td><td>Session expiry, cache freshness, temporary locks.</td></tr>
+      <tr><td><code>DEL</code> / <code>UNLINK</code></td><td>Remove a key synchronously or asynchronously.</td><td>Explicit invalidation after a database update.</td></tr>
+      <tr><td><code>INCR</code> / <code>DECR</code></td><td>Atomically change a numeric value.</td><td>Rate limits, counters, and usage tracking.</td></tr>
+      <tr><td><code>HSET</code> / <code>HGET</code></td><td>Write or read a field inside a Redis hash.</td><td>Store several attributes under one object key.</td></tr>
+      <tr><td><code>SADD</code> / <code>SISMEMBER</code></td><td>Add to a set or test membership.</td><td>Unique tags, roles, or feature enrollment.</td></tr>
+      <tr><td><code>LPUSH</code> / <code>RPOP</code></td><td>Push to or remove from a list.</td><td>Simple queues and recent-item lists.</td></tr>
+      <tr><td><code>SCAN</code></td><td>Iterate keys incrementally without blocking the server like <code>KEYS</code>.</td><td>Operational cleanup and key inspection.</td></tr>
+      <tr><td><code>PUBLISH</code> / <code>SUBSCRIBE</code></td><td>Send and receive transient channel messages.</td><td>Notifications where durable replay is not required.</td></tr>
+      <tr><td><code>RedisTemplate.opsForValue()</code></td><td>Access Spring Data Redis string-value operations.</td><td><code>get</code>, <code>set</code>, <code>increment</code>, and TTL-aware writes.</td></tr>
+      <tr><td><code>RedisTemplate.delete()</code> / <code>expire()</code></td><td>Invalidate keys and manage expiry from Spring.</td><td>Keep cache state consistent with the database.</td></tr>
+      <tr><td>Distributed lock + TTL jitter</td><td>Coordinates one refresh and spreads expiry times.</td><td>Reduce cache stampedes using a lock, bounded lease, and randomized TTL.</td></tr>
+      <tr><td>Cache prewarming</td><td>Loads high-demand data before traffic arrives.</td><td>Warm popular property or reference-data keys after deployment.</td></tr>
+      <tr><td>Stale-while-revalidate</td><td>Serves acceptable stale data while one worker refreshes it.</td><td>Protect latency during a slow upstream or database refresh.</td></tr>
+      <tr><td>Single-flight refresh</td><td>Combines concurrent misses for the same key into one database fetch.</td><td>Prevent a burst of identical cache-miss queries.</td></tr>
+      <tr><td><code>@CacheConfig</code> / <code>@EnableCaching</code></td><td>Shares cache configuration and enables Spring's caching annotations.</td><td>Configure cache names once and activate <code>@Cacheable</code>, <code>@CachePut</code>, and <code>@CacheEvict</code>.</td></tr>
+    </tbody>
+  </table>
+</div>
+
 <h2>Spring Integration &amp; Messaging (Kafka/RabbitMQ)</h2>
 
 <h3>Spring Integration</h3>
@@ -431,6 +489,29 @@
 
 <h3>WebClient</h3>
 <p>Non-blocking HTTP client replacing RestTemplate. Use case: reactive HTTP calls, non-blocking communication, high performance.</p>
+
+<h3>Important WebClient methods</h3>
+<div class="note-table-wrap">
+  <table>
+    <thead><tr><th>Method</th><th>Purpose</th><th>Typical use</th></tr></thead>
+    <tbody>
+      <tr><td><code>get</code> / <code>post</code> / <code>put</code> / <code>patch</code> / <code>delete</code></td><td>Starts a request with the selected HTTP method.</td><td>Choose the method that matches the remote API contract.</td></tr>
+      <tr><td><code>uri</code></td><td>Sets the path, query parameters, and URI variables.</td><td><code>.uri(builder -&gt; builder.path("/properties").queryParam("city", city).build())</code></td></tr>
+      <tr><td><code>headers</code> / <code>header</code></td><td>Adds request headers.</td><td>Set correlation IDs, content type, or bearer tokens.</td></tr>
+      <tr><td><code>bodyValue</code> / <code>body</code></td><td>Writes a request body.</td><td>Send a DTO with a POST or PUT request.</td></tr>
+      <tr><td><code>retrieve</code></td><td>Extracts a response body with standard status handling.</td><td>Best for straightforward request-to-body flows.</td></tr>
+      <tr><td><code>exchangeToMono</code> / <code>exchangeToFlux</code></td><td>Inspects the full response before choosing how to decode it.</td><td>Use when status, headers, and body require custom handling.</td></tr>
+      <tr><td><code>bodyToMono</code> / <code>bodyToFlux</code></td><td>Decodes the response into one value or a stream of values.</td><td><code>bodyToMono(Property.class)</code> or a list stream.</td></tr>
+      <tr><td><code>toEntity</code> / <code>toBodilessEntity</code></td><td>Returns response metadata with or without a decoded body.</td><td>Read status, headers, and body together.</td></tr>
+      <tr><td><code>onStatus</code></td><td>Maps HTTP error statuses to domain exceptions.</td><td>Convert 404 or 5xx responses into meaningful service errors.</td></tr>
+      <tr><td><code>timeout</code></td><td>Stops a request that exceeds a time limit.</td><td>Protect a service from waiting indefinitely on a dependency.</td></tr>
+      <tr><td><code>retryWhen</code></td><td>Retries failures according to a Reactor retry policy.</td><td>Retry transient failures with backoff, not validation or auth failures.</td></tr>
+      <tr><td><code>doOnRequest</code> / <code>doOnNext</code> / <code>doOnError</code></td><td>Observes signals for metrics and diagnostics.</td><td>Record latency and sanitized error details without changing the flow.</td></tr>
+      <tr><td><code>cache</code></td><td>Replays a reactive result to later subscribers.</td><td>Use deliberately for short-lived shared results; pair with an expiry strategy when needed.</td></tr>
+      <tr><td><code>block</code></td><td>Waits synchronously for a result.</td><td>Avoid inside reactive event-loop code; use only at an intentional boundary.</td></tr>
+    </tbody>
+  </table>
+</div>
 
 <h3>Mono.zip</h3>
 <p>Combines multiple independent <code>Mono</code> sources and waits for all of them to complete before

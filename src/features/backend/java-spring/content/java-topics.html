@@ -448,6 +448,33 @@
   <h3>Stream API</h3>
   <p>A functional approach to process collections of data. Use case: data filtering, mapping, reducing, parallel processing.</p>
 
+  <h4>Important Stream methods</h4>
+  <div class="note-table-wrap">
+    <table>
+      <thead>
+        <tr><th>Method</th><th>Type</th><th>What it does</th><th>Example</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>filter</code></td><td>Intermediate</td><td>Keeps elements that match a predicate.</td><td><code>.filter(x -&gt; x &gt; 10)</code></td></tr>
+        <tr><td><code>map</code></td><td>Intermediate</td><td>Transforms each element into another value.</td><td><code>.map(String::toUpperCase)</code></td></tr>
+        <tr><td><code>flatMap</code></td><td>Intermediate</td><td>Flattens nested streams into one stream.</td><td><code>.flatMap(List::stream)</code></td></tr>
+        <tr><td><code>distinct</code></td><td>Intermediate</td><td>Removes duplicate elements using equality.</td><td><code>.distinct()</code></td></tr>
+        <tr><td><code>sorted</code></td><td>Intermediate</td><td>Sorts elements naturally or with a comparator.</td><td><code>.sorted(Comparator.reverseOrder())</code></td></tr>
+        <tr><td><code>peek</code></td><td>Intermediate</td><td>Observes elements for debugging; should not contain business logic.</td><td><code>.peek(log::debug)</code></td></tr>
+        <tr><td><code>limit</code> / <code>skip</code></td><td>Intermediate</td><td>Restricts or ignores a number of elements.</td><td><code>.skip(10).limit(20)</code></td></tr>
+        <tr><td><code>takeWhile</code> / <code>dropWhile</code></td><td>Intermediate</td><td>Works with the leading portion of an ordered stream while a condition holds.</td><td><code>.takeWhile(x -&gt; x &lt; 100)</code></td></tr>
+        <tr><td><code>reduce</code></td><td>Terminal</td><td>Combines elements into one result.</td><td><code>.reduce(0, Integer::sum)</code></td></tr>
+        <tr><td><code>collect</code></td><td>Terminal</td><td>Accumulates elements into a collection or summary result.</td><td><code>.collect(Collectors.toList())</code></td></tr>
+        <tr><td><code>toList</code></td><td>Terminal</td><td>Returns an unmodifiable list in modern Java.</td><td><code>.toList()</code></td></tr>
+        <tr><td><code>groupingBy</code> / <code>partitioningBy</code></td><td>Collector</td><td>Groups elements by a key or splits them by a predicate.</td><td><code>Collectors.groupingBy(User::role)</code></td></tr>
+        <tr><td><code>anyMatch</code> / <code>allMatch</code> / <code>noneMatch</code></td><td>Short-circuit terminal</td><td>Tests whether any, all, or none of the elements match.</td><td><code>.anyMatch(User::active)</code></td></tr>
+        <tr><td><code>findFirst</code> / <code>findAny</code></td><td>Short-circuit terminal</td><td>Returns an element as an <code>Optional</code>; <code>findAny</code> can be better for parallel streams.</td><td><code>.findFirst()</code></td></tr>
+        <tr><td><code>count</code> / <code>min</code> / <code>max</code></td><td>Terminal</td><td>Produces a count or an optional extreme value.</td><td><code>.max(Comparator.naturalOrder())</code></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Interview rule:</strong> Intermediate operations are lazy and run only when a terminal operation is called. Streams are single-use, should avoid side effects, and preserve encounter order unless an unordered or parallel pipeline changes that guarantee.</p>
+
   <h3>Optional Class</h3>
   <p>A container for potentially null values. Use case: null pointer prevention, functional programming, cleaner null handling.</p>
 
@@ -461,6 +488,35 @@
 
   <h3>Volatile Keyword</h3>
   <p>Ensures variable visibility across threads. Use case: thread synchronization, atomic operations, lock-free programming.</p>
+  <pre><code>class Worker implements Runnable {
+    private volatile boolean running = true;
+
+    public void stop() {
+        running = false;
+    }
+
+    public void run() {
+        while (running) {
+            processNextTask();
+        }
+    }
+}</code></pre>
+  <p><strong>Real-life example:</strong> A background worker checks a volatile shutdown flag. When the application receives a shutdown signal, another thread sets the flag and the worker sees the new value without waiting for a lock. <code>volatile</code> provides visibility, but it does not make compound operations such as <code>count++</code> atomic.</p>
+
+  <h3>AtomicInteger</h3>
+  <p>A lock-free, thread-safe integer built on atomic CPU operations such as compare-and-set. Use case: counters, sequence numbers, retry limits, and shared state that requires an atomic update.</p>
+  <pre><code>AtomicInteger activeRequests = new AtomicInteger();
+
+int current = activeRequests.incrementAndGet();
+try {
+    if (current &gt; MAX_REQUESTS) {
+        throw new RejectedExecutionException("Too busy");
+    }
+    handleRequest();
+} finally {
+    activeRequests.decrementAndGet();
+}</code></pre>
+  <p><strong>Real-life example:</strong> An API can use an <code>AtomicInteger</code> to track active requests across worker threads and reject new work when a concurrency limit is reached. Each increment and decrement is atomic, so concurrent requests cannot overwrite one another's counter updates.</p>
 
   <h3>Deadlock</h3>
   <p>A situation where threads wait indefinitely for each other. Use case: multithreading debugging, synchronization design, performance issues.</p>
@@ -522,6 +578,11 @@
   <figure class="note-figure">
     <img src="assets/img/java-jvm-process-memory.png" alt="Original JVM process memory diagram showing shared heap, metaspace, code cache, and per-thread stack memory">
     <figcaption>JVM process memory: shared regions versus per-thread memory.</figcaption>
+  </figure>
+
+  <figure class="note-figure">
+    <img src="assets/img/java-jvm-runtime-architecture.png" alt="JDK, JRE, JVM, runtime data areas, class loader, execution engine, JIT compiler, garbage collector, JNI, and native method libraries architecture diagram">
+    <figcaption>JVM runtime architecture: how the JDK, JRE, JVM, memory areas, execution engine, and native libraries connect.</figcaption>
   </figure>
 
   <h3>Garbage Collection</h3>
