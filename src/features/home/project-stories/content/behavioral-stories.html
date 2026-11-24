@@ -158,4 +158,26 @@
   <p>Template changes now propagate across every instance in seconds from a database edit, no deploy. We also deleted a chunk of hand written cache management in favour of framework code that's already tested.</p>
 </div>
 
+<div class="story-block">
+  <h3>16. Reidy.AI — React Production Performance Optimization</h3>
+  <p>At Reidy.AI, we faced a performance issue in our property listing dashboard, where users could search, filter, and view property details. As the data increased, the UI became slower, especially when users changed filters or searched quickly.</p>
+  <p>I started debugging using Chrome DevTools Network tab and React Profiler. I noticed that multiple API requests were triggered while typing, and some components were re-rendering unnecessarily.</p>
+  <p>We used <strong>useState</strong> to manage search text, filters, pagination, loading, and error states. <strong>useEffect</strong> handled API calls whenever the search criteria or page changed. However, frequent state updates caused repeated requests.</p>
+  <p>To fix this, we introduced <strong>300ms debouncing</strong> and Axios request cancellation using AbortController to prevent outdated responses from updating the UI. We also implemented <strong>server-side pagination and filtering</strong>, so Spring Boot returned only the required property records instead of loading everything into React.</p>
+  <p>For rendering optimization, we used <strong>React.memo</strong> to avoid unnecessary child re-renders, <strong>useMemo</strong> for expensive calculations, and <strong>useCallback</strong> for stable function references. We also used <strong>useRef</strong> for values that didn't require re-rendering and <strong>useContext</strong> for shared authentication information.</p>
+  <p>One important decision was to optimize only the components identified through profiling rather than adding memoization everywhere.</p>
+  <p>After the changes, we compared API request counts, rendering times, and UI responsiveness. This reduced unnecessary backend traffic and made property searching smoother.</p>
+</div>
+
+<div class="story-block">
+  <h3>17. Citibank — AWS Production Reliability and Performance Optimization</h3>
+  <p>At Citibank, we experienced a production issue in our Credit Risk Service during peak loan application traffic. The service depended on external credit bureau APIs, and increased response times and occasional timeouts were affecting loan decision processing.</p>
+  <p>I worked with the DevOps team to investigate using <strong>AWS CloudWatch</strong>, checking application logs, timeout exceptions, API latency, and <strong>EC2 CPU and memory utilization</strong>. We also reviewed HTTP client connection pooling and retry configurations.</p>
+  <p>We identified that slow downstream API responses, combined with repeated retries, were increasing processing time and consuming application resources.</p>
+  <p>To address this, we configured <strong>Resilience4j circuit breakers</strong>, appropriate HTTP timeouts, and controlled retries with exponential backoff. We limited retries to temporary failures and avoided retrying requests beyond the overall decision deadline.</p>
+  <p>Since our Fraud and Credit Risk Services processed applications independently through <strong>Kafka</strong>, the Decision Service correlated both results using the application ID. If the credit bureau remained unavailable, the application could be routed to <strong>manual review</strong> rather than making an incomplete decision.</p>
+  <p>We monitored timeout rates, error patterns, and response times through CloudWatch to validate the improvements.</p>
+  <p>The key learning was that increasing EC2 capacity isn't always the solution. Sometimes improving timeout handling, retry behavior, and downstream dependency management provides better reliability and performance.</p>
+</div>
+
 </div>
