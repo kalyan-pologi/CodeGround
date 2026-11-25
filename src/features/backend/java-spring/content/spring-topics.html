@@ -230,6 +230,33 @@
 <h3>SecurityContextHolder</h3>
 <p>Holds security context for the current thread. Use case: authentication information access, user details retrieval, security context.</p>
 
+<h3>One JWT Request: John Reads His Credit Balance</h3>
+<p>John sends a JWT to <code>/credits/balance</code>. Spring Security validates the token, creates an <code>Authentication</code> object, and stores it in the current <code>SecurityContext</code>. The <code>SecurityContextHolder</code> is the thread-local entry point used to find that context.</p>
+<div class="note-table-wrap">
+  <table>
+    <thead><tr><th>Object</th><th>Simple meaning in this request</th><th>John's value</th></tr></thead>
+    <tbody>
+      <tr><td><code>SecurityContextHolder</code></td><td>Where Spring exposes the current security context.</td><td>Used to look up the authenticated request.</td></tr>
+      <tr><td><code>SecurityContext</code></td><td>Container holding the current authentication.</td><td>Contains John's <code>Authentication</code>.</td></tr>
+      <tr><td><code>Authentication</code></td><td>Who the caller is, their principal, authorities, and authentication status.</td><td>Name: <code>U101</code>; authority: <code>SCOPE_credits.read</code>; authenticated: <code>true</code>.</td></tr>
+      <tr><td><code>Principal</code></td><td>The identity making the request.</td><td>For JWT authentication, typically a <code>Jwt</code> object.</td></tr>
+      <tr><td>Authorities</td><td>What the caller is allowed to do.</td><td><code>SCOPE_credits.read</code> permits the credit-balance read.</td></tr>
+    </tbody>
+  </table>
+</div>
+<pre><code>Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+auth.getName();          // U101
+auth.getPrincipal();     // Jwt object
+auth.getAuthorities();   // [SCOPE_credits.read]
+auth.isAuthenticated();  // true</code></pre>
+<p><strong>Principal depends on the login mechanism:</strong> username/password usually provides <code>UserDetails</code>, JWT authentication provides <code>Jwt</code>, and OAuth2 login provides <code>OAuth2User</code> or <code>OidcUser</code>.</p>
+<pre><code>Jwt jwt = (Jwt) auth.getPrincipal();
+jwt.getSubject();              // U101
+jwt.getClaimAsString("name");  // John
+jwt.getClaimAsString("email"); // John's email</code></pre>
+<p>In a controller, choose the smallest access point you need: inject <code>Authentication</code> for identity plus permissions, <code>Principal</code> for only the name, or <code>@AuthenticationPrincipal Jwt jwt</code> when you need JWT claims directly. In a service, use <code>SecurityContextHolder</code> deliberately and keep authorization decisions close to the protected operation.</p>
+
 <figure class="note-figure">
   <img src="assets/img/spring-security-authentication-architecture-diagram.png" alt="Combined Spring Security authentication and authorization flow showing filters, authentication providers, SecurityContextHolder, URL rules, method security, and authorities">
   <figcaption>Spring Security authentication and authorization: identity first, permission checks second.</figcaption>
