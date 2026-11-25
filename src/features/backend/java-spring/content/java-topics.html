@@ -303,6 +303,31 @@
   <h3>JSON Parsing</h3>
   <p>Converting between Java objects and JSON format. Use case: web APIs, data exchange, configuration files, REST services.</p>
 
+  <h3>Jackson and Important Methods</h3>
+  <p>Jackson is the JSON library commonly used by Spring Boot's HTTP message converters. Its central type is <code>ObjectMapper</code>, which serializes Java objects to JSON and deserializes JSON into Java types. Prefer DTOs and explicit validation at API boundaries so the JSON contract stays stable.</p>
+  <div class="note-table-wrap">
+    <table>
+      <caption>Jackson APIs worth knowing</caption>
+      <thead><tr><th>Method / type</th><th>Purpose</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><code>ObjectMapper.readValue</code></td><td>Deserialize JSON into a class, generic type, or tree.</td><td><code>readValue(json, OrderDto.class)</code></td></tr>
+        <tr><td><code>ObjectMapper.writeValueAsString</code></td><td>Serialize an object to a JSON string.</td><td><code>writeValueAsString(order)</code></td></tr>
+        <tr><td><code>ObjectMapper.readTree</code></td><td>Parse JSON into a <code>JsonNode</code> tree when the shape is partial or dynamic.</td><td><code>readTree(json).path("status").asText()</code></td></tr>
+        <tr><td><code>ObjectMapper.convertValue</code></td><td>Convert between compatible objects or maps without an intermediate JSON string.</td><td><code>convertValue(map, OrderDto.class)</code></td></tr>
+        <tr><td><code>TypeReference&lt;T&gt;</code></td><td>Preserve generic type information at runtime.</td><td><code>readValue(json, new TypeReference&lt;List&lt;OrderDto&gt;&gt;() {})</code></td></tr>
+        <tr><td><code>JsonNode.get</code> / <code>path</code></td><td>Read a field from a tree; <code>path</code> returns a safe missing node.</td><td>Use <code>path</code> for optional fields and validate required ones.</td></tr>
+        <tr><td><code>@JsonProperty</code> / <code>@JsonAlias</code></td><td>Map a JSON name or accept legacy input names.</td><td><code>@JsonProperty("order_id")</code></td></tr>
+        <tr><td><code>@JsonIgnore</code> / <code>@JsonInclude</code></td><td>Control sensitive or empty fields in output.</td><td>Never serialize passwords or tokens.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <pre><code>ObjectMapper mapper = new ObjectMapper();
+OrderDto order = mapper.readValue(json, OrderDto.class);
+String responseJson = mapper.writeValueAsString(order);
+JsonNode root = mapper.readTree(json);
+String status = root.path("status").asText();</code></pre>
+  <p><strong>Interview point:</strong> In Spring MVC, malformed JSON or a type mismatch often surfaces as <code>HttpMessageNotReadableException</code> with a Jackson cause. Handle it centrally with <code>@RestControllerAdvice</code>, return a safe validation response, and do not expose raw parser details.</p>
+
   <h3>Common Exceptions: Java to Spring Boot</h3>
   <p>The same exception can have several causes. Read the first relevant application stack frame and the root cause before choosing a fix. Checked exceptions must be caught or declared; unchecked exceptions usually point to a broken input contract, invalid state, or programming mistake. Spring may wrap an underlying Java, JDBC, or Jackson exception.</p>
 

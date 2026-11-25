@@ -476,6 +476,44 @@
 <h3>@LoadBalanced</h3>
 <p>Enables client-side load balancing for RestTemplate. Use case: service load balancing, microservices, fault tolerance.</p>
 
+<h3>Resilience4j: Rate Limiter, Retry, Circuit Breaker, and Bulkhead</h3>
+<p>Resilience4j protects an outbound dependency with independent policies. Apply them at the service boundary, keep retries bounded, retry only transient and idempotent operations, and provide a useful fallback or clear failure response. The configuration below gives the <code>creditService</code> dependency a rate limit, three attempts with backoff, a circuit that opens after a measured failure rate, and a concurrency cap.</p>
+<pre><code>resilience4j:
+  ratelimiter:
+    instances:
+      creditService:
+        limitForPeriod: 100
+        limitRefreshPeriod: 1s
+        timeoutDuration: 0s
+  retry:
+    instances:
+      creditService:
+        maxAttempts: 3
+        waitDuration: 500ms
+  circuitbreaker:
+    instances:
+      creditService:
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10s
+  bulkhead:
+    instances:
+      creditService:
+        maxConcurrentCalls: 20</code></pre>
+<div class="note-table-wrap">
+  <table>
+    <thead><tr><th>Policy</th><th>Important settings</th><th>What it prevents</th></tr></thead>
+    <tbody>
+      <tr><td><code>@RateLimiter(name = "creditService")</code></td><td>100 calls per 1 second; <code>timeoutDuration: 0s</code> rejects immediately.</td><td>Overloading the dependency or violating its quota.</td></tr>
+      <tr><td><code>@Retry(name = "creditService")</code></td><td>3 total attempts with a 500 ms wait.</td><td>Permanent failure from one transient network error.</td></tr>
+      <tr><td><code>@CircuitBreaker(name = "creditService", fallbackMethod = "creditFallback")</code></td><td>10-call window, open at 50% failures, wait 10 seconds before a probe.</td><td>Cascading failures and needless calls while a dependency is unhealthy.</td></tr>
+      <tr><td><code>@Bulkhead(name = "creditService")</code></td><td>At most 20 concurrent calls.</td><td>Thread starvation and unlimited in-flight work.</td></tr>
+    </tbody>
+  </table>
+</div>
+<p><strong>Ordering matters:</strong> choose an explicit decorator order and observe accepted, rejected, retried, timed-out, and fallback calls. A circuit breaker is not a timeout, and a retry is not a substitute for a timeout. Pair these policies with client connection/read timeouts and metrics.</p>
+
 <h2>Spring WebFlux (Reactive)</h2>
 
 <h3>Spring WebFlux</h3>
